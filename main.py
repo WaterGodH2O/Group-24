@@ -184,7 +184,9 @@ while running:
 
                     for key, box in param_inputs.items():
                         box.kill()
-
+                    pedestrian_yes.kill()
+                    pedestrian_no.kill()
+                    run_simulation_button.kill()
 
 
 
@@ -203,8 +205,6 @@ while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-
-
 
 
         manager.update(time_delta)
