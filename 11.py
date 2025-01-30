@@ -1,28 +1,26 @@
 import pygame
 import pygame_gui
-
+#not part of our project, just used to test if I understand those function usage correctly
 pygame.init()
 
-# 设置窗口
+
 pygame.display.set_caption('Delete UI Element Example')
 window_size = (800, 600)
 screen = pygame.display.set_mode(window_size)
 
-# 创建背景
+
 background = pygame.Surface(window_size)
 background.fill(pygame.Color('#000000'))
 
-# 创建 UI 管理器
 manager = pygame_gui.UIManager(window_size)
 
-# 创建一个按钮
+
 button = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((350, 275), (100, 50)),
     text='Click Me',
     manager=manager
 )
 
-# 创建一个删除按钮
 delete_button = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((350, 350), (100, 50)),
     text='Delete Button',
