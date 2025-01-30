@@ -1,0 +1,17 @@
+2025.1.30
+Version 1.0
+Committer : Yang
+===============================================================
+Defined a simpe frame of game
+Defined a abstract class for vehicle and lane
+Builded a start page
+
+In main.py line 114, there is a function which is important to know as it ralated control the movement of object.
+
+    # set the simulation FPS as 60
+    # this function will return the time interval between this frame and previous frame in ms
+    # it should be 16.67 ms (60 frame per second) if not lag
+    time_delta = clock.tick(60)
+
+The movement of object should take the time interval into account, rather than based on frame.
+Well it could based on frame, but it will cause confusion when FPS is not stable, like the speed of car and the frequency of change of traffic light is slower when FPS lower.
