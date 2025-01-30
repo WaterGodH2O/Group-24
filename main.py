@@ -7,10 +7,10 @@ from Junction import Junction
 game_state:int = 0
 
 
-# 初始化 pygame
+
 pygame.init()
 
-# 窗口大小
+# window size
 WIDTH, HEIGHT = 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Traffic Junction Simulation")
@@ -22,10 +22,9 @@ manager = pygame_gui.UIManager((WIDTH, HEIGHT))
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
-# 字体
-
-title = pygame.font.Font(None, 35)  # 仅传入字体和大小
-title.set_bold(True)                # 启用加粗
+# word configuration
+title = pygame.font.Font(None, 35)
+title.set_bold(True)
 title.set_italic(True)
 
 font = pygame.font.Font(None, 29)
@@ -45,7 +44,7 @@ def draw_bold_font(text, position):
     text_surface = bold_font.render(text, True, BLACK)
     screen.blit(text_surface, position)
 
-# 交通流量输入框坐标
+
 traffic_flow_positions = {
     "n2e": (250, 110),
     "n2s": (370, 110),
@@ -61,7 +60,7 @@ traffic_flow_positions = {
     "w2e": (250, 320),
 }
 
-# 配置参数输入框坐标
+
 param_positions = {
     "num_lanes": (400, 650),
     "crossing_time": (650, 650),
@@ -69,14 +68,14 @@ param_positions = {
     "simulation_duration": (400, 700),
 }
 
-# 交通流量输入框
+# Create the object of input box of VPH
 traffic_flow_inputs = {}
 for key, pos in traffic_flow_positions.items():
     Rectangle = pygame.Rect(pos, (80, 30))
 
     traffic_flow_inputs[key] = pygame_gui.elements.UITextEntryLine(relative_rect=Rectangle, manager=manager)
 
-# 配置参数输入框
+# other input box, not completed
 param_inputs = {}
 for key, pos in param_positions.items():
     Rectangle = pygame.Rect(pos, (80, 30))
@@ -85,7 +84,7 @@ for key, pos in param_positions.items():
         manager=manager
     )
 
-# 手动实现 Yes/No 单选按钮
+# yes or no button
 pedestrian_yes = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((600, 700), (50, 30)),
     text='Yes',
@@ -98,16 +97,16 @@ pedestrian_no = pygame_gui.elements.UIButton(
     manager=manager
 )
 
-selected_pedestrian = False  # 默认无行人过道
+selected_pedestrian = False
 
-# 运行仿真按钮
+# Run simulation
 run_simulation_button = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((900, 700), (150, 50)),
     text='Run Simulation',
     manager=manager
 )
 
-# 游戏状态
+# 0 is for initial page
 game_state = 0
 clock = pygame.time.Clock()
 running = True
@@ -119,66 +118,101 @@ while running:
     # ----um my cursor flashing in 60fps so I just changed it to 240, dont mind it
     time_delta = clock.tick(240)
 
+    if (game_state == 0):
 
-    screen.fill(WHITE)
+        screen.fill(WHITE)
+        # draw text
+        draw_title("Traffic flow rates", (20, 5))
+        draw_font("North", (50, 125))
+        draw_font("East", (50, 185))
+        draw_font("South", (50, 255))
+        draw_font("West", (50, 325))
 
-    # 绘制标签
-    draw_title("Traffic flow rates", (20, 5))
-    draw_font("North", (50, 125))
-    draw_font("East", (50, 185))
-    draw_font("South", (50, 255))
-    draw_font("West", (50, 325))
+        draw_font("North", (145, 75))
+        draw_font("East", (270, 75))
+        draw_font("South", (395, 75))
+        draw_font("West", (510, 75))
 
-    draw_font("North", (145, 75))
-    draw_font("East", (270, 75))
-    draw_font("South", (395, 75))
-    draw_font("West", (510, 75))
-
-    draw_bold_font("Out", (70, 45))
-    pygame.draw.line(screen, BLACK, (15, 45), (125, 110), 4)
+        draw_bold_font("Out", (70, 45))
+        draw_bold_font("In", (50, 85))
+        pygame.draw.line(screen, BLACK, (15, 45), (125, 110), 4)
 
 
-    draw_font("Configurable parameters", (50, 600))
+        draw_font("Configurable parameters", (50, 600))
 
-    # 事件处理
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+        # event handle
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-        manager.process_events(event)
+            manager.process_events(event)
 
-        # 按钮点击事件
-        if event.type == pygame.USEREVENT:
-            if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+            # click on button event
+            if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == pedestrian_yes:
                     selected_pedestrian = True
                 elif event.ui_element == pedestrian_no:
                     selected_pedestrian = False
+
                 elif event.ui_element == run_simulation_button:
-                    # 获取所有输入值
+
                     traffic_data = {}
+                    #for input_box in the object of the text input box
                     for key, input_box in traffic_flow_inputs.items():
+                        # or 0 to prevent the invalid input
                         traffic_data[key] = int(input_box.get_text() or 0)
 
-                    params = {}
-                    for key, input_box in param_inputs.items():
-                        params[key] = int(input_box.get_text() or 0)
+                    # not completed yet
 
-                    # 实例化 Junction 类
+                    # params = {}
+                    # for key, input_box in param_inputs.items():
+                    #     params[key] = int(input_box.get_text() or 0)
+
+                    # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
                     junction = Junction(
                         **traffic_data,
-                        num_lanes=params["num_lanes"],
-                        pedestrian_crossing=selected_pedestrian,
-                        crossing_time=params["crossing_time"],
-                        crossing_frequency=params["crossing_frequency"],
-                        simulation_duration=params["simulation_duration"]
+                        #num_lanes=params["num_lanes"],
+                        num_lanes = 0,
+                        pedestrian_crossing = True,
+                        simulation_duration = 0
                     )
 
                     print(junction)  # 打印实例化的 Junction 类数据
 
-    # 更新 GUI
-    manager.update(time_delta)
-    manager.draw_ui(screen)
-    pygame.display.flip()
+                    for key, box in traffic_flow_inputs.items():
+                        box.kill()
+
+                    for key, box in param_inputs.items():
+                        box.kill()
+
+
+
+
+                    game_state = 1
+
+        # update gui, flip the screen
+        manager.update(time_delta)
+        manager.draw_ui(screen)
+        pygame.display.flip()
+
+    elif(game_state == 1):
+
+        screen.fill(WHITE)
+
+        manager.process_events(event)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+
+
+
+        manager.update(time_delta)
+        manager.draw_ui(screen)
+        pygame.display.flip()
+
+    elif (game_state == 2):
+        pass
+
 
 pygame.quit()

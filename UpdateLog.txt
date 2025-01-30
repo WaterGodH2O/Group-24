@@ -15,3 +15,5 @@ In main.py line 114, there is a function which is important to know as it ralate
 
 The movement of object should take the time interval into account, rather than based on frame.
 Well it could based on frame, but it will cause confusion when FPS is not stable, like the speed of car and the frequency of change of traffic light is slower when FPS lower.
+
+By the way my python version is 3.9, the content so far should support the lower version of python, but I think it is better for everyone to unify the version.

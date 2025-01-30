@@ -1,36 +1,59 @@
-from abc import ABC, abstractmethod
+import pygame
+import pygame_gui
 
-class Lane(ABC):
-    @property
-    @abstractmethod
-    def lane_type(self):
-        pass
+pygame.init()
 
-    @property
-    @abstractmethod
-    def car_num(self):
-        pass
+# 设置窗口
+pygame.display.set_caption('Delete UI Element Example')
+window_size = (800, 600)
+screen = pygame.display.set_mode(window_size)
 
-class CarLane(Lane):
-    lane_type = "Car"
+# 创建背景
+background = pygame.Surface(window_size)
+background.fill(pygame.Color('#000000'))
 
-    def __init__(self, max_speed):
-        self._max_speed = max_speed
+# 创建 UI 管理器
+manager = pygame_gui.UIManager(window_size)
 
-    @property
-    def max_speed(self):
-        return self._max_speed
+# 创建一个按钮
+button = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((350, 275), (100, 50)),
+    text='Click Me',
+    manager=manager
+)
 
-class BikeLane(Lane):
-    lane_type = "Bike"
+# 创建一个删除按钮
+delete_button = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((350, 350), (100, 50)),
+    text='Delete Button',
+    manager=manager
+)
 
-    def __init__(self, max_speed):
-        self._max_speed = max_speed
+clock = pygame.time.Clock()
+running = True
 
-    @property
-    def max_speed(self):
-        return self._max_speed
+while running:
+    time_delta = clock.tick(60) / 1000.0  # 60 FPS
 
-# 测试代码
-car_lane = CarLane(60)
-bike_lane = BikeLane(20)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        manager.process_events(event)
+
+        if event.type == pygame.USEREVENT:
+            if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == button:
+                    print("Main Button Clicked!")
+                elif event.ui_element == delete_button:
+                    print("Delete Button Clicked! Deleting main button.")
+                    button.kill()  # 删除 main button
+
+    manager.update(time_delta)
+
+    screen.blit(background, (0, 0))
+    manager.draw_ui(screen)
+
+    pygame.display.update()
+
+pygame.quit()

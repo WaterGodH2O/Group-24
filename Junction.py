@@ -12,8 +12,8 @@ class Junction:
         :param e2n: The VPH of from East to North（vph）
         :param e2s: The VPH of from East to South（vph）
 
-        :param num_lanes: 车道数（2-4）
-        :param pedestrian_crossing: 是否有行人过道
+        :param num_lanes
+        :param pedestrian_crossing: if the crossing road applied
         :param simulation_duration: 模拟时间
         """
 
@@ -46,6 +46,4 @@ class Junction:
                 f"Configurable Parameters:\n"
                 f"  Number of lanes: {self.num_lanes}\n"
                 f"  Pedestrian crossing: {'Yes' if self.pedestrian_crossing else 'No'}\n"
-                f"  Crossing time: {self.crossing_time} seconds\n"
-                f"  Crossing request frequency: {self.crossing_frequency} per hour\n"
                 f"  Simulation duration: {self.simulation_duration} minutes\n")
