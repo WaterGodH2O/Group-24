@@ -1,3 +1,5 @@
+#version: 1.0
+
 import pygame
 import pygame_gui
 
@@ -28,6 +30,9 @@ title.set_bold(True)
 title.set_italic(True)
 
 font = pygame.font.Font(None, 29)
+
+little_font = pygame.font.Font(None, 23)
+little_font.set_italic(True)
 
 bold_font = pygame.font.Font(None, 29)
 bold_font.set_bold(True)
@@ -118,11 +123,17 @@ while running:
     # ----um my cursor flashing in 60fps so I just changed it to 240, dont mind it
     time_delta = clock.tick(240)
 
+
     if (game_state == 0):
 
         screen.fill(WHITE)
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
+        screen.blit(coord_text, (800, 10))
+
         # draw text
-        draw_title("Traffic flow rates", (20, 5))
+        draw_title("Traffic flow rates", (200, 5))
         draw_font("North", (50, 125))
         draw_font("East", (50, 185))
         draw_font("South", (50, 255))
