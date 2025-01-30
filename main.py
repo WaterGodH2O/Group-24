@@ -30,15 +30,20 @@ title.set_italic(True)
 
 font = pygame.font.Font(None, 29)
 
+bold_font = pygame.font.Font(None, 29)
+bold_font.set_bold(True)
+
 def draw_title(text, position):
     text_surface = title.render(text, True, BLACK, )
     screen.blit(text_surface, position)
-
 
 def draw_font(text, position):
     text_surface = font.render(text, True, BLACK)
     screen.blit(text_surface, position)
 
+def draw_bold_font(text, position):
+    text_surface = bold_font.render(text, True, BLACK)
+    screen.blit(text_surface, position)
 
 # 交通流量输入框坐标
 traffic_flow_positions = {
@@ -118,13 +123,21 @@ while running:
     screen.fill(WHITE)
 
     # 绘制标签
-    draw_title("Traffic flow rates", (20, 20))
-    draw_font("North", (50, 115))
+    draw_title("Traffic flow rates", (20, 5))
+    draw_font("North", (50, 125))
+    draw_font("East", (50, 185))
+    draw_font("South", (50, 255))
+    draw_font("West", (50, 325))
 
-    draw_font("Exiting North", (550, 150))
-    draw_font("Exiting East", (650, 150))
-    draw_font("Exiting South", (750, 150))
-    draw_font("Exiting West", (850, 150))
+    draw_font("North", (145, 75))
+    draw_font("East", (270, 75))
+    draw_font("South", (395, 75))
+    draw_font("West", (510, 75))
+
+    draw_bold_font("Out", (70, 45))
+    pygame.draw.line(screen, BLACK, (15, 45), (125, 110), 4)
+
+
     draw_font("Configurable parameters", (50, 600))
 
     # 事件处理
