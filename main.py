@@ -20,6 +20,9 @@ pygame.display.set_caption("Traffic Junction Simulation")
 # 创建 GUI 管理器
 manager = pygame_gui.UIManager((WIDTH, HEIGHT))
 
+page1_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), (WIDTH, HEIGHT)), manager=manager)
+page2_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), (WIDTH, HEIGHT)), manager=manager)
+
 # 颜色
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -78,7 +81,7 @@ traffic_flow_inputs = {}
 for key, pos in traffic_flow_positions.items():
     Rectangle = pygame.Rect(pos, (80, 30))
 
-    traffic_flow_inputs[key] = pygame_gui.elements.UITextEntryLine(relative_rect=Rectangle, manager=manager)
+    traffic_flow_inputs[key] = pygame_gui.elements.UITextEntryLine(relative_rect=Rectangle, manager=manager, container=page1_container)
 
 # other input box, not completed
 param_inputs = {}
@@ -86,20 +89,23 @@ for key, pos in param_positions.items():
     Rectangle = pygame.Rect(pos, (80, 30))
     param_inputs[key] = pygame_gui.elements.UITextEntryLine(
         relative_rect=pygame.Rect(pos, (80, 30)),
-        manager=manager
+        manager=manager,
+        container=page1_container
     )
 
 # yes or no button
 pedestrian_yes = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((600, 700), (50, 30)),
     text='Yes',
-    manager=manager
+    manager=manager,
+    container=page1_container
 )
 
 pedestrian_no = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((660, 700), (50, 30)),
     text='No',
-    manager=manager
+    manager=manager,
+    container=page1_container
 )
 
 selected_pedestrian = False
@@ -108,8 +114,41 @@ selected_pedestrian = False
 run_simulation_button = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((900, 700), (150, 50)),
     text='Run Simulation',
-    manager=manager
+    manager=manager,
+    container=page1_container
 )
+
+# Modify parameters
+modify_parameters_button = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((900, 700), (150, 50)),
+    text='Modify Parameters',
+    manager=manager,
+    container=page2_container
+)
+
+table_pos_x = 100
+table_pos_y = 100
+column_width = 150
+row_height = 100
+
+output_data = [
+    ['', 'Configuration 1', 'Configuration 2', 'Configuration 3'],
+    ['Junction\nSpecification', '', '', ''],
+    ['Efficiency', '', '', ''],
+    ['Average wait time (minutes)', '', '', ''],
+    ['Maximum wait time (minutes)', '', '', ''],
+    ['Maximum queue length', '', '', '']
+]
+
+def create_table(data):
+    for(i,row) in enumerate(output_data):
+        for(j,value) in enumerate(row):
+            label = pygame_gui.elements.UITextBox(
+                html_text=value,
+                relative_rect=pygame.Rect(table_pos_x+j*column_width, table_pos_y+i*row_height, column_width, row_height),
+                manager=manager,
+                container=page2_container
+            )
 
 # 0 is for initial page
 game_state = 0
@@ -125,6 +164,8 @@ while running:
 
 
     if (game_state == 0):
+        page2_container.hide()
+        page1_container.show()
 
         screen.fill(WHITE)
 
@@ -190,17 +231,6 @@ while running:
 
                     print(junction)  # 打印实例化的 Junction 类数据
 
-                    for key, box in traffic_flow_inputs.items():
-                        box.kill()
-
-                    for key, box in param_inputs.items():
-                        box.kill()
-                    pedestrian_yes.kill()
-                    pedestrian_no.kill()
-                    run_simulation_button.kill()
-
-
-
                     game_state = 1
 
         # update gui, flip the screen
@@ -212,7 +242,21 @@ while running:
 
         screen.fill(WHITE)
 
+        page1_container.hide()
+        page2_container.show()
+
+        create_table(output_data)
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
+        screen.blit(coord_text, (800, 10))
+
         manager.process_events(event)
+        # click on button event
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            if event.ui_element == modify_parameters_button:
+                game_state = 0
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
