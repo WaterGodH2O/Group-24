@@ -7,7 +7,7 @@ class Lane(ABC):
     """
     The abstract class Lane, which defines the basic interface for all lanes.
     """
-    def __init__(self, allowed_directions: List[int], width: int):
+    def __init__(self, allowed_directions: List[int], width: int, length: int):
         # the list of all vehicles currently in this lane
         self._vehicles: List[Vehicle] = []
 
@@ -16,11 +16,18 @@ class Lane(ABC):
 
         # the width of the lane
         self._width: int = width
+        self._length: int = length
 
     @property
     def allowed_directions(self) -> List[int]:
         """ Returns the directions cars in this lane are allowed to travel """
         return self._allowed_directions
+    @property
+    def width(self) -> int:
+        return self._width
+    @property
+    def length(self) -> int:
+        return self._length
 
     def get_last_vehicle(self) -> Vehicle:
         """
@@ -88,8 +95,8 @@ class Lane(ABC):
 
 
 class CarLane(Lane):
-    def __init__(self, allowed_directions: List[int], width: int):
-        super.__init__(self, allowed_directions, width)
+    def __init__(self, allowed_directions: List[int], width: int, length: int):
+        super().__init__(allowed_directions, width, length)
 
     def move_all_vehicles(self) -> None:
         # TODO implement this method
@@ -103,8 +110,8 @@ class CarLane(Lane):
 # !! not a must have requirement
 class BusLane(Lane):
 
-    def __init__(self, allowed_directions: List[int], width: int):
-        super.__init__(self, allowed_directions, width)
+    def __init__(self, allowed_directions: List[int], width: int, length: int):
+        super().__init__(allowed_directions, width, length)
 
     def move_all_vehicles(self) -> None:
         # TODO implement this method

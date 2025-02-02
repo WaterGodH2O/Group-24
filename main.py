@@ -181,9 +181,9 @@ while running:
 
                     # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
                     junction = Junction(
-                        **traffic_data,
+                        traffic_data,
                         #num_lanes=params["num_lanes"],
-                        num_lanes = 0,
+                        num_lanes = 2,
                         pedestrian_crossing = True,
                         simulation_duration = 0
                     )

@@ -1,57 +1,61 @@
 from abc import ABC, abstractmethod
-
+import Arm
 class Vehicle(ABC):
+    def __init__(self, vehicle_type: str, length: float, speed: int, source: int, destination: int, start_position: float):
+        #Arm ID of the vehicle's start and end
+        self._source = source
+        self._destination = destination
+        #Distance from the traffic light
+        self._distance = start_position
+        #Length of the vehicle in metres
+        self._length = length
+        #Minimum distance between this vehicle and the next
+        self._stopping_distance = length / 2
+        #Speed in metres per second
+        self._speed = speed
+        self.vehicle_type = vehicle_type
+        #Time spent waiting in milliseconds
+        self._waiting_time = 0
+
     @property
-    @abstractmethod
     def vehicle_type(self):
-        pass
+        return self._vehicle_type
 
     @property
-    @abstractmethod
-    def x(self):
-        pass
+    def source(self):
+        return self._source
 
     @property
-    @abstractmethod
-    def y(self):
-        pass
+    def destination(self):
+        return self._destination
 
     @property
-    @abstractmethod
-    # the waiting time of vehicle in the lane
-    def age(self):
-        pass
+    def waiting_time(self):
+        return self._waiting_time
+    
+    def moveArm(self, arm: Arm, timems: int):
+        #Get the distance of the next car in the lane plus the stopping distance, or 0 if there are no cars ahead
+        target_position = 0 or (arm.get_lane(self._source).get_vehicle_ahead().distance + self._stopping_distance)
+        #Subtract the distance travelled in a single tick, or set to the target position if that is greater
+        self._distance = max(target_position, self._distance - timems * self._speed / 1000)
+
+        #TODO: lane changes
+
+        #TODO: enter junction
+
+        
 
 class Car(Vehicle):
-    def __init__(self, x, y):
-        self._x = x
-        self._y = y
-        self.vehicle_type = "Car"
+    def __init__(self, speed, source, destination, start_position):
+        #Cars are on average 4.4m long in the UK
+        CAR_LENGTH = 4.4
+        super().__init__("Car", CAR_LENGTH, speed, source, destination, start_position)
 
-    @property
-    def vehicle_type(self):
-        return self.vehicle_type
-
-    @property
-    def x(self):
-        return self._x
-
-    @property
-    def y(self):
-        return self._y
 
 class Bus(Vehicle):
-    def __init__(self, x, y):
-        self._x = x
-        self._y = y
-        self.vehicle_type = "Bus"
+    def __init__(self, speed, source, destination, start_position):
+        #Busses are typically 9 to 11m long
+        BUS_LENGTH = 10
+        super().__init__("Bus", BUS_LENGTH, speed, source, destination, start_position)
 
-    @property
-    def vehicle_type(self):
-        return self.vehicle_type
-    @property
-    def x(self):
-        return self._x
-    @property
-    def y(self):
-        return self._y
+
