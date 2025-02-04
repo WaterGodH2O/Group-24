@@ -67,17 +67,20 @@ class Lane(ABC):
     def add_vehicle(self, vehicle: Vehicle) -> None:
         """
         Method to add a vehicle to the end of the current lane
+
+        :param vehicle: The vehicle we want to add
         """
-        # TODO might need to be changed
         # add the given vehicle to the end of the lane
         self._vehicles.append(vehicle)
 
     def remove_vehicle(self, vehicle: Vehicle) -> Vehicle:
         """
         Removes a given vehicle from the current lane should they enter the box / switch lanes
+
+        :param vehicle: The vehicle we want to remove
+        :return: The vehicle removed or None if not found
         """
-        # TODO might need to be changed
-        # remove a specific vehicle from the list
+        # remove a specific vehicle from the list if found
         if vehicle in self._vehicles:
             self._vehicles.remove(vehicle)
             return vehicle
