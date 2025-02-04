@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import Arm
 class Vehicle(ABC):
     def __init__(self, vehicle_type: str, length: float, speed: int, source: int, destination: int, start_position: float):
         #Arm ID of the vehicle's start and end
@@ -32,18 +31,6 @@ class Vehicle(ABC):
     @property
     def waiting_time(self):
         return self._waiting_time
-    
-    def moveArm(self, arm: Arm, timems: int):
-        #Get the distance of the next car in the lane plus the stopping distance, or 0 if there are no cars ahead
-        target_position = 0 or (arm.get_lane(self._source).get_vehicle_ahead().distance + self._stopping_distance)
-        #Subtract the distance travelled in a single tick, or set to the target position if that is greater
-        self._distance = max(target_position, self._distance - timems * self._speed / 1000)
-
-        #TODO: lane changes
-
-        #TODO: enter junction
-
-        
 
 class Car(Vehicle):
     def __init__(self, speed, source, destination, start_position):

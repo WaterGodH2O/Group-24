@@ -37,7 +37,7 @@ class Arm:
         """ Returns the longest queue seen at any given point """
         return self._max_queue_length
     
-    def get_lane(self, lane_num) -> Lane:
+    def get_lane(self, lane_num: int) -> Lane:
         return self._lanes[lane_num]
     
     def move_all_vehicles(self) -> None:
@@ -45,5 +45,10 @@ class Arm:
         Method to update all the vehicles in each lane of the junction +
         allocate new vehicles to lanes
         """
-        # TODO implement this method
+        #TODO: lane changes
+
+        #TODO: handle functionality if lights are green
+
+        #TODO: assign new vehicles to lanes
+
         pass
