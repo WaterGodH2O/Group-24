@@ -23,6 +23,9 @@ class Lane(ABC):
         """ Returns the directions cars in this lane are allowed to travel """
         return self._allowed_directions
     @property
+    def vehicles(self) -> List[Vehicle]:
+        return self._vehicles
+    @property
     def width(self) -> int:
         return self._width
     @property
@@ -69,13 +72,16 @@ class Lane(ABC):
         # add the given vehicle to the end of the lane
         self._vehicles.append(vehicle)
 
-    def remove_vehicle(self, vehicle: Vehicle) -> None:
+    def remove_vehicle(self, vehicle: Vehicle) -> Vehicle:
         """
         Removes a given vehicle from the current lane should they enter the box / switch lanes
         """
         # TODO might need to be changed
         # remove a specific vehicle from the list
-        self._vehicles.remove(vehicle)
+        if vehicle in self._vehicles:
+            self._vehicles.remove(vehicle)
+            return vehicle
+        return None
     
     @abstractmethod
     def move_all_vehicles(self) -> None:
