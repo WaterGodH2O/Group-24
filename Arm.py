@@ -22,6 +22,15 @@ class Arm:
         # represents the most cars in the arm at any given point in the simulation
         self._max_queue_length: int = 0
 
+        # how long each car has been in the arm
+        self._total_wait_times: float = 0
+        
+        # the total number of vehicles that have left the junction
+        self._total_car_count: int = 0
+
+        # the longest any given vehicle has been waiting in the arm
+        self._max_wait_time: float = 0
+
     @property
     def length(self) -> int:
         """ Returns the length of the arm """
@@ -51,4 +60,35 @@ class Arm:
 
         #TODO: assign new vehicles to lanes
 
+        # update the key performance indicators
+        update_kpi()
+
+
         pass
+
+    def update_kpi(self) -> None:
+        # TODO include as part of move_all_vehicles loop for efficiency
+        for lane in self._lanes:
+            # get a list of all vechiles that have left the lane
+            vehicles_leaving_lane = lane.move_all_vehicles()
+            
+            # update the total wait time and total car count
+            self._total_wait_times += sum(map(lambda v0ehicle : vehicle.waiting_time))
+            self._total_car_count += len(vehicles_leaving_lane)
+            
+            # update the max queue length
+            self._max_queue_length = max(self._max_queue_length, lane.length)
+
+            # update the max wait time
+            self._max_wait_time = max(self._max_wait_time, lane.get_longest_wait_time())
+
+
+
+    
+    def get_kpi(self) -> List[float]:
+        # calculate the efficiency
+        kpi_efficiency = self._average_wait_time + self._max_wait_time + self._max_queue_length # TODO placeholder until we get proper formula
+        average_wait_time = self._total_wait_times / self._total_car_count if self._total_car_count != 0 else 0
+        
+        # return the key kpi stats
+        return [kpi_efficiency, average_wait_time, self._max_wait_time, self._max_queue_length]

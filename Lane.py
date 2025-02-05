@@ -86,17 +86,22 @@ class Lane(ABC):
             return vehicle
         return None
     
-    def move_all_vehicles(self) -> None:
+    def move_all_vehicles(self) -> List[Vehicle]:
         """
         Method to update the distance of all vehicles in the lane
 
         :param elapsed_time: How long the vehicle has been in the queue for
+        :return: the vehicles currently leaving the junction
         """
+        leaving_vehicles = []
+
         for i, car in enumerate(self._vehicles):
             # enter the box if at a junction
             if i == 0 and car._distance == 0:
                 # TODO enter box junction, leave current queue
                 if self.can_enter_junction():
+                    # add the vehicles exiting the junction to a queue
+                    leaving_vehicles.append(car)
                     pass
 
             # if there is enough space to move forward
@@ -104,7 +109,18 @@ class Lane(ABC):
                 # TODO add an elapsed_time to Vehicle.py to update the distance of the car
                 # car._distance -= car._speed * car.elapsed_time
                 pass
+
+        return leaving_vehicles
         
+    def get_longest_wait_time(self) -> float:
+        """
+        Method to return the longest wait time currently in the queue. Intuition is the first vehicle will
+        always have been waiting for longer than the vehicles behind it as it entered first
+
+        :return: longest wait time present in the lane
+        """
+        return self._vehicles[0].waiting_time if self._vehicles else 0
+
 
     @property
     @abstractmethod
