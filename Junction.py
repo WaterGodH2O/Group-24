@@ -42,3 +42,7 @@ class Junction:
                 f"  Number of lanes: {self.num_lanes}\n"
                 f"  Pedestrian crossing: {'Yes' if self.pedestrian_crossing else 'No'}\n"
                 f"  Simulation duration: {self.simulation_duration} minutes\n")
+    
+    def simulate(self) -> int:
+        # dummy score
+        return self.num_lanes*20

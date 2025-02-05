@@ -131,6 +131,8 @@ table_pos_y = 100
 column_width = 150
 row_height = 100
 
+top_junctions = []
+
 output_data = []
 
 def init_table():
@@ -234,21 +236,30 @@ while running:
                     # for key, input_box in param_inputs.items():
                     #     params[key] = int(input_box.get_text() or 0)
 
-                    # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
-                    junction = Junction(
-                        traffic_data,
-                        #num_lanes=params["num_lanes"],
-                        num_lanes = 2,
-                        pedestrian_crossing = True,
-                        simulation_duration = 0
-                    )
+                    # for example of junction configurations being with lanes 1-4
+                    for i in range(4):
 
-                    print(junction)  # 打印实例化的 Junction 类数据
+                        # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
+                        junction = Junction(
+                            traffic_data,
+                            #num_lanes=params["num_lanes"],
+                            num_lanes = i,
+                            pedestrian_crossing = True,
+                            simulation_duration = 0
+                        )
+
+                        print(junction)  # 打印实例化的 Junction 类数据
+
+                        kpi = junction.simulate()
+                        top_junctions.append(kpi)
+
+                    # top 3 junctions by kpi
+                    top_junctions = sorted(top_junctions, reverse=True)[:3]
 
                     init_table()
 
-                    add_config(90,"2 lanes",5,7,9)
-                    add_config(60,"3 lanes",6,4,2)
+                    for junction in top_junctions:
+                        add_config(junction,'b',9,9,9)
 
                     game_state = 1
 
