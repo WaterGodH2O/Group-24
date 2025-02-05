@@ -86,12 +86,25 @@ class Lane(ABC):
             return vehicle
         return None
     
-    @abstractmethod
     def move_all_vehicles(self) -> None:
         """
-        Abstract method to update the positions of all vehicles in the lane, including lane arrivals and departures
+        Method to update the distance of all vehicles in the lane
+
+        :param elapsed_time: How long the vehicle has been in the queue for
         """
-        pass
+        for i, car in enumerate(self._vehicles):
+            # enter the box if at a junction
+            if i == 0 and car._distance == 0:
+                # TODO enter box junction, leave current queue
+                if self.can_enter_junction():
+                    pass
+
+            # if there is enough space to move forward
+            elif i == 0 or car._distance - car._stopping_distance > self._vehicles[i - 1]._distance:
+                # TODO add an elapsed_time to Vehicle.py to update the distance of the car
+                # car._distance -= car._speed * car.elapsed_time
+                pass
+        
 
     @property
     @abstractmethod
@@ -107,10 +120,6 @@ class CarLane(Lane):
     def __init__(self, allowed_directions: List[int], width: int, length: int):
         super().__init__(allowed_directions, width, length)
 
-    def move_all_vehicles(self) -> None:
-        # TODO implement this method
-        pass
-
     def can_enter_junction(self) -> bool:
         # TODO implement this method
         return False
@@ -121,10 +130,6 @@ class BusLane(Lane):
 
     def __init__(self, allowed_directions: List[int], width: int, length: int):
         super().__init__(allowed_directions, width, length)
-
-    def move_all_vehicles(self) -> None:
-        # TODO implement this method
-        pass
 
     def can_enter_junction(self) -> bool:
         # TODO implement this method
