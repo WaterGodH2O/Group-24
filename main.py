@@ -131,14 +131,28 @@ table_pos_y = 100
 column_width = 150
 row_height = 100
 
-output_data = [
-    ['', 'Configuration 1', 'Configuration 2', 'Configuration 3'],
-    ['Junction\nSpecification', '', '', ''],
-    ['Efficiency', '', '', ''],
-    ['Average wait time (minutes)', '', '', ''],
-    ['Maximum wait time (minutes)', '', '', ''],
-    ['Maximum queue length', '', '', '']
-]
+output_data = []
+
+def init_table():
+    global output_data
+    output_data = [
+        [''],
+        ['Junction\nSpecification'],
+        ['Efficiency'],
+        ['Average wait time (minutes)'],
+        ['Maximum wait time (minutes)'],
+        ['Maximum queue length']
+    ]
+
+def add_config(efficiency, specification, average_wait, maxmimum_wait, maximum_queue):
+    config_number = len(output_data[0])
+    output_data[0].append(f'Configuration {config_number}')
+
+    output_data[1].append(specification)
+    output_data[2].append(str(efficiency))
+    output_data[3].append(str(average_wait))
+    output_data[4].append(str(maxmimum_wait))
+    output_data[5].append(str(maximum_queue))
 
 def create_table(data):
     for(i,row) in enumerate(output_data):
@@ -230,6 +244,11 @@ while running:
                     )
 
                     print(junction)  # 打印实例化的 Junction 类数据
+
+                    init_table()
+
+                    add_config(90,"2 lanes",5,7,9)
+                    add_config(60,"3 lanes",6,4,2)
 
                     game_state = 1
 
