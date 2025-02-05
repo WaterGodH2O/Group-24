@@ -47,3 +47,19 @@ class Arm:
         """
         # TODO implement this method
         pass
+
+    def no_vehicles_within(self, distance: int) -> bool:
+        """ 
+        Check if any vehicles are within a given distance from the junction 
+        
+        :param distance: The distance from the junction to check
+        :return: False if no vehicles are close enough, true otherwise.
+        """
+        for lane in self._lanes:
+            if lane.get_first_vehicle() and lane.get_first_vehicle().distance < distance:
+                return False
+        return True
+    
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str, lane: int = 0):
+        """ Create a new vehicle in a given lane """
+        self.get_lane(lane).create_vehicle(speed, source, destination, type)

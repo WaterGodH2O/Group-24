@@ -185,11 +185,10 @@ while running:
                         #num_lanes=params["num_lanes"],
                         num_lanes = 2,
                         pedestrian_crossing = True,
-                        simulation_duration = 0
                     )
 
                     print(junction)  # 打印实例化的 Junction 类数据
-
+                    junction.simulate(100000, 1500)
                     for key, box in traffic_flow_inputs.items():
                         box.kill()
 

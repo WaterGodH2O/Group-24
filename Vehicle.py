@@ -13,7 +13,7 @@ class Vehicle(ABC):
         self._stopping_distance = length / 2
         #Speed in metres per second
         self._speed = speed
-        self.vehicle_type = vehicle_type
+        self._vehicle_type = vehicle_type
         #Time spent waiting in milliseconds
         self._waiting_time = 0
 
@@ -24,7 +24,9 @@ class Vehicle(ABC):
     @property
     def source(self):
         return self._source
-
+    @property
+    def distance(self):
+        return self._distance
     @property
     def destination(self):
         return self._destination
@@ -42,6 +44,7 @@ class Vehicle(ABC):
         #TODO: lane changes
 
         #TODO: enter junction
+
 
         
 
