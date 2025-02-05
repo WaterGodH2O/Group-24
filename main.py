@@ -24,7 +24,7 @@ page1_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), 
 page2_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), (WIDTH, HEIGHT)), manager=manager)
 
 # 颜色
-WHITE = (255, 255, 255)
+WHITE = (180, 180, 180)
 BLACK = (0, 0, 0)
 
 # word configuration
