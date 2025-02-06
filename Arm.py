@@ -61,7 +61,7 @@ class Arm:
         #TODO: assign new vehicles to lanes
 
         # update the key performance indicators
-        update_kpi()
+        self.update_kpi()
 
 
         pass
@@ -73,7 +73,7 @@ class Arm:
             vehicles_leaving_lane = lane.move_all_vehicles()
             
             # update the total wait time and total car count
-            self._total_wait_times += sum(map(lambda v0ehicle : vehicle.waiting_time))
+            self._total_wait_times += sum(map(lambda vehicle : vehicle.waiting_time))
             self._total_car_count += len(vehicles_leaving_lane)
             
             # update the max queue length
@@ -87,8 +87,8 @@ class Arm:
     
     def get_kpi(self) -> List[float]:
         # calculate the efficiency
-        kpi_efficiency = self._average_wait_time + self._max_wait_time + self._max_queue_length # TODO placeholder until we get proper formula
         average_wait_time = self._total_wait_times / self._total_car_count if self._total_car_count != 0 else 0
+        kpi_efficiency = average_wait_time + self._max_wait_time + self._max_queue_length # TODO placeholder until we get proper formula
         
         # return the key kpi stats
         return [kpi_efficiency, average_wait_time, self._max_wait_time, self._max_queue_length]
