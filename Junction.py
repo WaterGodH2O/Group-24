@@ -28,9 +28,10 @@ class Junction:
         self.pedestrian_crossing = pedestrian_crossing
         self.simulation_duration = simulation_duration
 
-        self.arms: List[Arm] = [None]*4
-        for i in range(len(self.arms)):
-            self.arms[i] = Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes)
+        self.arms: List[Arm] = [
+            Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes)
+            for i in range (4)
+        ]
         self.box = Box(self.LANE_WIDTH, self.num_lanes)
 
     def __str__(self):
@@ -46,3 +47,12 @@ class Junction:
     def simulate(self) -> int:
         # dummy score
         return self.num_lanes*20
+    
+    def get_kpi(self) -> List[List[int]]:
+        """ return the efficiency score, avg wait time, max wait time and max queue length for each arm of the junction """
+        kpi_list = [arm.get_kpi() for arm in self.arms]
+        return kpi_list
+    
+    def get_junction_information(self):
+        """ method to return all configuration details about this particular junction """
+        pass
