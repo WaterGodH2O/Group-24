@@ -27,8 +27,12 @@ class Junction:
         :param pedestrian_crossing: if the crossing road applied
         :param simulation_duration: 模拟时间
         """
+        #Initialise random number generator
+        self.random = np.random.default_rng()
 
-        self.traffic_data: list[list[int]] = np.zeros((self.NUM_ARMS, self.NUM_ARMS))
+        self.traffic_data: list[list[int]] = [[0, 100, 200, 3000], [250, 0, 1, 2], [20, 20, 0, 20], [1, 0, 3, 0]]
+        #Precompute scale values for exponential random distribution
+        self.traffic_scales: list[list[int]] = [[(60*60*1000)/val if val != 0 else 0 for val in row ] for row in self.traffic_data]
         
         self.num_lanes: int = num_lanes
         self.pedestrian_crossing: bool = pedestrian_crossing
@@ -39,10 +43,14 @@ class Junction:
         self.traffic_light_time_ms: int = traffic_light_interval_ms
         self.traffic_light_interval_ms: int = traffic_light_interval_ms
 
+        #Initialise time between vehicle creation to 0 for all pairs of sources and destinations
+        self.vehicle_timers_ms:int = np.zeros((self.NUM_ARMS, self.NUM_ARMS))
+
         self.arms: List[Arm] = [None]*self.NUM_ARMS
         for i in range(len(self.arms)):
             self.arms[i] = Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes)
         self.box: Box = Box(self.LANE_WIDTH, self.num_lanes)
+
 
     def __str__(self):
         """print the detail information instead of memory address"""
@@ -61,11 +69,10 @@ class Junction:
         :param sim_time_ms: The total length of time to simulate in milliseconds.
         :param update_length_ms: The length of each simulation step in milliseconds.
         """
-        #Test: create vehicle in arm 1 150m away
-        self.arms[1].create_vehicle(self.VEHICLE_SPEED_MPS, 2, 0, "Car")
         while (sim_time_ms > 0):
             sim_time_ms -= update_length_ms
             self.update(update_length_ms)
+
         print("Simulation finished")
     
     
@@ -75,6 +82,7 @@ class Junction:
 
         :param update_length_ms: The length of the simulation step in milliseconds
         """
+        self.create_new_vehicles(update_length_ms)
         self.update_traffic_light(update_length_ms)
     
     def update_traffic_light(self, update_length_ms: int) -> None:
@@ -86,17 +94,35 @@ class Junction:
         #Subtract the length of the update from the timer
         self.traffic_light_time_ms -= update_length_ms
 
-        #If no cars are within 100m of the light, skip the direction and reset the interval
+        #If no cars are within 100m of the light or the time is below 0, skip the direction and reset the interval
         if self.arms[self.traffic_light_dir].no_vehicles_within(100) or self.traffic_light_time_ms <= 0:       
-            self.traffic_light_dir = self.getLeftArm(self.traffic_light_dir)
+            self.traffic_light_dir = self.get_left_arm(self.traffic_light_dir)
             self.traffic_light_time_ms = self.traffic_light_interval_ms
 
-        print(f"Dir: {self.traffic_light_dir}, Time: {self.traffic_light_time_ms}")
 
-    def getLeftArm(self, arm_index: int) -> int:
+    def get_left_arm(self, arm_index: int) -> int:
         """ Get the index in arms of the arm clockwise to the given index"""
         return (arm_index + 1) % self.NUM_ARMS
     
-    def getRightArm(self, arm_index: int) -> int:
+    def get_right_arm(self, arm_index: int) -> int:
         """ Get the index in arms of the arm anti-clockwise to the given index"""
         return (arm_index - 1) % self.NUM_ARMS
+
+    def create_new_vehicles(self, update_length_ms: int) -> None:
+        """
+        Attempt to create new vehicles
+        """
+        for source in range(0, self.NUM_ARMS):
+            for dest in range(0, self.NUM_ARMS):
+                #If an entry has no vehicles, skip it
+                if (self.traffic_data[source][dest] == 0):
+                    continue
+                #Decrement the timer by the length of the update
+                self.vehicle_timers_ms[source][dest] -= update_length_ms
+
+                #If a timer is less than 0, create a car and increment the timer by a random value.
+                #If the timer is still below 0, multiple cars are created in a single update.
+                while(self.vehicle_timers_ms[source][dest] <= 0):
+                    time_to_next_ms = self.random.exponential(self.traffic_scales[source][dest])
+                    self.vehicle_timers_ms[source][dest] += time_to_next_ms
+                    #TODO: create vehicle

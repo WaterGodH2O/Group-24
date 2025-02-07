@@ -188,7 +188,7 @@ while running:
                     )
 
                     print(junction)  # 打印实例化的 Junction 类数据
-                    junction.simulate(100000, 1500)
+                    junction.simulate(60*60*1000, 1000)
                     for key, box in traffic_flow_inputs.items():
                         box.kill()
 
