@@ -1,5 +1,7 @@
 from typing import List
 from Lane import CarLane, Lane
+from time import time
+from math import ceil
 
 class Arm:
     """
@@ -10,14 +12,14 @@ class Arm:
         self._length: int = length
         self._width: int = width
 
-        # the number of vehicles expected per hour. Index 0 = north, 1 = east, 2 = south, 3 = west
-        self._vehicles_per_hour: List[int] = vehicles_per_hour
+        # the number of seconds until a vehicle is expected Index 0 = north, 1 = east, 2 = south, 3 = west
+        self._seconds_per_vehicle: List[int] = list(map(lambda vph : ceil(3600 / vph), vehicles_per_hour))
 
         # initalise a list of all the lanes coming from a certain direction in the junction
         # TODO assign lanes
-        self._lanes: List[Lane] = [None] * num_lanes
-        for i in range(len(self._lanes)):
-            self._lanes[i] = CarLane([0, 1, 2, 3], width / num_lanes, length)
+        self._lanes: List[Lane] = []
+        for i in range(num_lanes):
+            self._lanes.append(CarLane([0, 1, 2, 3], width / num_lanes, length))
 
         # represents the most cars in the arm at any given point in the simulation
         self._max_queue_length: int = 0
@@ -49,39 +51,30 @@ class Arm:
     def get_lane(self, lane_num: int) -> Lane:
         return self._lanes[lane_num]
     
-    def move_all_vehicles(self) -> None:
+    def move_all_vehicles(self, isLightGreen: bool) -> None:
         """
-        Method to update all the vehicles in each lane of the junction +
-        allocate new vehicles to lanes
+        Method to update all the vehicles in each lane of the junction + allocate new vehicles to lanes
         """
-        #TODO: lane changes
-
-        #TODO: handle functionality if lights are green
-
-        #TODO: assign new vehicles to lanes
-
-        # update the key performance indicators
-        self.update_kpi()
-
-
-        pass
-
-    def update_kpi(self) -> None:
-        # TODO include as part of move_all_vehicles loop for efficiency
+        
+        # move each vehicle currently in the lane
         for lane in self._lanes:
-            # get a list of all vechiles that have left the lane
-            vehicles_leaving_lane = lane.move_all_vehicles()
-            
-            # update the total wait time and total car count
-            self._total_wait_times += sum(map(lambda vehicle : vehicle.waiting_time))
-            self._total_car_count += len(vehicles_leaving_lane)
-            
-            # update the max queue length
-            self._max_queue_length = max(self._max_queue_length, lane.length)
+            # update the position of each vehicle in the arm
+            vehicle_leaving = lane.move_all_vehicles(isLightGreen)
 
+            # remove the vehicles from the lane if necessary
+            if vehicle_leaving:
+                lane.remove_vehicle(vehicle_leaving)
+
+                # update kpi
+                self._total_wait_times += time() -  vehicle_leaving.arrival_time
+                self._total_car_count += 1
+            
             # update the max wait time
             self._max_wait_time = max(self._max_wait_time, lane.get_longest_wait_time())
+            
+        #TODO: lane change
 
+        #TODO: assign new vehicles to lanes
 
 
     

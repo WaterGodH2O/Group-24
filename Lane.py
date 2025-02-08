@@ -12,14 +12,14 @@ class Lane(ABC):
         self._vehicles: List[Vehicle] = []
 
         # the directions vehicles in this lane can go
-        self._allowed_directions: List[int] = allowed_directions
+        self._allowed_directions: set[int] = set(allowed_directions)
 
         # the width of the lane
         self._width: int = width
         self._length: int = length
 
     @property
-    def allowed_directions(self) -> List[int]:
+    def allowed_directions(self) -> set[int]:
         """ Returns the directions cars in this lane are allowed to travel """
         return self._allowed_directions
     @property
@@ -96,31 +96,30 @@ class Lane(ABC):
             return vehicle
         return None
     
-    def move_all_vehicles(self) -> List[Vehicle]:
+    def move_all_vehicles(self, isLightGreen: bool) -> Vehicle:
         """
         Method to update the distance of all vehicles in the lane
 
         :param elapsed_time: How long the vehicle has been in the queue for
         :return: the vehicles currently leaving the junction
         """
-        leaving_vehicles = []
+        leaving_vehicle = None
 
         for i, car in enumerate(self._vehicles):
             # enter the box if at a junction
             if i == 0 and car._distance == 0:
-                # TODO enter box junction, leave current queue
-                if self.can_enter_junction():
+                if isLightGreen:
                     # add the vehicles exiting the junction to a queue
-                    leaving_vehicles.append(car)
+                    leaving_vehicle = car
                     pass
 
             # if there is enough space to move forward
-            elif i == 0 or car._distance - car._stopping_distance > self._vehicles[i - 1]._distance:
+            elif i == 0 or car._distance - car._stopping_distance > self._vehicles[i - 1]._distance or self._vehicles[i - 1] == leaving_vehicle:
                 # TODO add an elapsed_time to Vehicle.py to update the distance of the car
                 # car._distance -= car._speed * car.elapsed_time
                 pass
 
-        return leaving_vehicles
+        return leaving_vehicle
         
     def get_longest_wait_time(self) -> float:
         """
@@ -129,7 +128,7 @@ class Lane(ABC):
 
         :return: longest wait time present in the lane
         """
-        return self._vehicles[0].waiting_time if self._vehicles else 0
+        return self._vehicles[0].arrival_time if self._vehicles else 0
 
 
     @property
