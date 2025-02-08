@@ -244,8 +244,7 @@ while running:
                             traffic_data,
                             #num_lanes=params["num_lanes"],
                             num_lanes = i,
-                            pedestrian_crossing = True,
-                            simulation_duration = 0
+                            pedestrian_crossing = True
                         )
 
                         print(junction)  # 打印实例化的 Junction 类数据

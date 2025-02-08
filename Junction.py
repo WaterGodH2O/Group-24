@@ -29,7 +29,7 @@ class Junction:
         """
         #Initialise random number generator
         self.random = np.random.default_rng()
-
+        #dummy data
         self.traffic_data: list[list[int]] = [[0, 100, 200, 3000], [250, 0, 1, 2], [20, 20, 0, 20], [1, 0, 3, 0]]
         #Precompute scale values for exponential random distribution
         self.traffic_scales: list[list[int]] = [[(60*60*1000)/val if val != 0 else 0 for val in row ] for row in self.traffic_data]
@@ -44,8 +44,8 @@ class Junction:
         #Set the interval between changes and the traffic light timer to the given interval
         self.traffic_light_time_ms: int = traffic_light_interval_ms
         self.traffic_light_interval_ms: int = traffic_light_interval_ms
-
-        
+        #used to test car generation
+        self.cars_made = np.zeros((self.NUM_ARMS, self.NUM_ARMS))
 
         self.arms: List[Arm] = [
             Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes)
@@ -61,8 +61,7 @@ class Junction:
                 f"  {self.traffic_data}\n"
                 f"Configurable Parameters:\n"
                 f"  Number of lanes: {self.num_lanes}\n"
-                f"  Pedestrian crossing: {'Yes' if self.pedestrian_crossing else 'No'}\n"
-                f"  Simulation duration: {self.simulation_duration} minutes\n")
+                f"  Pedestrian crossing: {'Yes' if self.pedestrian_crossing else 'No'}\n")
 
     
     def get_kpi(self) -> List[List[int]]:
@@ -85,7 +84,9 @@ class Junction:
         while (sim_time_ms > 0):
             sim_time_ms -= update_length_ms
             self.update(update_length_ms)
-
+        #Show cars created
+        np.set_printoptions(suppress=True)
+        print(self.cars_made)
         print("Simulation finished")
         # dummy score
         return self.num_lanes*20
@@ -140,5 +141,6 @@ class Junction:
                 while(self.vehicle_timers_ms[source][dest] <= 0):
                     time_to_next_ms = self.random.exponential(self.traffic_scales[source][dest])
                     self.vehicle_timers_ms[source][dest] += time_to_next_ms
+                    self.cars_made[source][dest] += 1
                     #TODO: create vehicle
 
