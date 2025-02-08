@@ -1,6 +1,6 @@
 from typing import List
 from abc import ABC, abstractmethod
-from Vehicle import Vehicle
+from Vehicle import Vehicle, Car, Bus
 
 
 class Lane(ABC):
@@ -32,6 +32,16 @@ class Lane(ABC):
     def length(self) -> int:
         return self._length
 
+    def get_first_vehicle(self) -> Vehicle:
+        """
+        Method to get the first vehicle currently in this lane
+
+        :return: The first vehicle in the lane or None if the list is empty
+        """
+        
+        # return the first index of the list or none if empty
+        return self._vehicles[0] if self._vehicles else None
+    
     def get_last_vehicle(self) -> Vehicle:
         """
         Method to get the last vehicle currently in this lane
@@ -131,6 +141,13 @@ class Lane(ABC):
         """
         pass
 
+    @abstractmethod
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> bool:
+        """
+        Create a new vehicle, unless forbidden by lane type
+        :return: True if created successfully, false otherwise.
+        """
+
 
 class CarLane(Lane):
     def __init__(self, allowed_directions: List[int], width: int, length: int):
@@ -138,6 +155,16 @@ class CarLane(Lane):
 
     def can_enter_junction(self) -> bool:
         # TODO implement this method
+        return False
+    
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> bool:
+        # TODO replace 150 with max(80% of lane length, last_vehicle.position) 
+        if type == "Car":
+            self.add_vehicle(Car(speed, source, destination, 150))
+            return True
+        if type == "Bus":
+            self.add_vehicle(Bus(speed, source, destination, 150))
+            return True
         return False
 
 
@@ -149,4 +176,10 @@ class BusLane(Lane):
 
     def can_enter_junction(self) -> bool:
         # TODO implement this method
+        return False
+    
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> bool:
+        if type == "Bus":
+            self.add_vehicle(Bus(speed, source, destination, 150))
+            return True
         return False

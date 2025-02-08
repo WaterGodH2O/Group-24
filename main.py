@@ -249,8 +249,7 @@ while running:
                         )
 
                         print(junction)  # 打印实例化的 Junction 类数据
-
-                        kpi = junction.simulate()
+                        kpi = junction.simulate(60*60*1000, 1000)
                         top_junctions.append(kpi)
 
                     # top 3 junctions by kpi
