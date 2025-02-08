@@ -7,16 +7,12 @@ class Arm:
     """
     This class defines the behaviour of each entrance in the junction
     """
-    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int):
+    def __init__(self, width: int, length: int, num_lanes: int):
         # the length and width of the arm in metres
         self._length: int = length
         self._width: int = width
 
-        # the number of seconds until a vehicle is expected Index 0 = north, 1 = east, 2 = south, 3 = west
-        self._seconds_per_vehicle: List[int] = list(map(lambda vph : ceil(3600 / vph), vehicles_per_hour))
-
         # initalise a list of all the lanes coming from a certain direction in the junction
-        # TODO assign lanes
         self._lanes: List[Lane] = []
         for i in range(num_lanes):
             self._lanes.append(CarLane([0, 1, 2, 3], width / num_lanes, length))
@@ -51,22 +47,25 @@ class Arm:
     def get_lane(self, lane_num: int) -> Lane:
         return self._lanes[lane_num]
     
-    def move_all_vehicles(self, isLightGreen: bool) -> None:
+    def move_all_vehicles(self, is_light_green: bool) -> None:
         """
         Method to update all the vehicles in each lane of the junction + allocate new vehicles to lanes
+        Moves all the vehicles for a particular arm in the junction. For each vehicle that exits the lane,
+        it updates the KPI attributes
+
+        :param is_light_green: Whether the traffic light for this lane is green or not
         """
         
-        # move each vehicle currently in the lane
         for lane in self._lanes:
-            # update the position of each vehicle in the arm
-            vehicle_leaving = lane.move_all_vehicles(isLightGreen)
+            # update the position of each vehicle in the arm, getting the vehicle leaving the lane
+            vehicle_leaving = lane.move_all_vehicles(is_light_green)
 
             # remove the vehicles from the lane if necessary
             if vehicle_leaving:
                 lane.remove_vehicle(vehicle_leaving)
 
                 # update kpi
-                self._total_wait_times += time() -  vehicle_leaving.arrival_time
+                self._total_wait_times += time() - vehicle_leaving.arrival_time
                 self._total_car_count += 1
             
             # update the max wait time
@@ -75,13 +74,15 @@ class Arm:
         #TODO: lane change
 
         #TODO: assign new vehicles to lanes
+        #! might already be done in Junction.py so not necessary here
 
 
     
     def get_kpi(self) -> List[float]:
+        """ Returns the key performance indicators for this arm of the junction """
         # calculate the efficiency
         average_wait_time = self._total_wait_times / self._total_car_count if self._total_car_count != 0 else 0
-        kpi_efficiency = average_wait_time + self._max_wait_time + self._max_queue_length # TODO placeholder until we get proper formula
+        kpi_efficiency = average_wait_time + self._max_wait_time + self._max_queue_length #TODO: placeholder until we get proper formula
         
         # return the key kpi stats
         return [kpi_efficiency, average_wait_time, self._max_wait_time, self._max_queue_length]

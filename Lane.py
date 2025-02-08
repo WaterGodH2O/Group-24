@@ -96,28 +96,26 @@ class Lane(ABC):
             return vehicle
         return None
     
-    def move_all_vehicles(self, isLightGreen: bool) -> Vehicle:
+    def move_all_vehicles(self, is_light_green: bool) -> Vehicle:
         """
-        Method to update the distance of all vehicles in the lane
+        Moves all vehicles in the lane based on speed. Cars can move if there is sufficient space
+        ahead of them, or if they're at the start of the junction and the light is green
 
-        :param elapsed_time: How long the vehicle has been in the queue for
+        :param is_light_green: Whether the traffic light for this lane is green or not
         :return: the vehicles currently leaving the junction
         """
         leaving_vehicle = None
 
-        for i, car in enumerate(self._vehicles):
+        for i, vehicle in enumerate(self._vehicles):
             # enter the box if at a junction
-            if i == 0 and car._distance == 0:
-                if isLightGreen:
-                    # add the vehicles exiting the junction to a queue
-                    leaving_vehicle = car
-                    pass
+            if i == 0 and vehicle._distance <= 0:
+                if is_light_green:
+                    # this vehicle will leave the junction
+                    leaving_vehicle = vehicle
 
-            # if there is enough space to move forward
-            elif i == 0 or car._distance - car._stopping_distance > self._vehicles[i - 1]._distance or self._vehicles[i - 1] == leaving_vehicle:
-                # TODO add an elapsed_time to Vehicle.py to update the distance of the car
-                # car._distance -= car._speed * car.elapsed_time
-                pass
+            # update vehicle distance if there is enough space to move forward
+            elif i == 0 or vehicle._distance - vehicle._stopping_distance > self._vehicles[i - 1]._distance or self._vehicles[i - 1] == leaving_vehicle:
+                vehicle._distance -= vehicle._speed #TODO: assumes each iteration is 1 second on the junction -> division if necessary
 
         return leaving_vehicle
         

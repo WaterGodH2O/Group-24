@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
-import time
+from abc import ABC
+from time import time
 
 class Vehicle(ABC):
     def __init__(self, vehicle_type: str, length: float, speed: int, source: int, destination: int, start_position: float):
@@ -16,7 +16,7 @@ class Vehicle(ABC):
         self._speed = speed
         self._vehicle_type = vehicle_type
         #Time spent waiting in milliseconds
-        self._arrival_time = time.time()
+        self._arrival_time = time()
 
     @property
     def vehicle_type(self):
