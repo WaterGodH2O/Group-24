@@ -1,5 +1,6 @@
 from typing import List
 from Lane import CarLane, Lane
+from exceptions import TooManyVehiclesException
 
 class Arm:
     """
@@ -105,6 +106,17 @@ class Arm:
                 return False
         return True
     
-    def create_vehicle(self, speed: int, source: int, destination: int, type: str, lane: int = 0):
-        """ Create a new vehicle in a given lane """
-        self.get_lane(lane).create_vehicle(speed, source, destination, type)
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> None:
+        """ Create a new vehicle in a random lane """
+        furthest_car_distance = 0
+        for lane in self._lanes:
+            vehicle = lane.get_last_vehicle()
+            if vehicle == None:
+                dist = 0
+            else:
+                dist = vehicle.distance
+            furthest_car_distance = max(furthest_car_distance, dist)
+        start_position = furthest_car_distance + 20
+        if start_position > self._length:
+            raise TooManyVehiclesException
+        self._lanes[0].create_vehicle(speed, source, destination, type, start_position)

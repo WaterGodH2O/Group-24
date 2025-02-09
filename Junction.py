@@ -3,12 +3,13 @@ from Box import Box
 import Lane
 import Vehicle
 from typing import List
+from exceptions import TooManyVehiclesException
 import numpy as np
 
 class Junction:
-    #Assume lanes are 3m wide, 500m long
+    #Assume lanes are 3m wide, 10000m long (length is to halt early if the junction cannot handle throughput)
     LANE_WIDTH: int = 3
-    LANE_LENGTH: int = 500
+    LANE_LENGTH: int = 10000
 
     NUM_ARMS: int = 4
     #40 miles per hour is approximately 18 metres per second
@@ -81,9 +82,13 @@ class Junction:
         :param sim_time_ms: The total length of time to simulate in milliseconds.
         :param update_length_ms: The length of each simulation step in milliseconds.
         """
-        while (sim_time_ms > 0):
-            sim_time_ms -= update_length_ms
-            self.update(update_length_ms)
+        try:
+            while (sim_time_ms > 0):
+                
+                    sim_time_ms -= update_length_ms
+                    self.update(update_length_ms)
+        except TooManyVehiclesException:
+            print("Too many vehicles created in an arm, exiting early")
         #Show cars created
         np.set_printoptions(suppress=True)
         print(self.cars_made)
@@ -142,5 +147,6 @@ class Junction:
                     time_to_next_ms = self.random.exponential(self.traffic_scales[source][dest])
                     self.vehicle_timers_ms[source][dest] += time_to_next_ms
                     self.cars_made[source][dest] += 1
-                    #TODO: create vehicle
+                    
+                    self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Car")
 

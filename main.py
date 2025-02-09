@@ -243,12 +243,12 @@ while running:
                         junction = Junction(
                             traffic_data,
                             #num_lanes=params["num_lanes"],
-                            num_lanes = i,
+                            num_lanes = i+1,
                             pedestrian_crossing = True
                         )
 
                         print(junction)  # 打印实例化的 Junction 类数据
-                        kpi = junction.simulate(60*60*1000, 1000)
+                        kpi = junction.simulate(5*60*1000, 1000)
                         top_junctions.append(kpi)
 
                     # top 3 junctions by kpi
