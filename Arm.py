@@ -1,16 +1,17 @@
 from typing import List
 from Lane import CarLane, Lane
-from time import time
-from math import ceil
 
 class Arm:
     """
     This class defines the behaviour of each entrance in the junction
     """
-    def __init__(self, width: int, length: int, num_lanes: int):
+    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int):
         # the length and width of the arm in metres
         self._length: int = length
         self._width: int = width
+
+        # the number of vehicles expected per hour. Index 0 = north, 1 = east, 2 = south, 3 = west
+        self._vehicles_per_hour: List[int] = vehicles_per_hour
 
         # initalise a list of all the lanes coming from a certain direction in the junction
         self._lanes: List[Lane] = []
@@ -47,12 +48,13 @@ class Arm:
     def get_lane(self, lane_num: int) -> Lane:
         return self._lanes[lane_num]
     
-    def move_all_vehicles(self, is_light_green: bool) -> None:
+    def move_all_vehicles(self, current_time_ms: int, is_light_green: bool) -> None:
         """
         Method to update all the vehicles in each lane of the junction + allocate new vehicles to lanes
         Moves all the vehicles for a particular arm in the junction. For each vehicle that exits the lane,
         it updates the KPI attributes
 
+        :param current_time_ms: How long the simulation has been running for in milliseconds
         :param is_light_green: Whether the traffic light for this lane is green or not
         """
         
@@ -65,11 +67,15 @@ class Arm:
                 lane.remove_vehicle(vehicle_leaving)
 
                 # update kpi
-                self._total_wait_times += time() - vehicle_leaving.arrival_time
+                vehicle_wait_time = (current_time_ms - vehicle_leaving.arrival_time) / 1000
+
+                self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
+                self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1
             
-            # update the max wait time
-            self._max_wait_time = max(self._max_wait_time, lane.get_longest_wait_time())
+            # update the max queue length
+            self._max_queue_length = max(self._max_queue_length, lane.length)
+            
             
         #TODO: lane change
 

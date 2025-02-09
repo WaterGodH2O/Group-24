@@ -96,7 +96,7 @@ class Lane(ABC):
             return vehicle
         return None
     
-    def move_all_vehicles(self, is_light_green: bool) -> Vehicle:
+    def move_all_vehicles(self, is_light_green: bool, update_length_ms: int) -> Vehicle:
         """
         Moves all vehicles in the lane based on speed. Cars can move if there is sufficient space
         ahead of them, or if they're at the start of the junction and the light is green
@@ -115,11 +115,11 @@ class Lane(ABC):
 
             # update vehicle distance if there is enough space to move forward
             elif i == 0 or vehicle._distance - vehicle._stopping_distance > self._vehicles[i - 1]._distance or self._vehicles[i - 1] == leaving_vehicle:
-                vehicle._distance -= vehicle._speed #TODO: assumes each iteration is 1 second on the junction -> division if necessary
+                vehicle._distance -= vehicle._speed * update_length_ms / 1000
 
         return leaving_vehicle
         
-    def get_longest_wait_time(self) -> float:
+    def get_earliest_arrival_time(self) -> float:
         """
         Method to return the longest wait time currently in the queue. Intuition is the first vehicle will
         always have been waiting for longer than the vehicles behind it as it entered first
@@ -154,13 +154,13 @@ class CarLane(Lane):
         # TODO implement this method
         return False
     
-    def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> bool:
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str, arrival_time) -> bool:
         # TODO replace 150 with max(80% of lane length, last_vehicle.position) 
         if type == "Car":
-            self.add_vehicle(Car(speed, source, destination, 150))
+            self.add_vehicle(Car(speed, source, destination, 150, arrival_time))
             return True
         if type == "Bus":
-            self.add_vehicle(Bus(speed, source, destination, 150))
+            self.add_vehicle(Bus(speed, source, destination, 150, arrival_time))
             return True
         return False
 
