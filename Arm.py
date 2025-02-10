@@ -46,7 +46,7 @@ class Arm:
         return self._max_queue_length
     
     def get_lane(self, lane_num: int) -> Lane:
-        return self._lanes[lane_num]
+        return self._lanes[lane_num] if lane_num < len(self._lanes) else None
     
     def move_all_vehicles(self, current_time_ms: int, is_light_green: bool) -> None:
         """

@@ -114,7 +114,7 @@ class Lane(ABC):
                     leaving_vehicle = vehicle
 
             # update vehicle distance if there is enough space to move forward
-            elif i == 0 or vehicle._distance - vehicle._stopping_distance > self._vehicles[i - 1]._distance or self._vehicles[i - 1] == leaving_vehicle:
+            elif i == 0 or vehicle._distance - (vehicle._speed * update_length_ms / 1000) >= self._vehicles[i - 1]._distance + vehicle._stopping_distance or self._vehicles[i - 1] == leaving_vehicle:
                 vehicle._distance -= vehicle._speed * update_length_ms / 1000
 
         return leaving_vehicle
