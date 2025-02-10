@@ -154,13 +154,16 @@ class CarLane(Lane):
         # TODO implement this method
         return False
     
-    def create_vehicle(self, speed: int, source: int, destination: int, type: str, arrival_time) -> bool:
-        # TODO replace 150 with max(80% of lane length, last_vehicle.position) 
+
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str, start_position: int) -> bool:
+        """
+        Create a new vehicle with the given information.
+        """
         if type == "Car":
-            self.add_vehicle(Car(speed, source, destination, 150, arrival_time))
+            self.add_vehicle(Car(speed, source, destination, start_position))
             return True
         if type == "Bus":
-            self.add_vehicle(Bus(speed, source, destination, 150, arrival_time))
+            self.add_vehicle(Bus(speed, source, destination, start_position))
             return True
         return False
 
