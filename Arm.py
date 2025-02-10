@@ -15,10 +15,9 @@ class Arm:
         self._vehicles_per_hour: List[int] = vehicles_per_hour
 
         # initalise a list of all the lanes coming from a certain direction in the junction
-        # TODO assign lanes
-        self._lanes: List[Lane] = [None] * num_lanes
-        for i in range(len(self._lanes)):
-            self._lanes[i] = CarLane([0, 1, 2, 3], width / num_lanes, length)
+        self._lanes: List[Lane] = []
+        for i in range(num_lanes):
+            self._lanes.append(CarLane([0, 1, 2, 3], width / num_lanes, length))
 
         # represents the most cars in the arm at any given point in the simulation
         self._max_queue_length: int = 0
@@ -48,48 +47,49 @@ class Arm:
         return self._max_queue_length
     
     def get_lane(self, lane_num: int) -> Lane:
-        return self._lanes[lane_num]
+        return self._lanes[lane_num] if lane_num < len(self._lanes) else None
     
-    def move_all_vehicles(self) -> None:
+    def move_all_vehicles(self, current_time_ms: int, is_light_green: bool) -> None:
         """
-        Method to update all the vehicles in each lane of the junction +
-        allocate new vehicles to lanes
+        Method to update all the vehicles in each lane of the junction + allocate new vehicles to lanes
+        Moves all the vehicles for a particular arm in the junction. For each vehicle that exits the lane,
+        it updates the KPI attributes
+
+        :param current_time_ms: How long the simulation has been running for in milliseconds
+        :param is_light_green: Whether the traffic light for this lane is green or not
         """
-        #TODO: lane changes
-
-        #TODO: handle functionality if lights are green
-
-        #TODO: assign new vehicles to lanes
-
-        # update the key performance indicators
-        self.update_kpi()
-
-
-        pass
-
-    def update_kpi(self) -> None:
-        # TODO include as part of move_all_vehicles loop for efficiency
+        
         for lane in self._lanes:
-            # get a list of all vechiles that have left the lane
-            vehicles_leaving_lane = lane.move_all_vehicles()
-            
-            # update the total wait time and total car count
-            self._total_wait_times += sum(map(lambda vehicle : vehicle.waiting_time))
-            self._total_car_count += len(vehicles_leaving_lane)
+            # update the position of each vehicle in the arm, getting the vehicle leaving the lane
+            vehicle_leaving = lane.move_all_vehicles(is_light_green)
+
+            # remove the vehicles from the lane if necessary
+            if vehicle_leaving:
+                lane.remove_vehicle(vehicle_leaving)
+
+                # update kpi
+                vehicle_wait_time = (current_time_ms - vehicle_leaving.arrival_time) / 1000
+
+                self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
+                self._total_wait_times += vehicle_wait_time
+                self._total_car_count += 1
             
             # update the max queue length
             self._max_queue_length = max(self._max_queue_length, lane.length)
+            
+            
+        #TODO: lane change
 
-            # update the max wait time
-            self._max_wait_time = max(self._max_wait_time, lane.get_longest_wait_time())
-
+        #TODO: assign new vehicles to lanes
+        #! might already be done in Junction.py so not necessary here
 
 
     
     def get_kpi(self) -> List[float]:
+        """ Returns the key performance indicators for this arm of the junction """
         # calculate the efficiency
         average_wait_time = self._total_wait_times / self._total_car_count if self._total_car_count != 0 else 0
-        kpi_efficiency = average_wait_time + self._max_wait_time + self._max_queue_length # TODO placeholder until we get proper formula
+        kpi_efficiency = average_wait_time + self._max_wait_time + self._max_queue_length #TODO: placeholder until we get proper formula
         
         # return the key kpi stats
         return [kpi_efficiency, average_wait_time, self._max_wait_time, self._max_queue_length]
@@ -106,6 +106,7 @@ class Arm:
                 return False
         return True
     
+
     def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> None:
         """ Create a new vehicle in a random lane """
         furthest_car_distance = 0

@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+
 class Vehicle(ABC):
-    def __init__(self, vehicle_type: str, length: float, speed: int, source: int, destination: int, start_position: float):
+    def __init__(self, vehicle_type: str, length: float, speed: int, source: int, destination: int, start_position: float, arrival_time_ms: int):
         #Arm ID of the vehicle's start and end
         self._source = source
         self._destination = destination
@@ -13,8 +14,8 @@ class Vehicle(ABC):
         #Speed in metres per second
         self._speed = speed
         self._vehicle_type = vehicle_type
-        #Time spent waiting in milliseconds
-        self._waiting_time = 0
+        #Exact time arrived at junction in milliseconds
+        self._arrival_time = arrival_time_ms
 
     @property
     def vehicle_type(self):
@@ -31,20 +32,20 @@ class Vehicle(ABC):
         return self._destination
 
     @property
-    def waiting_time(self):
-        return self._waiting_time
+    def arrival_time(self):
+        return self._arrival_time
 
 class Car(Vehicle):
-    def __init__(self, speed, source, destination, start_position):
+    def __init__(self, speed, source, destination, start_position, arrival_time_ms):
         #Cars are on average 4.4m long in the UK
         CAR_LENGTH = 4.4
-        super().__init__("Car", CAR_LENGTH, speed, source, destination, start_position)
+        super().__init__("Car", CAR_LENGTH, speed, source, destination, start_position, arrival_time_ms)
 
 
 class Bus(Vehicle):
-    def __init__(self, speed, source, destination, start_position):
+    def __init__(self, speed, source, destination, start_position, arrival_time_ms):
         #Busses are typically 9 to 11m long
         BUS_LENGTH = 10
-        super().__init__("Bus", BUS_LENGTH, speed, source, destination, start_position)
+        super().__init__("Bus", BUS_LENGTH, speed, source, destination, start_position, arrival_time_ms)
 
 

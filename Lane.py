@@ -12,14 +12,14 @@ class Lane(ABC):
         self._vehicles: List[Vehicle] = []
 
         # the directions vehicles in this lane can go
-        self._allowed_directions: List[int] = allowed_directions
+        self._allowed_directions: set[int] = set(allowed_directions)
 
         # the width of the lane
         self._width: int = width
         self._length: int = length
 
     @property
-    def allowed_directions(self) -> List[int]:
+    def allowed_directions(self) -> set[int]:
         """ Returns the directions cars in this lane are allowed to travel """
         return self._allowed_directions
     @property
@@ -96,40 +96,37 @@ class Lane(ABC):
             return vehicle
         return None
     
-    def move_all_vehicles(self) -> List[Vehicle]:
+    def move_all_vehicles(self, is_light_green: bool, update_length_ms: int) -> Vehicle:
         """
-        Method to update the distance of all vehicles in the lane
+        Moves all vehicles in the lane based on speed. Cars can move if there is sufficient space
+        ahead of them, or if they're at the start of the junction and the light is green
 
-        :param elapsed_time: How long the vehicle has been in the queue for
+        :param is_light_green: Whether the traffic light for this lane is green or not
         :return: the vehicles currently leaving the junction
         """
-        leaving_vehicles = []
+        leaving_vehicle = None
 
-        for i, car in enumerate(self._vehicles):
+        for i, vehicle in enumerate(self._vehicles):
             # enter the box if at a junction
-            if i == 0 and car._distance == 0:
-                # TODO enter box junction, leave current queue
-                if self.can_enter_junction():
-                    # add the vehicles exiting the junction to a queue
-                    leaving_vehicles.append(car)
-                    pass
+            if i == 0 and vehicle._distance <= 0:
+                if is_light_green:
+                    # this vehicle will leave the junction
+                    leaving_vehicle = vehicle
 
-            # if there is enough space to move forward
-            elif i == 0 or car._distance - car._stopping_distance > self._vehicles[i - 1]._distance:
-                # TODO add an elapsed_time to Vehicle.py to update the distance of the car
-                # car._distance -= car._speed * car.elapsed_time
-                pass
+            # update vehicle distance if there is enough space to move forward
+            elif i == 0 or vehicle._distance - (vehicle._speed * update_length_ms / 1000) >= self._vehicles[i - 1]._distance + vehicle._stopping_distance or self._vehicles[i - 1] == leaving_vehicle:
+                vehicle._distance -= vehicle._speed * update_length_ms / 1000
 
-        return leaving_vehicles
+        return leaving_vehicle
         
-    def get_longest_wait_time(self) -> float:
+    def get_earliest_arrival_time(self) -> float:
         """
         Method to return the longest wait time currently in the queue. Intuition is the first vehicle will
         always have been waiting for longer than the vehicles behind it as it entered first
 
         :return: longest wait time present in the lane
         """
-        return self._vehicles[0].waiting_time if self._vehicles else 0
+        return self._vehicles[0].arrival_time if self._vehicles else 0
 
 
     @property
@@ -157,6 +154,7 @@ class CarLane(Lane):
         # TODO implement this method
         return False
     
+
     def create_vehicle(self, speed: int, source: int, destination: int, type: str, start_position: int) -> bool:
         """
         Create a new vehicle with the given information.

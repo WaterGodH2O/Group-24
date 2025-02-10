@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock
 from Lane import CarLane
+from Vehicle import Vehicle
 import unittest
 
 
@@ -75,4 +76,82 @@ class TestLanes(unittest.TestCase):
 
         # test that it identifies car 1 still isn't in the lane
         self.assertIsNone(self.lane.get_vehicle_ahead(car1))
+
+    def test_move_all_vehicles_red(self):
+        """ tests if vehicles (not waiting in a queue) can still move even if the light is red """
+        # create mock vehicles
+        car1 = MagicMock(spec=Vehicle)
+        car2 = MagicMock(spec=Vehicle)
+        car3 = MagicMock(spec=Vehicle)
+        car4 = MagicMock(spec=Vehicle)
+
+        # set mock values
+        car1._distance = 0
+        car1._speed = 2
+        car1._stopping_distance = 5
+
+        car2._distance = 5
+        car2._speed = 2
+        car2._stopping_distance = 5
+
+        car3._distance = 12
+        car3._speed = 2
+        car3._stopping_distance = 5
+
+        car4._distance = 20
+        car4._speed = 2
+        car4._stopping_distance = 5
+
+        # create lane with mock vehicles
+        self.lane._vehicles = [car1, car2, car3, car4]
+
+        # update the positions of all cars (per 1 second)
+        leaving_vehicle = self.lane.move_all_vehicles(False, 1000)
+
+        # assert that the right vehicles have moved (cars 3 and 4 should have move 2m in 1 second (2m/s))
+        self.assertEqual(leaving_vehicle, None)
+        self.assertEqual(car1._distance, 0)
+        self.assertEqual(car2._distance, 5)
+        self.assertEqual(car3._distance, 10)
+        self.assertEqual(car4._distance, 18)
+
+    
+    def test_move_all_vehicles_green(self):
+        """ test that the right vehicles move when the light is green """
+        # create mock vehicles
+        car1 = MagicMock(spec=Vehicle)
+        car2 = MagicMock(spec=Vehicle)
+        car3 = MagicMock(spec=Vehicle)
+        car4 = MagicMock(spec=Vehicle)
+
+        # set mock values
+        car1._distance = 0
+        car1._speed = 2
+        car1._stopping_distance = 5
+
+        car2._distance = 5
+        car2._speed = 2
+        car2._stopping_distance = 5
+
+        car3._distance = 10
+        car3._speed = 2
+        car3._stopping_distance = 5
+
+        car4._distance = 13
+        car4._speed = 2
+        car4._stopping_distance = 5
+
+        # create lane with mock vehicles
+        self.lane._vehicles = [car1, car2, car3, car4]
+
+        # update the positions of all cars (per 1 second)
+        leaving_vehicle = self.lane.move_all_vehicles(True, 1000)
+
+        # assert that the right vehicles have moved (cars 3 and 4 should have move 2m in 1 second (2m/s))
+        self.assertEqual(leaving_vehicle, car1) # assert that car 1 has left the junction
+        self.assertEqual(car2._distance, 3)
+        self.assertEqual(car3._distance, 8)
+        self.assertEqual(car4._distance, 13)
+
+
     
