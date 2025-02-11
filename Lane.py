@@ -160,11 +160,10 @@ class CarLane(Lane):
         Create a new vehicle with the given information.
         """
         if type == "Car":
-            # added 0 as arrival_time_ms so program runs
-            self.add_vehicle(Car(speed, source, destination, start_position, 0))
+            self.add_vehicle(Car(speed, source, destination, start_position))
             return True
         if type == "Bus":
-            self.add_vehicle(Bus(speed, source, destination, start_position, 0))
+            self.add_vehicle(Bus(speed, source, destination, start_position))
             return True
         return False
 
