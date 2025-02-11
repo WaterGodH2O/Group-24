@@ -70,10 +70,10 @@ traffic_flow_positions = {
 
 
 param_positions = {
-    "num_lanes": (400, 650),
-    "crossing_time": (650, 650),
-    "crossing_frequency": (900, 650),
-    "simulation_duration": (400, 700),
+    "num_lanes": (300, 450),
+    "crossing_time": (550, 550),
+    "crossing_frequency": (850, 550),
+    "simulation_duration": (300, 650),
 }
 
 # Create the object of input box of VPH
@@ -81,7 +81,7 @@ traffic_flow_inputs = {}
 for key, pos in traffic_flow_positions.items():
     Rectangle = pygame.Rect(pos, (80, 30))
 
-    traffic_flow_inputs[key] = pygame_gui.elements.UITextEntryLine(relative_rect=Rectangle, manager=manager, container=page1_container)
+    traffic_flow_inputs[key] = pygame_gui.elements.UITextEntryLine(relative_rect=Rectangle, placeholder_text="vph", manager=manager, container=page1_container)
 
 # other input box, not completed
 param_inputs = {}
@@ -94,15 +94,16 @@ for key, pos in param_positions.items():
     )
 
 # yes or no button
+
 pedestrian_yes = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((600, 700), (50, 30)),
+    relative_rect=pygame.Rect((300, 550), (50, 30)),
     text='Yes',
     manager=manager,
     container=page1_container
 )
 
 pedestrian_no = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((660, 700), (50, 30)),
+    relative_rect=pygame.Rect((300, 580), (50, 30)),
     text='No',
     manager=manager,
     container=page1_container
@@ -206,7 +207,17 @@ while running:
         pygame.draw.line(screen, BLACK, (15, 45), (125, 110), 4)
 
 
-        draw_font("Configurable parameters", (50, 600))
+        draw_title("Configurable parameters", (50, 400))
+
+        draw_font("Number of lanes\n(e.g. 2-4)", (50, 450))
+
+        draw_font("Include models with\npedestrian crossings", (50, 550))
+
+        draw_font("Crossing time\n(seconds)", (400, 550))
+
+        draw_font("Crossing request\nfrequency (per hour)", (650, 550))
+
+        draw_font("Simulation duration\n(minutes)", (50, 650))
 
         # event handle
         for event in pygame.event.get():
@@ -215,12 +226,24 @@ while running:
 
             manager.process_events(event)
 
+            if event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
+                if event.ui_element == pedestrian_yes:
+                    selected_pedestrian = True
+                    pedestrian_no.deselect_item('No')
+                elif event.ui_element == pedestrian_no:
+                    selected_pedestrian = False
+                    pedestrian_no.deselect_item('Yes')
+
             # click on button event
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == pedestrian_yes:
                     selected_pedestrian = True
+                    pedestrian_yes.set_text("> Yes <")
+                    pedestrian_no.set_text("No")
                 elif event.ui_element == pedestrian_no:
                     selected_pedestrian = False
+                    pedestrian_yes.set_text("Yes")
+                    pedestrian_no.set_text("> No <")
 
                 elif event.ui_element == run_simulation_button:
 
