@@ -357,8 +357,10 @@ while running:
                         )
 
                         print(junction)  # 打印实例化的 Junction 类数据
+
                         junction.simulate(simulation_duration*60*1000, 100)
                         top_junctions.append([junction.get_kpi(),num_lanes])
+
 
                     # top 3 junctions by kpi
                     top_junctions = sorted(top_junctions, key=lambda x: x[0], reverse=True)[:3]

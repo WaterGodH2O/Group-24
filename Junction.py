@@ -103,6 +103,7 @@ class Junction:
         """
         self.create_new_vehicles(update_length_ms)
         self.update_traffic_light(update_length_ms)
+        self.box.moveAllCars(update_length_ms)
     
     def update_traffic_light(self, update_length_ms: int) -> None:
         """

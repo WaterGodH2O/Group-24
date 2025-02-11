@@ -1,7 +1,7 @@
 from abc import ABC
 
 class Vehicle(ABC):
-    def __init__(self, vehicle_type: str, length: float, speed: int, source: int, destination: int, start_position: float, arrival_time_ms: int):
+    def __init__(self, vehicle_type: str, length: float, speed: int, source: int, destination: int, start_position: float, arrival_time_ms: int = 0):
         #Arm ID of the vehicle's start and end
         self._source = source
         self._destination = destination
@@ -34,16 +34,24 @@ class Vehicle(ABC):
     @property
     def arrival_time(self):
         return self._arrival_time
+    
+    def setPosition(self, position) -> None:
+        self._distance = position
+
+    def getNextPosition(self, update_length_ms: int) -> int:
+        #Calculate the new position of the vehicle after moving for the given time
+        return self._distance - (self._speed * update_length_ms / 1000) 
+    
 
 class Car(Vehicle):
-    def __init__(self, speed, source, destination, start_position, arrival_time_ms):
+    def __init__(self, speed, source, destination, start_position, arrival_time_ms = 0):
         #Cars are on average 4.4m long in the UK
         CAR_LENGTH = 4.4
         super().__init__("Car", CAR_LENGTH, speed, source, destination, start_position, arrival_time_ms)
 
 
 class Bus(Vehicle):
-    def __init__(self, speed, source, destination, start_position, arrival_time_ms):
+    def __init__(self, speed, source, destination, start_position, arrival_time_ms = 0):
         #Busses are typically 9 to 11m long
         BUS_LENGTH = 10
         super().__init__("Bus", BUS_LENGTH, speed, source, destination, start_position, arrival_time_ms)
