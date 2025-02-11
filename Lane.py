@@ -114,8 +114,8 @@ class Lane(ABC):
                     leaving_vehicle = vehicle
 
             # update vehicle distance if there is enough space to move forward
-            elif i == 0 or vehicle._distance - (vehicle._speed * update_length_ms / 1000) >= self._vehicles[i - 1]._distance + vehicle._stopping_distance or self._vehicles[i - 1] == leaving_vehicle:
-                vehicle._distance -= vehicle._speed * update_length_ms / 1000
+            elif i == 0 or vehicle.getNextPosition(update_length_ms) >= self._vehicles[i - 1]._distance + vehicle._stopping_distance or self._vehicles[i - 1] == leaving_vehicle:
+                vehicle.setPosition(vehicle.getNextPosition(update_length_ms))
 
         return leaving_vehicle
         
@@ -151,8 +151,7 @@ class CarLane(Lane):
         super().__init__(allowed_directions, width, length)
 
     def can_enter_junction(self) -> bool:
-        # TODO implement this method
-        return False
+        return True
     
 
     def create_vehicle(self, speed: int, source: int, destination: int, type: str, start_position: int) -> bool:
