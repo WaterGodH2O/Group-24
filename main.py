@@ -119,6 +119,15 @@ run_simulation_button = pygame_gui.elements.UIButton(
     container=page1_container
 )
 
+# error message box
+error_message_label = pygame_gui.elements.UITextBox(
+    relative_rect=pygame.Rect((700, 50), (400, 200)),
+    html_text="Errors",
+    manager=manager,
+    container=page1_container,
+    visible=False
+)
+
 # Modify parameters
 modify_parameters_button = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((900, 700), (150, 50)),
@@ -128,34 +137,37 @@ modify_parameters_button = pygame_gui.elements.UIButton(
 )
 
 table_pos_x = 100
-table_pos_y = 100
+table_pos_y = 50
 column_width = 150
-row_height = 100
+row_height = 120
 
 top_junctions = []
 
 output_data = []
 
+table_elements = []
+
 def init_table():
     global output_data
-    output_data = [
+    output_data = []
+    output_data.extend([
         [''],
         ['Junction\nSpecification'],
         ['Efficiency'],
         ['Average wait time (minutes)'],
         ['Maximum wait time (minutes)'],
         ['Maximum queue length']
-    ]
+    ])
 
-def add_config(efficiency, specification, average_wait, maxmimum_wait, maximum_queue):
+def add_config(values, description):
     config_number = len(output_data[0])
     output_data[0].append(f'Configuration {config_number}')
 
-    output_data[1].append(specification)
-    output_data[2].append(str(efficiency))
-    output_data[3].append(str(average_wait))
-    output_data[4].append(str(maxmimum_wait))
-    output_data[5].append(str(maximum_queue))
+    output_data[1].append(description)
+    output_data[2].append(str(calc_efficiency(values[0], values[1], values[2], values[3])))
+    output_data[3].append(f"North: {values[0][0]}\nEast: {values[1][0]}\nSouth: {values[2][0]}\nWest: {values[3][0]}")
+    output_data[4].append(f"North: {values[0][1]}\nEast: {values[1][1]}\nSouth: {values[2][1]}\nWest: {values[3][1]}")
+    output_data[5].append(f"North: {values[0][2]}\nEast: {values[1][2]}\nSouth: {values[2][2]}\nWest: {values[3][2]}")
 
 def create_table(data):
     for(i,row) in enumerate(output_data):
@@ -166,6 +178,19 @@ def create_table(data):
                 manager=manager,
                 container=page2_container
             )
+            table_elements.append(label)
+
+def show_error_box(error_text):
+    error_message_label.set_text(error_text)
+    error_message_label.show()
+
+def hide_error_box():
+    error_message_label.set_text("")
+    error_message_label.visible=False
+    error_message_label.hide()
+
+def calc_efficiency(north_arm, south_arm, east_arm, west_arm):
+    return 70
 
 # 0 is for initial page
 game_state = 0
@@ -209,7 +234,7 @@ while running:
 
         draw_title("Configurable parameters", (50, 400))
 
-        draw_font("Number of lanes\n(e.g. 2-4)", (50, 450))
+        draw_font("Number of lanes\n(e.g. 2-5)", (50, 450))
 
         draw_font("Include models with\npedestrian crossings", (50, 550))
 
@@ -226,14 +251,6 @@ while running:
 
             manager.process_events(event)
 
-            if event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
-                if event.ui_element == pedestrian_yes:
-                    selected_pedestrian = True
-                    pedestrian_no.deselect_item('No')
-                elif event.ui_element == pedestrian_no:
-                    selected_pedestrian = False
-                    pedestrian_no.deselect_item('Yes')
-
             # click on button event
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == pedestrian_yes:
@@ -248,39 +265,111 @@ while running:
                 elif event.ui_element == run_simulation_button:
 
                     traffic_data = {}
-                    #for input_box in the object of the text input box
+                    lane_configs = []
+
+                    traffic_flow_rates_invalid = False
+                    num_lanes_invalid = False
+                    pedestrian_details_invalid = False
+                    simulation_duration_invalid = False
+
+                    error_messages = []
+
+                    # validate traffic flow rates
                     for key, input_box in traffic_flow_inputs.items():
-                        # or 0 to prevent the invalid input
-                        traffic_data[key] = int(input_box.get_text() or 0)
+                        value = input_box.get_text().strip()
 
-                    # not completed yet
+                        if not value.isdigit() or not (0 <= int(value) <= 3000):
+                            traffic_flow_rates_invalid = True
+                        else:
+                            traffic_data[key] = int(value)
 
-                    # params = {}
-                    # for key, input_box in param_inputs.items():
-                    #     params[key] = int(input_box.get_text() or 0)
+                    if traffic_flow_rates_invalid:
+                        error_messages.append("Error: All traffic flow rates must be integer values between 0 and 3000.")
 
-                    # for example of junction configurations being with lanes 1-4
-                    for i in range(4):
+                    # validate number of lanes input
+                    num_lanes_input = param_inputs["num_lanes"].get_text().strip()
+                    if not num_lanes_input:
+                        num_lanes_invalid = True
+                    else:
+                        if "-" in num_lanes_input:
+                            parts = num_lanes_input.split("-")
+                            if len(parts) != 2 or not all(p.isdigit() for p in parts):
+                                num_lanes_invalid = True
+                            else:
+                                start = int(parts[0])
+                                end = int(parts[1])
+                                if not(1 <= start < end <= 5):
+                                    num_lanes_invalid = True
+                                else:
+                                    lane_configs = list(range(start, end + 1))
+                        else:
+                            if not num_lanes_input.isdigit():
+                                num_lanes_invalid = True
+                            else:
+                                num_lanes_input = int(num_lanes_input)
+                                if not (1 <= num_lanes_input <=5):
+                                    num_lanes_invalid = True
+                                else:
+                                    lane_configs = [num_lanes_input]
+
+                    if num_lanes_invalid:
+                        error_messages.append("Error: Number of lanes must be in format X or X-Y where the range of lanes is 1-5.")
+
+                    # validate pedestrian crossing details
+                    if selected_pedestrian:
+                        crossing_time_input = param_inputs["crossing_time"].get_text().strip()
+                        crossing_frequency_input = param_inputs["crossing_frequency"].get_text().strip()
+
+                        if not crossing_time_input.isdigit() or int(crossing_time_input) <= 0:
+                            pedestrian_details_invalid = True
+
+                        if not crossing_frequency_input.isdigit() or int(crossing_frequency_input) <= 0:
+                            pedestrian_details_invalid = True
+
+                    if pedestrian_details_invalid:
+                        error_messages.append("Error: Crossing time and crossing frequency request must be filled in with integer values.")
+                    
+                    # validate simulation duration
+                    simulation_duration_input = param_inputs["simulation_duration"].get_text().strip()
+                    if not simulation_duration_input or not simulation_duration_input.isdigit() or int(simulation_duration_input) <= 0:
+                        simulation_duration_invalid = True
+                    
+                    if simulation_duration_invalid:
+                        error_messages.append("Error: Simulation duration must be a positive integer.")
+                    else:
+                        simulation_duration = int(simulation_duration_input)
+
+                    if error_messages:
+                        show_error_box("\n".join(error_messages))
+                        continue
+                    else:
+                        hide_error_box()
+
+                    top_junctions = []
+
+                    for num_lanes in lane_configs:
 
                         # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
                         junction = Junction(
                             traffic_data,
-                            #num_lanes=params["num_lanes"],
-                            num_lanes = i+1,
-                            pedestrian_crossing = True
+                            num_lanes = num_lanes,
+                            pedestrian_crossing = selected_pedestrian
                         )
 
                         print(junction)  # 打印实例化的 Junction 类数据
-                        kpi = junction.simulate(5*60*1000, 1000)
-                        top_junctions.append(kpi)
+                        junction.simulate(simulation_duration*60*1000, 100)
+                        top_junctions.append([junction.get_kpi(),num_lanes])
 
                     # top 3 junctions by kpi
-                    top_junctions = sorted(top_junctions, reverse=True)[:3]
+                    top_junctions = sorted(top_junctions, key=lambda x: x[0], reverse=True)[:3]
 
                     init_table()
 
                     for junction in top_junctions:
-                        add_config(junction,'b',9,9,9)
+                        config_description = f"{junction[1]} lanes\nPedestrian crossings: {'Yes' if selected_pedestrian else 'No'}"
+                        add_config(junction[0],config_description)
+
+                    create_table(output_data)
 
                     game_state = 1
 
@@ -307,6 +396,11 @@ while running:
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == modify_parameters_button:
                 game_state = 0
+                init_table()
+
+                for element in table_elements:
+                    element.kill()
+                table_elements.clear()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

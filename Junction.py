@@ -75,7 +75,7 @@ class Junction:
         pass
     
 
-    def simulate(self, sim_time_ms: int, update_length_ms: int) -> int:
+    def simulate(self, sim_time_ms: int, update_length_ms: int):
         """
         Simulate the junction for a given period of time and at a given precision.
 
@@ -93,8 +93,6 @@ class Junction:
         np.set_printoptions(suppress=True)
         print(self.cars_made)
         print("Simulation finished")
-        # dummy score
-        return self.num_lanes*20
     
     
     def update(self, update_length_ms: int) -> None:
