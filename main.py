@@ -23,6 +23,8 @@ manager = pygame_gui.UIManager((WIDTH, HEIGHT))
 page1_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), (WIDTH, HEIGHT)), manager=manager)
 page2_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), (WIDTH, HEIGHT)), manager=manager)
 
+page1_container_error = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), (WIDTH, HEIGHT)), manager=manager)
+
 # color
 WHITE = (180, 180, 180)
 BLACK = (0, 0, 0)
@@ -124,7 +126,7 @@ error_message_label = pygame_gui.elements.UITextBox(
     relative_rect=pygame.Rect((700, 50), (400, 200)),
     html_text="Errors",
     manager=manager,
-    container=page1_container,
+    container=page1_container_error,
     visible=False
 )
 
@@ -208,6 +210,7 @@ while running:
     if (game_state == 0):
         page2_container.hide()
         page1_container.show()
+
 
         screen.fill(WHITE)
 
@@ -356,7 +359,7 @@ while running:
                             pedestrian_crossing = selected_pedestrian
                         )
 
-                        print(junction)  # 打印实例化的 Junction 类数据
+                        print(junction)
 
                         junction.simulate(simulation_duration*60*1000, 100)
                         top_junctions.append([junction.get_kpi(),num_lanes])
@@ -398,6 +401,7 @@ while running:
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == modify_parameters_button:
                 game_state = 0
+                hide_error_box()
                 init_table()
 
                 for element in table_elements:

@@ -137,4 +137,23 @@
     <MESSAGE value="1.0" />
     <option name="LAST_COMMIT_MESSAGE" value="1.0" />
   </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/main.py</url>
+          <line>402</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="PythonConfigurationType">
+        <watch expression="error_messages" language="Python" />
+        <watch expression="error_message_label.visible" language="Python" />
+        <watch expression="__py_debug_temp_var_1083460149" />
+        <watch expression="error_messages" />
+      </configuration>
+    </watches-manager>
+  </component>
 </project>
