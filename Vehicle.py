@@ -16,6 +16,8 @@ class Vehicle(ABC):
         self._vehicle_type = vehicle_type
         #Exact time arrived at junction in milliseconds
         self._arrival_time = arrival_time_ms
+        #Lane vehicle came from. Set when entering box to calculate collisions.
+        self._source_lane = None
 
     @property
     def vehicle_type(self):
@@ -35,12 +37,19 @@ class Vehicle(ABC):
     def arrival_time(self):
         return self._arrival_time
     
-    def setPosition(self, position) -> None:
+    @property
+    def source_lane(self):
+        return self._source_lane
+    
+    def set_position(self, position) -> None:
         self._distance = position
 
-    def getNextPosition(self, update_length_ms: int) -> int:
+    def get_next_position(self, update_length_ms: int) -> int:
         #Calculate the new position of the vehicle after moving for the given time
-        return self._distance - (self._speed * update_length_ms / 1000) 
+        return self._distance - (self._speed * update_length_ms / 1000)
+    
+    def set_source_lane(self, source_lane: int) -> None:
+        self._source_lane = source_lane
     
 
 class Car(Vehicle):

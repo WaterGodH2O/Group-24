@@ -1,6 +1,7 @@
 from typing import List
 from Lane import CarLane, Lane
 from exceptions import TooManyVehiclesException
+from Box import Box
 
 class Arm:
     """
@@ -49,7 +50,7 @@ class Arm:
     def get_lane(self, lane_num: int) -> Lane:
         return self._lanes[lane_num] if lane_num < len(self._lanes) else None
     
-    def move_all_vehicles(self, current_time_ms: int, is_light_green: bool) -> None:
+    def move_all_vehicles(self, current_time_ms: int, is_light_green: bool, junction_box: Box, update_length_ms: int, num_arms: int) -> None:
         """
         Method to update all the vehicles in each lane of the junction + allocate new vehicles to lanes
         Moves all the vehicles for a particular arm in the junction. For each vehicle that exits the lane,
@@ -59,14 +60,14 @@ class Arm:
         :param is_light_green: Whether the traffic light for this lane is green or not
         """
         
-        for lane in self._lanes:
+        for i, lane in enumerate(self._lanes):
             # update the position of each vehicle in the arm, getting the vehicle leaving the lane
-            vehicle_leaving = lane.move_all_vehicles(is_light_green)
+            vehicle_leaving = lane.move_all_vehicles(is_light_green, update_length_ms, junction_box, i, num_arms)
 
             # remove the vehicles from the lane if necessary
             if vehicle_leaving:
                 lane.remove_vehicle(vehicle_leaving)
-
+                junction_box.add_vehicle(vehicle_leaving)
                 # update kpi
                 vehicle_wait_time = (current_time_ms - vehicle_leaving.arrival_time) / 1000
 

@@ -1,7 +1,7 @@
 from typing import List
 from abc import ABC, abstractmethod
 from Vehicle import Vehicle, Car, Bus
-
+from Box import Box
 
 class Lane(ABC):
     """
@@ -96,7 +96,7 @@ class Lane(ABC):
             return vehicle
         return None
     
-    def move_all_vehicles(self, is_light_green: bool, update_length_ms: int) -> Vehicle:
+    def move_all_vehicles(self, is_light_green: bool, update_length_ms: int, box: Box, lane_id: int, num_arms: int) -> Vehicle:
         """
         Moves all vehicles in the lane based on speed. Cars can move if there is sufficient space
         ahead of them, or if they're at the start of the junction and the light is green
@@ -109,13 +109,14 @@ class Lane(ABC):
         for i, vehicle in enumerate(self._vehicles):
             # enter the box if at a junction
             if i == 0 and vehicle._distance <= 0:
-                if is_light_green:
+                if self.can_enter_box(vehicle, box, lane_id, is_light_green, num_arms):
                     # this vehicle will leave the junction
+                    vehicle.set_source_lane(lane_id)
                     leaving_vehicle = vehicle
 
             # update vehicle distance if there is enough space to move forward
-            elif i == 0 or vehicle.getNextPosition(update_length_ms) >= self._vehicles[i - 1]._distance + vehicle._stopping_distance or self._vehicles[i - 1] == leaving_vehicle:
-                vehicle.setPosition(vehicle.getNextPosition(update_length_ms))
+            elif i == 0 or vehicle.get_next_position(update_length_ms) >= self._vehicles[i - 1]._distance + vehicle._stopping_distance or self._vehicles[i - 1] == leaving_vehicle:
+                vehicle.set_position(vehicle.get_next_position(update_length_ms))
 
         return leaving_vehicle
         
@@ -128,15 +129,35 @@ class Lane(ABC):
         """
         return self._vehicles[0].arrival_time if self._vehicles else 0
 
-
-    @property
-    @abstractmethod
-    def can_enter_junction(self) -> bool:
+    def can_enter_box(self, vehicle: Vehicle, box: Box, lane_id: int, is_light_green: bool, num_arms: int) -> bool:
         """
         Indicate whether the vehicle in this lane are allowed to enter junction
         i.e. whether cooresponding traffic light is green.
         """
-        pass
+        #If the light is red, do not enter.
+        if (not is_light_green):
+            return False
+        
+        #Vehicle's relative direction. 1 = right, 2 = forward, 3 = left
+        #For more/less arms, represents the number of arms anticlockwise
+        vehicle_relative_dir = (vehicle.source - vehicle.destination) % num_arms
+
+        for box_vehicle in box.get_vehicles():
+            box_v_r_d = (box_vehicle.source - box_vehicle.destination) % num_arms
+            #If a vehicle came from a lane to the left
+            if box_vehicle.source_lane < lane_id:
+                #If the box vehicle is moving somewhere right of the vehicles target, it blocks.
+                #Eg: if the box vehicle is moving forwards (2), it blocks left (3) turns.
+                if box_v_r_d < vehicle_relative_dir:
+                    return False
+
+            #If a vehicle came from the right
+            elif box_vehicle.source_lane > lane_id:
+                #If the box vehicle is moving somewhere right of the vehicles target, it blocks.
+                if box_v_r_d > vehicle_relative_dir:
+                    return False
+        #If the light is green and no vehicle in the box blocks it, enter the box
+        return True
 
     @abstractmethod
     def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> bool:
@@ -149,11 +170,7 @@ class Lane(ABC):
 class CarLane(Lane):
     def __init__(self, allowed_directions: List[int], width: int, length: int):
         super().__init__(allowed_directions, width, length)
-
-    def can_enter_junction(self) -> bool:
-        return True
     
-
     def create_vehicle(self, speed: int, source: int, destination: int, type: str, start_position: int) -> bool:
         """
         Create a new vehicle with the given information.
@@ -172,13 +189,10 @@ class BusLane(Lane):
 
     def __init__(self, allowed_directions: List[int], width: int, length: int):
         super().__init__(allowed_directions, width, length)
-
-    def can_enter_junction(self) -> bool:
-        # TODO implement this method
-        return False
     
     def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> bool:
         if type == "Bus":
             self.add_vehicle(Bus(speed, source, destination, 150))
             return True
         return False
+

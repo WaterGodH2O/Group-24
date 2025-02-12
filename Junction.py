@@ -31,7 +31,7 @@ class Junction:
         #Initialise random number generator
         self.random = np.random.default_rng()
         #dummy data
-        self.traffic_data: list[list[int]] = [[0, 100, 200, 3000], [250, 0, 1, 2], [20, 20, 0, 20], [1, 0, 3, 0]]
+        self.traffic_data: list[list[int]] = [[0, 300, 200, 300], [250, 0, 400, 200], [100, 120, 0, 150], [75, 180, 100, 0]]
         #Precompute scale values for exponential random distribution
         self.traffic_scales: list[list[int]] = [[(60*60*1000)/val if val != 0 else 0 for val in row ] for row in self.traffic_data]
         
@@ -82,6 +82,12 @@ class Junction:
         :param sim_time_ms: The total length of time to simulate in milliseconds.
         :param update_length_ms: The length of each simulation step in milliseconds.
         """
+        #Collision test
+        """
+        self.arms[0]._lanes[0]._vehicles.append(Vehicle.Car(18, 0, 3, 2))
+        self.arms[0]._lanes[1]._vehicles.append(Vehicle.Car(18, 0, 2, 0))
+        self.arms[0]._lanes[2]._vehicles.append(Vehicle.Car(18, 0, 1, 2))
+        """
         try:
             while (sim_time_ms > 0):
                 
@@ -93,6 +99,7 @@ class Junction:
         np.set_printoptions(suppress=True)
         print(self.cars_made)
         print("Simulation finished")
+        print(f"{self.box.vt} vehicles passed through out of {np.sum(self.cars_made)}")
     
     
     def update(self, update_length_ms: int) -> None:
@@ -101,9 +108,13 @@ class Junction:
 
         :param update_length_ms: The length of the simulation step in milliseconds
         """
+        
         self.create_new_vehicles(update_length_ms)
         self.update_traffic_light(update_length_ms)
-        self.box.moveAllCars(update_length_ms)
+        self.box.move_all_vehicles(update_length_ms)
+        for i, arm in enumerate(self.arms):
+            green_light = i == self.traffic_light_dir
+            arm.move_all_vehicles(0, green_light, self.box, update_length_ms, self.NUM_ARMS)
     
     def update_traffic_light(self, update_length_ms: int) -> None:
         """

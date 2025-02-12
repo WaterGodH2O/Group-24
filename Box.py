@@ -8,14 +8,24 @@ class Box:
         in a given arm.
         """
         self._size = lane_width * maximum_lane_count * 2
+        self.vt = 0
 
-    def addVehicle(self, vehicle: Vehicle) -> None:
+    def add_vehicle(self, vehicle: Vehicle) -> None:
         """Add a new vehicle to the box by resetting its position to 0 and adding it to the list"""
-        vehicle.setPosition(self._size)
+        vehicle.set_position(self._size)
         self._vehicles.append(vehicle)
 
-    def moveAllCars(self, update_length_ms: int) -> None:
+    def move_all_vehicles(self, update_length_ms: int) -> None:
+        vehicles_to_delete: list[Vehicle] = []
         for vehicle in self._vehicles:
-            vehicle.setPosition(vehicle.getNextPosition(update_length_ms))
+            vehicle.set_position(vehicle.get_next_position(update_length_ms))
             if (vehicle.distance <= 0):
-                self._vehicles.remove(vehicle)
+                vehicles_to_delete.append(vehicle)
+                self.vt += 1
+        if len(vehicles_to_delete) != 0:
+            #Remove all vehicles have distances below 0
+            self._vehicles = [v for v in self._vehicles if v not in vehicles_to_delete]
+
+
+    def get_vehicles(self) -> list[Vehicle]:
+        return self._vehicles
