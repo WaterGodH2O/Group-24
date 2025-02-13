@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 from abc import ABC, abstractmethod
 from Vehicle import Vehicle, Car, Bus
 from Box import Box
@@ -12,14 +12,14 @@ class Lane(ABC):
         self._vehicles: List[Vehicle] = []
 
         # the directions vehicles in this lane can go
-        self._allowed_directions: set[int] = set(allowed_directions)
+        self._allowed_directions: Set[int] = set(allowed_directions)
 
         # the width of the lane
         self._width: int = width
         self._length: int = length
 
     @property
-    def allowed_directions(self) -> set[int]:
+    def allowed_directions(self) -> Set[int]:
         """ Returns the directions cars in this lane are allowed to travel """
         return self._allowed_directions
     @property
@@ -105,6 +105,7 @@ class Lane(ABC):
         :return: the vehicles currently leaving the junction
         """
         leaving_vehicle = None
+        vehicle_ahead = None
 
         for i, vehicle in enumerate(self._vehicles):
             # enter the box if at a junction
@@ -114,12 +115,33 @@ class Lane(ABC):
                     vehicle.set_source_lane(lane_id)
                     leaving_vehicle = vehicle
 
+            # if the vehicle is at the front of the queue and not at the junction (no need to check vehicle ahead)
+            elif i == 0 or vehicle_ahead == leaving_vehicle:
+                if self.has_space_to_move(vehicle, vehicle_ahead):
+                    vehicle.set_position(vehicle.get_next_position(update_length_ms))
+
             # update vehicle distance if there is enough space to move forward
-            elif i == 0 or vehicle.get_next_position(update_length_ms) >= self._vehicles[i - 1]._distance + vehicle._stopping_distance or self._vehicles[i - 1] == leaving_vehicle:
-                vehicle.set_position(vehicle.get_next_position(update_length_ms))
+            elif self.has_space_to_move(vehicle, vehicle_ahead):
+                # new position is the furthest the vehicle can travel in the time step ensuring it doesn't get too
+                # close to the vehicle ahead
+                new_vehicle_distance = max(vehicle.get_next_position(update_length_ms),
+                                           vehicle_ahead.distance + vehicle._stopping_distance)
+                
+                vehicle.set_position(new_vehicle_distance)
+
+            # update the vehicle ahead for the next iteration
+            vehicle_ahead = vehicle
 
         return leaving_vehicle
         
+    def has_space_to_move(self, vehicle, vehicle_ahead):
+        """ checks if there is any space between a vehicle and the car ahead """
+        if vehicle_ahead is None:
+            return True
+        return vehicle.distance > vehicle_ahead.distance + vehicle._stopping_distance
+        
+
+    
     def get_earliest_arrival_time(self) -> float:
         """
         Method to return the longest wait time currently in the queue. Intuition is the first vehicle will

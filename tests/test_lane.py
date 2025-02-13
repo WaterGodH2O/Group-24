@@ -94,7 +94,7 @@ class TestLanes(unittest.TestCase):
         car2._speed = 2
         car2._stopping_distance = 5
 
-        car3._distance = 12
+        car3._distance = 11
         car3._speed = 2
         car3._stopping_distance = 5
 
@@ -146,7 +146,7 @@ class TestLanes(unittest.TestCase):
 
         # update the positions of all cars (per 1 second)
         leaving_vehicle = self.lane.move_all_vehicles(True, 1000)
-
+        
         # assert that the right vehicles have moved (cars 3 and 4 should have move 2m in 1 second (2m/s))
         self.assertEqual(leaving_vehicle, car1) # assert that car 1 has left the junction
         self.assertEqual(car2._distance, 3)
