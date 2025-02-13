@@ -18,6 +18,9 @@ class Lane(ABC):
         self._width: int = width
         self._length: int = length
 
+        # the number of vehicles currently in the lane
+        self._queue_length: int = 0
+
     @property
     def allowed_directions(self) -> Set[int]:
         """ Returns the directions cars in this lane are allowed to travel """
@@ -31,6 +34,9 @@ class Lane(ABC):
     @property
     def length(self) -> int:
         return self._length
+    @property
+    def queue_length(self) -> int:
+        return self._queue_length
 
     def get_first_vehicle(self) -> Vehicle:
         """
@@ -82,6 +88,13 @@ class Lane(ABC):
         """
         # add the given vehicle to the end of the lane
         self._vehicles.append(vehicle)
+        self._queue_length += 1
+
+    def add_vehicle_to_index(self, vehicle: Vehicle, index: int) -> None:
+        """ Method do add a vehicle to a specified index """
+        self._vehicles.insert(index, vehicle)
+        self._queue_length += 1
+
 
     def remove_vehicle(self, vehicle: Vehicle) -> Vehicle:
         """
@@ -93,8 +106,10 @@ class Lane(ABC):
         # remove a specific vehicle from the list if found
         if vehicle in self._vehicles:
             self._vehicles.remove(vehicle)
+            self._queue_length = len(self._vehicles)
             return vehicle
         return None
+    
     
     def move_all_vehicles(self, is_light_green: bool, update_length_ms: int, box: Box, lane_id: int, num_arms: int) -> Vehicle:
         """
@@ -114,11 +129,13 @@ class Lane(ABC):
                     # this vehicle will leave the junction
                     vehicle.set_source_lane(lane_id)
                     leaving_vehicle = vehicle
+                else:
+                    # update the wait time if they can't enter the junction
+                    vehicle.update_wait_time(update_length_ms)
 
             # if the vehicle is at the front of the queue and not at the junction (no need to check vehicle ahead)
             elif i == 0 or vehicle_ahead == leaving_vehicle:
-                if self.has_space_to_move(vehicle, vehicle_ahead):
-                    vehicle.set_position(vehicle.get_next_position(update_length_ms))
+                vehicle.set_position(vehicle.get_next_position(update_length_ms))
 
             # update vehicle distance if there is enough space to move forward
             elif self.has_space_to_move(vehicle, vehicle_ahead):
@@ -128,6 +145,10 @@ class Lane(ABC):
                                            vehicle_ahead.distance + vehicle._stopping_distance)
                 
                 vehicle.set_position(new_vehicle_distance)
+
+            # update the wait time if the vehicle doesn't have space to move
+            else:
+                vehicle.update_wait_time(update_length_ms)
 
             # update the vehicle ahead for the next iteration
             vehicle_ahead = vehicle
@@ -142,14 +163,14 @@ class Lane(ABC):
         
 
     
-    def get_earliest_arrival_time(self) -> float:
+    def get_earliest_wait_time(self) -> float:
         """
         Method to return the longest wait time currently in the queue. Intuition is the first vehicle will
         always have been waiting for longer than the vehicles behind it as it entered first
 
         :return: longest wait time present in the lane
         """
-        return self._vehicles[0].arrival_time if self._vehicles else 0
+        return self._vehicles[0].wait_time if self._vehicles else 0
 
     def can_enter_box(self, vehicle: Vehicle, box: Box, lane_id: int, is_light_green: bool, num_arms: int) -> bool:
         """
