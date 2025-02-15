@@ -192,7 +192,17 @@ def hide_error_box():
     error_message_label.hide()
 
 def calc_efficiency(north_arm, south_arm, east_arm, west_arm):
-    return 70
+    total_score = 0
+    arms = [north_arm, south_arm, east_arm, west_arm]
+
+    for arm_data in arms:
+        avg_wait, max_wait, max_queue = arm_data
+        # compute partial score
+        arn_score = 0
+        arm_score = (1/avg_wait) + (1/max_wait) + (1/max_queue)
+        # add to the total score for the junction
+        total_score += arm_score
+    return total_score
 
 # 0 is for initial page
 game_state = 0
