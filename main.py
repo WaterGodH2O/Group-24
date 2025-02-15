@@ -318,6 +318,9 @@ while running:
                     if num_lanes_invalid:
                         error_messages.append("Error: Number of lanes must be in format X or X-Y where the range of lanes is 1-5.")
 
+                    #Initialise crossing values as None
+                    crossing_frequency = None
+                    crossing_time = None
                     # validate pedestrian crossing details
                     if selected_pedestrian:
                         crossing_time_input = param_inputs["crossing_time"].get_text().strip()
@@ -328,6 +331,9 @@ while running:
 
                         if not crossing_frequency_input.isdigit() or int(crossing_frequency_input) <= 0:
                             pedestrian_details_invalid = True
+                        
+                        crossing_time = int(crossing_time_input)
+                        crossing_frequency = int(crossing_frequency_input)
 
                     if pedestrian_details_invalid:
                         error_messages.append("Error: Crossing time and crossing frequency request must be filled in with integer values.")
@@ -356,7 +362,9 @@ while running:
                         junction = Junction(
                             traffic_data,
                             num_lanes = num_lanes,
-                            pedestrian_crossing = selected_pedestrian
+                            pedestrian_crossing = selected_pedestrian,
+                            p_crossing_time_s = crossing_time,
+                            p_crossing_freq = crossing_frequency
                         )
 
                         print(junction)

@@ -68,6 +68,7 @@ class Arm:
             if vehicle_leaving:
                 lane.remove_vehicle(vehicle_leaving)
                 junction_box.add_vehicle(vehicle_leaving)
+                #print("Vehicle entered box")
                 # update kpi
                 vehicle_wait_time = (current_time_ms - vehicle_leaving.arrival_time) / 1000
 
