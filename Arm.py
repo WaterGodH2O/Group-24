@@ -67,8 +67,8 @@ class Arm:
             # remove the vehicles from the lane if necessary
             if vehicle_leaving:
                 lane.remove_vehicle(vehicle_leaving)
-                print(f"Vehicle moved to box")
                 junction_box.add_vehicle(vehicle_leaving)
+                #print("Vehicle entered box")
                 # update kpi
                 vehicle_wait_time = (current_time_ms - vehicle_leaving.arrival_time) / 1000
 
