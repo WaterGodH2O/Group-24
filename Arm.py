@@ -90,9 +90,11 @@ class Arm:
         """ Returns the key performance indicators for this arm of the junction """
         # calculate the efficiency
         average_wait_time = self._total_wait_times / self._total_car_count if self._total_car_count != 0 else 0
-        
+
+        # calculate the kpi score
+        kpi_score = (1/avg_wait_time) + (1/self._max_wait_time) + (1/self._max_queue_length)
         # return the key kpi stats
-        return [average_wait_time, self._max_wait_time, self._max_queue_length]
+        return [kpi_score, average_wait_time, self._max_wait_time, self._max_queue_length]
         
     def no_vehicles_within(self, distance: int) -> bool:
         """ 
