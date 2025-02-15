@@ -92,7 +92,7 @@ class Arm:
         average_wait_time = self._total_wait_times / self._total_car_count if self._total_car_count != 0 else 0
 
         # calculate the kpi score
-        kpi_score = (1/avg_wait_time) + (1/self._max_wait_time) + (1/self._max_queue_length)
+        kpi_score = (1/average_wait_time) + (1/self._max_wait_time) + (1/self._max_queue_length)
         # return the key kpi stats
         return [kpi_score, average_wait_time, self._max_wait_time, self._max_queue_length]
         
