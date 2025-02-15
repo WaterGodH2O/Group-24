@@ -199,7 +199,7 @@ def calc_efficiency(north_arm, south_arm, east_arm, west_arm):
         avg_wait, max_wait, max_queue = arm_data
         # compute partial score
         arn_score = 0
-        arm_score = (1/avg_wait) + (1/max_wait) + (1/max_queue)
+        arm_score = (100/avg_wait) + (100/max_wait) + (100/max_queue)
         # add to the total score for the junction
         total_score += arm_score
     return total_score
