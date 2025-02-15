@@ -15,6 +15,10 @@ class Junction:
     #40 miles per hour is approximately 18 metres per second
     VEHICLE_SPEED_MPS: int = 18
 
+    #Time between one traffic light turning off and another turning on
+    #Set to 5s (2s all red time, 3s red+amber for next direction)
+    TRAFFIC_LIGHT_GAP_MS: int = 5000
+
     def __init__(self,
                  traffic_data: list[list[int]],
                  traffic_light_interval_ms: int = 20000,
@@ -31,7 +35,7 @@ class Junction:
         #Initialise random number generator
         self.random = np.random.default_rng()
         #dummy data
-        self.traffic_data: list[list[int]] = [[0, 300, 200, 300], [250, 0, 400, 200], [100, 120, 0, 150], [75, 180, 100, 0]]
+        self.traffic_data: list[list[int]] = [[0, 300, 200, 300], [250, 0, 400, 200], [2000, 120, 0, 150], [0, 0, 30, 0]]
         #Precompute scale values for exponential random distribution
         self.traffic_scales: list[list[int]] = [[(60*60*1000)/val if val != 0 else 0 for val in row ] for row in self.traffic_data]
         
@@ -45,6 +49,11 @@ class Junction:
         #Set the interval between changes and the traffic light timer to the given interval
         self.traffic_light_time_ms: int = traffic_light_interval_ms
         self.traffic_light_interval_ms: int = traffic_light_interval_ms
+        #Initialise timer for the interval between one light turning red and another turning green.
+        self.traffic_light_gap_timer_ms: int = 0
+        #Initialise value to store the light direction before pedestrian crossings and light changes
+        self.prev_light_dir: int = 0
+
         #used to test car generation
         self.cars_made = np.zeros((self.NUM_ARMS, self.NUM_ARMS))
 
@@ -111,6 +120,7 @@ class Junction:
         
         self.create_new_vehicles(update_length_ms)
         self.update_traffic_light(update_length_ms)
+        
         self.box.move_all_vehicles(update_length_ms)
         for i, arm in enumerate(self.arms):
             green_light = i == self.traffic_light_dir
@@ -122,13 +132,34 @@ class Junction:
 
         :param update_length_ms: The length of the simulation step in milliseconds
         """
-        #Subtract the length of the update from the timer
-        self.traffic_light_time_ms -= update_length_ms
+        #If the traffic light is not in between directions
+        if self.traffic_light_gap_timer_ms <= 0:
+            #Subtract the length of the update from the timer
+            self.traffic_light_time_ms -= update_length_ms
 
-        #If no cars are within 100m of the light or the time is below 0, skip the direction and reset the interval
-        if self.arms[self.traffic_light_dir].no_vehicles_within(100) or self.traffic_light_time_ms <= 0:       
-            self.traffic_light_dir = self.get_left_arm(self.traffic_light_dir)
-            self.traffic_light_time_ms = self.traffic_light_interval_ms
+            #If no cars are within 100m of the light or the time is below 0, set all lights red and start the gap timer
+            if self.arms[self.traffic_light_dir].no_vehicles_within(100) or self.traffic_light_time_ms <= 0:       
+                self.traffic_light_gap_timer_ms = self.TRAFFIC_LIGHT_GAP_MS
+                self.prev_light_dir = self.traffic_light_dir
+                self.traffic_light_dir = -1
+                
+        else:
+            #Subtract the length of the update
+            self.traffic_light_gap_timer_ms -= update_length_ms
+
+            #At the end of the gap, reset the main interval and update the direction
+            if self.traffic_light_gap_timer_ms <= 0:
+                self.traffic_light_time_ms = self.traffic_light_interval_ms
+                #To update direction, check each direction clockwise for vehicles. If a vehicle is found, set that direction green. 
+                #If none are found, set the first direction anticlockwise green
+                self.traffic_light_dir = self.prev_light_dir
+                for i in range(0,self.NUM_ARMS - 2):
+                    self.traffic_light_dir = self.get_left_arm(self.traffic_light_dir)
+                    if self.arms[self.traffic_light_dir].no_vehicles_within(100):
+                        break
+                
+        #Test print for light timing
+        #print(f"Current light direction: {self.traffic_light_dir}\nCurrent light timer: {self.traffic_light_time_ms}\nGap timer: {self.traffic_light_gap_timer_ms}")
 
 
     def get_left_arm(self, arm_index: int) -> int:
