@@ -2,6 +2,7 @@ from typing import List
 from Lane import CarLane, Lane
 from exceptions import TooManyVehiclesException
 from Box import Box
+from bisect import bisect_right
 
 class Arm:
     """
@@ -23,13 +24,13 @@ class Arm:
         # represents the most cars in the arm at any given point in the simulation
         self._max_queue_length: int = 0
 
-        # how long each car has been in the arm
+        # how long each car has been in the arm in seconds
         self._total_wait_times: float = 0
         
         # the total number of vehicles that have left the junction
         self._total_car_count: int = 0
 
-        # the longest any given vehicle has been waiting in the arm
+        # the longest any given vehicle has been waiting in the arm in seconds
         self._max_wait_time: float = 0
 
     @property
@@ -70,21 +71,115 @@ class Arm:
                 junction_box.add_vehicle(vehicle_leaving)
                 #print("Vehicle entered box")
                 # update kpi
-                vehicle_wait_time = (current_time_ms - vehicle_leaving.arrival_time) / 1000
+                vehicle_wait_time = vehicle_leaving.wait_time / 1000 # in seconds
 
                 self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
                 self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1
             
             # update the max queue length
-            self._max_queue_length = max(self._max_queue_length, lane.length)
+            self._max_queue_length = max(self._max_queue_length, lane.queue_length)  
             
+        # change lanes
+        self.handle_lane_switching()
+
+    def handle_lane_switching(self):
+        """ Attempts lane switching for all vehicles in the arm of a junction, prioritising shortest lane """
+
+        previous_lane = None
+        vehicles_to_remove = [] # list of vehicles and what lane we want to remove them from
+
+        for i, current_lane in enumerate(self._lanes):
             
-        #TODO: lane change
+            # get adjacent lanes
+            adjacent_lanes = []
+            if previous_lane:
+                adjacent_lanes.append(previous_lane)
+            if i < len(self._lanes) - 1:
+                adjacent_lanes.append(self._lanes[i + 1])
 
-        #TODO: assign new vehicles to lanes
-        #! might already be done in Junction.py so not necessary here
+            
+            for vehicle in current_lane.vehicles:
+                # sort the adjacent lanes by min queue_length to prioritise shorter lanes
+                adjacent_lanes.sort(key=lambda lane: lane.queue_length)
 
+                for new_lane in adjacent_lanes:
+                    # check if the vehicle can merge into a new lane if the current lane is shorter
+                    # and goes where the vehicle wants to go
+                    if self.is_new_lane_shorter(current_lane, new_lane) and vehicle.destination in new_lane.allowed_directions:
+                        
+                        # stop looping if the vehicle has successfully merged into the new lane
+                        if self.move_vehicle_to_lane(vehicle, current_lane, new_lane):
+                            vehicles_to_remove.append((current_lane, vehicle))
+                            break
+
+            # update the previous lane
+            previous_lane = current_lane
+        
+        # remove all vehicles from the lanes they have switched to
+        for lane, vehicle in vehicles_to_remove:
+            lane.remove_vehicle(vehicle)
+
+    def move_vehicle_to_lane(self, vehicle, current_lane, target_lane):
+        """
+        Moves a given vehicle into a new lane at a specified position
+
+        :param vehicle: the vehicle we want to move
+        :param current_lane: the lane the vehicle is currently in
+        :param target_lane: the lane we want to move the vehicle to
+        """
+
+        # the index the vehicle will be added to in teh target lane
+        new_lane_index = self.enough_space_to_merge(vehicle, target_lane)
+        if new_lane_index != -1:
+
+            # add vehicle to new lane at specified index
+            target_lane.add_vehicle_to_index(vehicle, new_lane_index)
+
+            # update current lane count (as if the vehicle has been removed) to ensure proper sorting
+            current_lane._queue_length -= 1
+
+            # return true, indicating vehicle has merged successfully
+            return True
+
+        # return false as no merge was possible
+        return False
+
+    
+    def enough_space_to_merge(self, vehicle, lane):
+        """ 
+        Checks if there is enough space for a given vehicle to fit in a new lane
+        
+        :param vehicle: the vehicle we want to add to the new lane
+        :param lane: the lane we want to add the vehicle to
+        :return: the index the new vehicle can merge into, -1 otherwise
+        """
+        # check if there is enough space for a vehicle in a new lane
+        
+        # perform a binary search to find the index where the new vehicle would be inserted
+        vehicle_positions_arr = [v.distance for v in lane.vehicles]
+        new_vehicle_index = bisect_right(vehicle_positions_arr, vehicle.distance)
+
+        # find the vehicle ahead and behind of where the vehicle would be
+        vehicle_ahead = lane.vehicles[new_vehicle_index - 1] if new_vehicle_index > 0 else None
+        vehicle_behind = lane.vehicles[new_vehicle_index] if new_vehicle_index < len(lane.vehicles) else None
+
+        # check the space between the vehicle ahead and behind to ensure adequate space
+        # TODO maybe refine?
+        if vehicle_ahead and vehicle.distance - vehicle_ahead.distance <= vehicle._stopping_distance:
+            # return -1 to indicate we can't move into this lane
+            return -1
+        
+        # check if there is enough space for the vehicle behind to adequately stop
+        if vehicle_behind and vehicle_behind.distance - vehicle.distance <= vehicle_behind._stopping_distance:
+            return -1
+
+        # return the index the vehicle should be isnerted
+        return new_vehicle_index
+
+    def is_new_lane_shorter(self, current_lane, new_lane):
+        """ Checks if there is at least two cars difference between two adjacent lanes """
+        return current_lane.queue_length - new_lane.queue_length > 1
 
     
     def get_kpi(self) -> List[float]:
