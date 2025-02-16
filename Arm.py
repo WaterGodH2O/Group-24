@@ -1,5 +1,5 @@
 from typing import List
-from Lane import CarLane, Lane
+from Lane import CarLane, Lane, BusLane
 from exceptions import TooManyVehiclesException
 from Box import Box
 from bisect import bisect_right
@@ -8,7 +8,7 @@ class Arm:
     """
     This class defines the behaviour of each entrance in the junction
     """
-    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int):
+    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int, bus_lane: int):
         # the length and width of the arm in metres
         self._length: int = length
         self._width: int = width
@@ -18,8 +18,10 @@ class Arm:
 
         # initalise a list of all the lanes coming from a certain direction in the junction
         self._lanes: List[Lane] = []
+        if(bus_lane):
+                self._lanes.append(BusLane(width / num_lanes, length))
         for i in range(num_lanes):
-            self._lanes.append(CarLane([0, 1, 2, 3], width / num_lanes, length))
+            self._lanes.append(CarLane(width / num_lanes, length))
 
         # represents the most cars in the arm at any given point in the simulation
         self._max_queue_length: int = 0
@@ -71,7 +73,7 @@ class Arm:
                 junction_box.add_vehicle(vehicle_leaving)
                 # update kpi
                 vehicle_wait_time = vehicle_leaving.wait_time / 1000 # in seconds
-
+                print(f"Vehicle entered box from lane {vehicle_leaving.source_lane}")
                 self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
                 self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1
@@ -80,9 +82,9 @@ class Arm:
             self._max_queue_length = max(self._max_queue_length, lane.queue_length)  
             
         # change lanes
-        # self.handle_lane_switching() # TODO lane switching greatly slows down junction simulation performance (~11s to 4.4s without it) -> necessary?
+        self.handle_lane_switching(num_arms) # TODO lane switching greatly slows down junction simulation performance (~11s to 4.4s without it) -> necessary?
 
-    def handle_lane_switching(self):
+    def handle_lane_switching(self, num_arms):
         """ Attempts lane switching for all vehicles in the arm of a junction, prioritising shortest lane """
 
         previous_lane = None
@@ -91,7 +93,7 @@ class Arm:
         for i, current_lane in enumerate(self._lanes):
             
             # get adjacent lanes
-            adjacent_lanes = []
+            adjacent_lanes: list[Lane] = []
             if previous_lane:
                 adjacent_lanes.append(previous_lane)
             if i < len(self._lanes) - 1:
@@ -105,7 +107,7 @@ class Arm:
                 for new_lane in adjacent_lanes:
                     # check if the vehicle can merge into a new lane if the current lane is shorter
                     # and goes where the vehicle wants to go
-                    if self.is_new_lane_shorter(current_lane, new_lane) and vehicle.destination in new_lane.allowed_directions:
+                    if self.is_new_lane_shorter(current_lane, new_lane) and new_lane.can_enter_lane(vehicle, num_arms):
                         
                         # stop looping if the vehicle has successfully merged into the new lane
                         if self.move_vehicle_to_lane(vehicle, current_lane, new_lane):
@@ -230,4 +232,10 @@ class Arm:
         start_position = furthest_car_distance + 20
         if start_position > self._length:
             raise TooManyVehiclesException
-        self._lanes[0].create_vehicle(speed, source, destination, type, start_position)
+        
+        for i in range(0, len(self._lanes)):
+            v = self._lanes[i].create_vehicle(speed, source, destination, type, start_position)
+            if v:
+                print(f"Vehicle created in lane {i}")
+                break
+                

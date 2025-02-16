@@ -344,9 +344,9 @@ while running:
 
                         if not crossing_frequency_input.isdigit() or int(crossing_frequency_input) <= 0:
                             pedestrian_details_invalid = True
-                        
-                        crossing_time = int(crossing_time_input)
-                        crossing_frequency = int(crossing_frequency_input)
+                        if (not pedestrian_details_invalid):
+                            crossing_time = int(crossing_time_input)
+                            crossing_frequency = int(crossing_frequency_input)
 
                     if pedestrian_details_invalid:
                         error_messages.append("Error: Crossing time and crossing frequency request must be filled in with integer values.")

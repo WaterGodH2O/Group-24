@@ -209,6 +209,13 @@ class Lane(ABC):
                     return False
         #If the light is green and no vehicle in the box blocks it, enter the box
         return True
+    
+    @abstractmethod
+    def can_enter_lane(self, vehicle: Vehicle, num_arms: int )-> bool:
+        """
+        Check if a vehicle is allowed to enter a lane based on type and direction
+        :return: True if allowed, false otherwise.
+        """
 
     @abstractmethod
     def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> bool:
@@ -219,8 +226,8 @@ class Lane(ABC):
 
 
 class CarLane(Lane):
-    def __init__(self, allowed_directions: List[int], width: int, length: int):
-        super().__init__(allowed_directions, width, length)
+    def __init__(self, width: int, length: int):
+        super().__init__([0,1,2,3], width, length)
     
     def create_vehicle(self, speed: int, source: int, destination: int, type: str, start_position: int) -> bool:
         """
@@ -233,17 +240,26 @@ class CarLane(Lane):
             self.add_vehicle(Bus(speed, source, destination, start_position))
             return True
         return False
+    
+    def can_enter_lane(self, vehicle, num_arms):
+        #Car lanes can be entered by any vehicle going in any direction
+        return True
 
 
 # !! not a must have requirement
 class BusLane(Lane):
 
-    def __init__(self, allowed_directions: List[int], width: int, length: int):
-        super().__init__(allowed_directions, width, length)
+    def __init__(self, width: int, length: int):
+        super().__init__([0,1,2,3], width, length)
     
-    def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> bool:
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str, start_position: int) -> bool:
         if type == "Bus":
-            self.add_vehicle(Bus(speed, source, destination, 150))
+            self.add_vehicle(Bus(speed, source, destination, start_position))
+            return True
+        return False
+    
+    def can_enter_lane(self, vehicle: Vehicle, num_arms: int):
+        if vehicle.vehicle_type == "Bus":
             return True
         return False
 

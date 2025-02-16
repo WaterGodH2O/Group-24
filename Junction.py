@@ -26,7 +26,8 @@ class Junction:
                  num_lanes: int = 2,
                  pedestrian_crossing: bool = False,
                  p_crossing_time_s: int = 0,
-                 p_crossing_freq: int = 0):
+                 p_crossing_freq: int = 0,
+                 bus_lane: bool = False):
         """
         初始化交通路口信息
         :param traffic_data: The number of vehicles per hour from each arm to another. The first index is the source arm and the second is the destination, numbered clockwise from north.
@@ -59,7 +60,7 @@ class Junction:
         self.cars_made = np.zeros((self.NUM_ARMS, self.NUM_ARMS))
 
         self.arms: List[Arm] = [
-            Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes)
+            Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes, bus_lane)
             for i in range (4)
         ]
         self.box = Box(self.LANE_WIDTH, self.num_lanes)
