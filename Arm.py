@@ -69,7 +69,6 @@ class Arm:
             if vehicle_leaving:
                 lane.remove_vehicle(vehicle_leaving)
                 junction_box.add_vehicle(vehicle_leaving)
-                #print("Vehicle entered box")
                 # update kpi
                 vehicle_wait_time = vehicle_leaving.wait_time / 1000 # in seconds
 
@@ -81,7 +80,7 @@ class Arm:
             self._max_queue_length = max(self._max_queue_length, lane.queue_length)  
             
         # change lanes
-        self.handle_lane_switching()
+        # self.handle_lane_switching() # TODO lane switching greatly slows down junction simulation performance (~11s to 4.4s without it) -> necessary?
 
     def handle_lane_switching(self):
         """ Attempts lane switching for all vehicles in the arm of a junction, prioritising shortest lane """
@@ -186,7 +185,8 @@ class Arm:
         """ Returns the key performance indicators for this arm of the junction """
         # calculate the efficiency
         average_wait_time = self._total_wait_times / self._total_car_count if self._total_car_count != 0 else 0
-
+        
+        # return the key kpi stats
         return [average_wait_time, self._max_wait_time, self._max_queue_length]
         
     def no_vehicles_within(self, distance: int) -> bool:
