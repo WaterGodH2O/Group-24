@@ -188,7 +188,7 @@ class Lane(ABC):
         #If the light is red, do not enter.
         if (not is_light_green):
             return False
-        
+
         #Vehicle's relative direction. 1 = right, 2 = forward, 3 = left
         #For more/less arms, represents the number of arms anticlockwise
         vehicle_relative_dir = (vehicle.source - vehicle.destination) % num_arms

@@ -37,7 +37,7 @@ class Junction:
         #Initialise random number generator
         self.random = np.random.default_rng()
         #dummy data
-        self.traffic_data: list[list[int]] = [[0, 300, 200, 300], [250, 0, 400, 200], [600, 120, 0, 150], [700, 300, 50, 0]]
+        self.traffic_data: list[list[int]] = [[0, 0, 0, 0], [300, 300, 300, 0], [300, 300, 300, 300], [300, 300, 300, 300]]
         #Precompute scale values for exponential random distribution
         self.traffic_scales: list[list[int]] = [[(60*60*1000)/val if val != 0 else 0 for val in row ] for row in self.traffic_data]
         
@@ -60,11 +60,11 @@ class Junction:
             #Calculate the scale value and take a sample for the initial time
             self.p_crossing_scale: int = 60*60*1000/p_crossing_freq
             self.p_crossing_interval_time_ms = self.random.exponential(self.p_crossing_scale)
+            self.p_crossing_length_ms = p_crossing_time_s * 1000
 
         #Initialise p_crossing_queued, which is called by update_traffic_light so must always be set
         self.p_crossing_queued = False
-        #Initialise the length of the crossing cycle and the timer to track it.
-        self.p_crossing_length_ms = p_crossing_time_s * 1000
+        #Initialise the timer for crossings
         self.p_crossing_timer_ms = 0
 
         #used to test car generation
@@ -167,7 +167,7 @@ class Junction:
             self.traffic_light_gap_timer_ms = self.TRAFFIC_LIGHT_GAP_MS
             self.prev_light_dir = self.traffic_light_dir
             self.traffic_light_dir = -1
-            #print("Light changed to red")
+            print("Light changed to red")
     
     def update_traffic_light_all_red(self, update_length_ms: int) -> None:
         """ Process one traffic light update when in between light cycles when no pedestrian crossing is active """
@@ -180,11 +180,11 @@ class Junction:
             #To update direction, check each direction clockwise for vehicles. If a vehicle is found, set that direction green. 
             #If none are found, set the first direction anticlockwise green
             self.traffic_light_dir = self.prev_light_dir
-            for i in range(0,self.NUM_ARMS - 2):
+            for i in range(0,self.NUM_ARMS - 1):
                 self.traffic_light_dir = self.get_left_arm(self.traffic_light_dir)
-                if self.arms[self.traffic_light_dir].no_vehicles_within(100):
+                if not self.arms[self.traffic_light_dir].no_vehicles_within(100):
                     break
-            #print("Light changed to green")
+            print(f"Light changed to green, direction {self.traffic_light_dir}")
                 
 
     def get_left_arm(self, arm_index: int) -> int:
