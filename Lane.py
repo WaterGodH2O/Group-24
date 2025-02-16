@@ -111,7 +111,7 @@ class Lane(ABC):
         return None
     
     
-    def move_all_vehicles(self, is_light_green: bool, update_length_ms: int, box: Box, lane_id: int, num_arms: int) -> Vehicle:
+    def move_all_vehicles(self, is_light_green: bool, update_length_ms: int, box: Box, lane_id: int, num_arms: int) -> Set[Vehicle]:
         """
         Moves all vehicles in the lane based on speed. Cars can move if there is sufficient space
         ahead of them, or if they're at the start of the junction and the light is green
@@ -119,22 +119,30 @@ class Lane(ABC):
         :param is_light_green: Whether the traffic light for this lane is green or not
         :return: the vehicles currently leaving the junction
         """
-        leaving_vehicle = None
+        leaving_vehicles = set()
         vehicle_ahead = None
 
         for i, vehicle in enumerate(self._vehicles):
-            # enter the box if at a junction
-            if i == 0 and vehicle._distance <= 0:
+            # if the vehicles next move will put them in the junction
+            if vehicle.get_next_position(update_length_ms) <= 0:
                 if self.can_enter_box(vehicle, box, lane_id, is_light_green, num_arms):
                     # this vehicle will leave the junction
                     vehicle.set_source_lane(lane_id)
-                    leaving_vehicle = vehicle
+                    leaving_vehicles.add(vehicle)
+
                 else:
-                    # update the wait time if they can't enter the junction
-                    vehicle.update_wait_time(update_length_ms)
+                    # set distance to 0 if at front of queue, otherwise move forward if space
+                    new_vehicle_distance = min(vehicle_ahead.distance + vehicle._stopping_distance, vehicle.distance) if vehicle_ahead else 0
+                    
+                    # update wait time if the vehicle hasn't moved
+                    if new_vehicle_distance == vehicle.distance:
+                        vehicle.update_wait_time(update_length_ms)
+
+                    # set the new vehicle distance
+                    vehicle._distance = new_vehicle_distance
 
             # if the vehicle is at the front of the queue and not at the junction (no need to check vehicle ahead)
-            elif i == 0 or vehicle_ahead == leaving_vehicle:
+            elif i == 0 or vehicle_ahead in leaving_vehicles:
                 vehicle.set_position(vehicle.get_next_position(update_length_ms))
 
             # update vehicle distance if there is enough space to move forward
@@ -153,7 +161,7 @@ class Lane(ABC):
             # update the vehicle ahead for the next iteration
             vehicle_ahead = vehicle
 
-        return leaving_vehicle
+        return leaving_vehicles
         
     def has_space_to_move(self, vehicle, vehicle_ahead):
         """ checks if there is any space between a vehicle and the car ahead """

@@ -3,7 +3,7 @@
 import pygame
 import pygame_gui
 
-
+from time import time
 from Junction import Junction
 
 game_state:int = 0
@@ -378,8 +378,9 @@ while running:
                         )
 
                         print(junction)
-
+                        start_time = time()
                         junction.simulate(simulation_duration*60*1000, 100)
+                        print(f"Simulation duration: {time() - start_time}")
                         top_junctions.append([junction.get_kpi(),num_lanes])
 
 

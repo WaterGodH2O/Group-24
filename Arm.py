@@ -63,10 +63,10 @@ class Arm:
         
         for i, lane in enumerate(self._lanes):
             # update the position of each vehicle in the arm, getting the vehicle leaving the lane
-            vehicle_leaving = lane.move_all_vehicles(is_light_green, update_length_ms, junction_box, i, num_arms)
+            vehicles_leaving = lane.move_all_vehicles(is_light_green, update_length_ms, junction_box, i, num_arms)
 
             # remove the vehicles from the lane if necessary
-            if vehicle_leaving:
+            for vehicle_leaving in vehicles_leaving:
                 lane.remove_vehicle(vehicle_leaving)
                 junction_box.add_vehicle(vehicle_leaving)
                 # update kpi
