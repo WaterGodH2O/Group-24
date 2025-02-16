@@ -37,7 +37,7 @@ class Junction:
         #Initialise random number generator
         self.random = np.random.default_rng()
         #dummy data
-        self.traffic_data: list[list[int]] = [[0, 300, 200, 300], [250, 0, 400, 200], [2000, 120, 0, 150], [0, 0, 30, 0]]
+        self.traffic_data: list[list[int]] = [[0, 300, 200, 300], [250, 0, 400, 200], [600, 120, 0, 150], [700, 300, 50, 0]]
         #Precompute scale values for exponential random distribution
         self.traffic_scales: list[list[int]] = [[(60*60*1000)/val if val != 0 else 0 for val in row ] for row in self.traffic_data]
         
@@ -90,6 +90,7 @@ class Junction:
     def get_kpi(self) -> List[List[int]]:
         """ return the efficiency score, avg wait time, max wait time and max queue length for each arm of the junction """
         kpi_list = [arm.get_kpi() for arm in self.arms]
+        print(f"{kpi_list}\n")
         return kpi_list
     
     def get_junction_information(self):
