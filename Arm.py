@@ -80,7 +80,7 @@ class Arm:
             self._max_queue_length = max(self._max_queue_length, lane.queue_length)  
             
         # change lanes
-        # self.handle_lane_switching() # TODO lane switching greatly slows down junction simulation performance (~11s to 4.4s without it) -> necessary?
+        self.handle_lane_switching()
 
     def handle_lane_switching(self):
         """ Attempts lane switching for all vehicles in the arm of a junction, prioritising shortest lane """
