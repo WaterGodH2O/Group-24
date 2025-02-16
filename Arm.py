@@ -184,10 +184,25 @@ class Arm:
     def get_kpi(self) -> List[float]:
         """ Returns the key performance indicators for this arm of the junction """
         # calculate the efficiency
-        average_wait_time = self._total_wait_times / self._total_car_count if self._total_car_count != 0 else 0
+        total_wait_time = self._total_wait_times
+        max_wait_time = self._max_wait_time
+
+        # include all current vehicles in wait time calculations
+        for lane in self._lanes:
+            for vehicle in lane.vehicles:
+                vehicle_wait_time = vehicle.wait_time / 1000
+                total_wait_time += vehicle_wait_time
+                
+                # update max wait time if necessary
+                if vehicle_wait_time > max_wait_time:
+                    max_wait_time = vehicle_wait_time
+
+        
+        total_vehicles = self._total_car_count + sum(len(lane.vehicles) for lane in self._lanes)
+        average_wait_time = total_wait_time / total_vehicles if total_vehicles != 0 else 0
         
         # return the key kpi stats
-        return [average_wait_time, self._max_wait_time, self._max_queue_length]
+        return [average_wait_time, max_wait_time, self._max_queue_length]
         
     def no_vehicles_within(self, distance: int) -> bool:
         """ 
