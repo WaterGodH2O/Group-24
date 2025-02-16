@@ -202,7 +202,7 @@ class Arm:
         average_wait_time = total_wait_time / total_vehicles if total_vehicles != 0 else 0
         
         # return the key kpi stats
-        return [average_wait_time, max_wait_time, self._max_queue_length]
+        return [round(average_wait_time, 1), round(max_wait_time, 1), self._max_queue_length]
         
     def no_vehicles_within(self, distance: int) -> bool:
         """ 
