@@ -156,20 +156,20 @@ def init_table():
         [''],
         ['Junction\nSpecification'],
         ['Efficiency'],
-        ['Average wait time (minutes)'],
-        ['Maximum wait time (minutes)'],
+        ['Average wait time (seconds)'],
+        ['Maximum wait time (seconds)'],
         ['Maximum queue length']
     ])
 
-def add_config(values, description):
+def add_config(efficiency, values, description):
     config_number = len(output_data[0])
     output_data[0].append(f'Configuration {config_number}')
 
     output_data[1].append(description)
-    output_data[2].append(str(calc_efficiency(values[0], values[1], values[2], values[3])))
-    output_data[3].append(f"North: {values[0][0]}\nEast: {values[1][0]}\nSouth: {values[2][0]}\nWest: {values[3][0]}")
-    output_data[4].append(f"North: {values[0][1]}\nEast: {values[1][1]}\nSouth: {values[2][1]}\nWest: {values[3][1]}")
-    output_data[5].append(f"North: {values[0][2]}\nEast: {values[1][2]}\nSouth: {values[2][2]}\nWest: {values[3][2]}")
+    output_data[2].append(str((int)(efficiency)))
+    output_data[3].append(f"North: {(int)(values[0][0])}\nEast: {(int)(values[1][0])}\nSouth: {(int)(values[2][0])}\nWest: {(int)(values[3][0])}")
+    output_data[4].append(f"North: {(int)(values[0][1])}\nEast: {(int)(values[1][1])}\nSouth: {(int)(values[2][1])}\nWest: {(int)(values[3][1])}")
+    output_data[5].append(f"North: {(int)(values[0][2])}\nEast: {(int)(values[1][2])}\nSouth: {(int)(values[2][2])}\nWest: {(int)(values[3][2])}")
 
 def create_table(data):
     for(i,row) in enumerate(output_data):
@@ -191,7 +191,7 @@ def hide_error_box():
     error_message_label.visible=False
     error_message_label.hide()
 
-def calc_efficiency(north_arm, south_arm, east_arm, west_arm):
+def calc_efficiency(north_arm, south_arm, east_arm, west_arm) -> int:
     total_score = 0
     arms = [north_arm, south_arm, east_arm, west_arm]
 
@@ -384,7 +384,8 @@ while running:
                         start_time = time()
                         junction.simulate(simulation_duration*60*1000, 100)
                         print(f"Simulation duration: {time() - start_time}")
-                        top_junctions.append([junction.get_kpi(),num_lanes])
+                        kpi = junction.get_kpi()
+                        top_junctions.append([calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes])
 
 
                     # top 3 junctions by kpi
@@ -393,8 +394,8 @@ while running:
                     init_table()
 
                     for junction in top_junctions:
-                        config_description = f"{junction[1]} lanes\nPedestrian crossings: {'Yes' if selected_pedestrian else 'No'}"
-                        add_config(junction[0],config_description)
+                        config_description = f"{junction[2]} lanes\nPedestrian crossings: {'Yes' if selected_pedestrian else 'No'}"
+                        add_config(junction[0],junction[1],config_description)
 
                     create_table(output_data)
 
