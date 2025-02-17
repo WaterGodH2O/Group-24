@@ -75,8 +75,10 @@ param_positions = {
     "num_lanes": (300, 450),
     "crossing_time": (550, 550),
     "crossing_frequency": (850, 550),
-    "simulation_duration": (300, 650),
+    "simulation_duration": (622, 450),
+    "bus_percentage": (709, 741),
 }
+
 
 # Create the object of input box of VPH
 traffic_flow_inputs = {}
@@ -98,24 +100,56 @@ for key, pos in param_positions.items():
 # yes or no button
 
 pedestrian_yes = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((300, 550), (50, 30)),
+    relative_rect=pygame.Rect((82, 703-40), (50, 30)),
     text='Yes',
     manager=manager,
     container=page1_container
 )
 
 pedestrian_no = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((300, 580), (50, 30)),
+    relative_rect=pygame.Rect((82+60, 703-40), (50, 30)),
+    text='No',
+    manager=manager,
+    container=page1_container
+)
+
+turn_yes = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((380, 703-40), (50, 30)),
+    text='Yes',
+    manager=manager,
+    container=page1_container
+)
+
+turn_no = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((380+60, 703-40), (50, 30)),
+    text='No',
+    manager=manager,
+    container=page1_container
+)
+
+bus_yes = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((685, 703-40), (50, 30)),
+    text='Yes',
+    manager=manager,
+    container=page1_container
+)
+
+bus_no = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((685+60, 703-40), (50, 30)),
     text='No',
     manager=manager,
     container=page1_container
 )
 
 selected_pedestrian = False
+selected_turn = False
+selected_bus = False
+bus_percentage = 0
+
 
 # Run simulation
 run_simulation_button = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((900, 700), (150, 50)),
+    relative_rect=pygame.Rect((1020, 700), (150, 70)),
     text='Run Simulation',
     manager=manager,
     container=page1_container
@@ -129,6 +163,8 @@ error_message_label = pygame_gui.elements.UITextBox(
     container=page1_container_error,
     visible=False
 )
+
+
 
 # Modify parameters
 modify_parameters_button = pygame_gui.elements.UIButton(
@@ -252,13 +288,19 @@ while running:
 
         draw_font("Number of lanes\n(e.g. 2-5)", (50, 450))
 
-        draw_font("Include models with\npedestrian crossings", (50, 550))
+        draw_font("Bus Percentage (input 0 to 1)", (656, 710))
+
+        draw_font("Pedestrian Crossings", (50, 630))
+
+        draw_font("Trun Lane", (385, 630))
+
+        draw_font("Bus Lane", (695, 630))
 
         draw_font("Crossing time\n(seconds)", (400, 550))
 
         draw_font("Crossing request\nfrequency (per hour)", (650, 550))
 
-        draw_font("Simulation duration\n(minutes)", (50, 650))
+        draw_font("Simulation duration\n(minutes)", (403, 450))
 
         # event handle
         for event in pygame.event.get():
@@ -278,6 +320,26 @@ while running:
                     pedestrian_yes.set_text("Yes")
                     pedestrian_no.set_text("> No <")
 
+                elif event.ui_element == bus_yes:
+                    selected_bus = True
+                    bus_yes.set_text("> Yes <")
+                    bus_no.set_text("No")
+                elif event.ui_element == bus_no:
+                    selected_bus = False
+                    bus_yes.set_text("Yes")
+                    bus_no.set_text("> No <")
+
+                elif event.ui_element == turn_yes:
+                    selected_turn = True
+                    turn_yes.set_text("> Yes <")
+                    turn_no.set_text("No")
+                elif event.ui_element == turn_no:
+                    selected_turn = False
+                    turn_yes.set_text("Yes")
+                    turn_no.set_text("> No <")
+
+
+
                 elif event.ui_element == run_simulation_button:
 
                     traffic_data = {}
@@ -287,8 +349,11 @@ while running:
                     num_lanes_invalid = False
                     pedestrian_details_invalid = False
                     simulation_duration_invalid = False
+                    bus_percentage_invalid = False
 
                     error_messages = []
+
+
 
                     # validate traffic flow rates
                     for key, input_box in traffic_flow_inputs.items():
@@ -302,6 +367,7 @@ while running:
                     if traffic_flow_rates_invalid:
                         error_messages.append("Error: All traffic flow rates must be integer values between 0 and 3000.")
 
+                    #------------------------------------------------------------------------------------------------------------------
                     # validate number of lanes input
                     num_lanes_input = param_inputs["num_lanes"].get_text().strip()
                     if not num_lanes_input:
@@ -331,6 +397,7 @@ while running:
                     if num_lanes_invalid:
                         error_messages.append("Error: Number of lanes must be in format X or X-Y where the range of lanes is 1-5.")
 
+                    # ------------------------------------------------------------------------------------------------------------------
                     #Initialise crossing values as None
                     crossing_frequency = None
                     crossing_time = None
@@ -350,7 +417,8 @@ while running:
 
                     if pedestrian_details_invalid:
                         error_messages.append("Error: Crossing time and crossing frequency request must be filled in with integer values.")
-                    
+
+                    # ------------------------------------------------------------------------------------------------------------------
                     # validate simulation duration
                     simulation_duration_input = param_inputs["simulation_duration"].get_text().strip()
                     if not simulation_duration_input or not simulation_duration_input.isdigit() or int(simulation_duration_input) <= 0:
@@ -361,11 +429,37 @@ while running:
                     else:
                         simulation_duration = int(simulation_duration_input)
 
+                    # ------------------------------------------------------------------------------------------------------------------
+                    # validate bus percentage
+                    bus_percentage_input = param_inputs["bus_percentage"].get_text().strip()
+                    if bus_percentage_input:
+                        if bus_percentage_input.isdigit():
+                            if (float(bus_percentage_input) < 0) or (float(bus_percentage_input) > 1):
+                                bus_percentage_invalid = True
+                        else:
+
+                            bus_percentage_invalid = True
+
+                    if bus_percentage_invalid:
+                        error_messages.append("Error: Bus percentage must be a number within 0 to 1.")
+
+                    # ------------------------------------------------------------------------------------------------------------------
+                    # display error
                     if error_messages:
                         show_error_box("\n".join(error_messages))
                         continue
                     else:
                         hide_error_box()
+
+
+'''
+selected_turn : boolean
+selected_bus : boolean
+input box is implemented in front end, the result will be store in these two var.
+
+bus_percentage_input : str
+percentage of bus, note that this is string type.
+'''
 
                     top_junctions = []
 
@@ -377,7 +471,8 @@ while running:
                             num_lanes = num_lanes,
                             pedestrian_crossing = selected_pedestrian,
                             p_crossing_time_s = crossing_time,
-                            p_crossing_freq = crossing_frequency
+                            p_crossing_freq = crossing_frequency,
+                            bus_lane = selected_bus
                         )
 
                         print(junction)
