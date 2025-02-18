@@ -73,7 +73,6 @@ class Arm:
                 junction_box.add_vehicle(vehicle_leaving)
                 # update kpi
                 vehicle_wait_time = vehicle_leaving.wait_time / 1000 # in seconds
-                print(f"{vehicle_leaving.vehicle_type} entered box from lane {vehicle_leaving.source_lane}")
                 self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
                 self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1
@@ -210,6 +209,10 @@ class Arm:
         """Returns total car count for this arm of the junction"""
         return self._total_car_count
     
+    def get_current_vehicle_count(self) -> int:
+        """ Returns the number of vehicles currently in this arm of the junction to be used for graphing"""
+        return sum([lane.queue_length for lane in self._lanes])
+    
     def no_vehicles_within(self, distance: int) -> bool:
         """ 
         Check if any vehicles are within a given distance from the junction 
@@ -240,6 +243,5 @@ class Arm:
         for i in range(0, len(self._lanes)):
             v = self._lanes[i].create_vehicle(speed, source, destination, type, start_position, num_arms)
             if v:
-                print(f"{v._vehicle_type} created in lane {i}")
                 break
                 

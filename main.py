@@ -8,6 +8,8 @@ from Junction import Junction
 import math
 game_state:int = 0
 
+
+
 pygame.init()
 
 # window size
@@ -200,10 +202,10 @@ def add_config(efficiency, values, description):
     output_data[0].append(f'Configuration {config_number}')
 
     output_data[1].append(description)
-    output_data[2].append(str((int)(efficiency)))
-    output_data[3].append(f"North: {(int)(values[0][0])}\nEast: {(int)(values[1][0])}\nSouth: {(int)(values[2][0])}\nWest: {(int)(values[3][0])}")
-    output_data[4].append(f"North: {(int)(values[0][1])}\nEast: {(int)(values[1][1])}\nSouth: {(int)(values[2][1])}\nWest: {(int)(values[3][1])}")
-    output_data[5].append(f"North: {(int)(values[0][2])}\nEast: {(int)(values[1][2])}\nSouth: {(int)(values[2][2])}\nWest: {(int)(values[3][2])}")
+    output_data[2].append(str(int(efficiency)))
+    output_data[3].append(f"North: {int(values[0][0])}\nEast: {int(values[1][0])}\nSouth: {int(values[2][0])}\nWest: {int(values[3][0])}")
+    output_data[4].append(f"North: {int(values[0][1])}\nEast: {int(values[1][1])}\nSouth: {int(values[2][1])}\nWest: {int(values[3][1])}")
+    output_data[5].append(f"North: {int(values[0][2])}\nEast: {int(values[1][2])}\nSouth: {int(values[2][2])}\nWest: {int(values[3][2])}")
 
 def create_table(data):
     for(i,row) in enumerate(output_data):
@@ -365,13 +367,6 @@ while running:
                     if traffic_flow_rates_invalid:
                         error_messages.append("Error: All traffic flow rates must be integer values between 0 and 3000.")
 
-                    print(traffic_data)
-                    row1 = [-1,traffic_data["n2e"],traffic_data["n2s"],traffic_data["n2w"]]
-                    row2 = [traffic_data["e2n"],-1,  traffic_data["e2s"], traffic_data["e2w"]]
-                    row3 = [traffic_data["s2n"], traffic_data["s2e"],-1,  traffic_data["s2w"]]
-                    row4 = [traffic_data["w2n"], traffic_data["w2e"], traffic_data["w2s"], -1]
-                    top_junctions = [row1, row2, row3, row4]
-                    print(top_junctions)
                     #------------------------------------------------------------------------------------------------------------------
                     # validate number of lanes input
                     num_lanes_input = param_inputs["num_lanes"].get_text().strip()
@@ -385,7 +380,7 @@ while running:
                             else:
                                 start = int(parts[0])
                                 end = int(parts[1])
-                                if not(2 <= start < end <= 5):
+                                if not(1 <= start < end <= 5):
                                     num_lanes_invalid = True
                                 else:
                                     lane_configs = list(range(start, end + 1))
@@ -394,13 +389,13 @@ while running:
                                 num_lanes_invalid = True
                             else:
                                 num_lanes_input = int(num_lanes_input)
-                                if not (2 <= num_lanes_input <=5):
+                                if not (1 <= num_lanes_input <=5):
                                     num_lanes_invalid = True
                                 else:
                                     lane_configs = [num_lanes_input]
 
                     if num_lanes_invalid:
-                        error_messages.append("Error: Number of lanes must be in format X or X-Y where the range of lanes is 2-5.")
+                        error_messages.append("Error: Number of lanes must be in format X or X-Y where the range of lanes is 1-5.")
 
                     # ------------------------------------------------------------------------------------------------------------------
                     #Initialise crossing values as None
@@ -461,28 +456,29 @@ while running:
                     selected_turn : boolean
                     selected_bus : boolean
                     input box is implemented in front end, the result will be store in these two var.
+
                     bus_percentage_input : str
                     percentage of bus, note that this is string type.
                     '''
 
-
+                    top_junctions = []
 
                     for num_lanes in lane_configs:
 
                         # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
                         junction = Junction(
-                            top_junctions,
+                            traffic_data,
                             num_lanes = num_lanes,
                             pedestrian_crossing = selected_pedestrian,
                             p_crossing_time_s = crossing_time,
                             p_crossing_freq = crossing_frequency,
-                            bus_lane = True,
-                            bus_ratio = 0.2
+                            bus_lane = selected_bus
                         )
+
                         print(junction)
                         start_time = time()
                         junction.simulate(simulation_duration*60*1000, 100)
-                        print(f"Simulation duration: {time() - start_time}")
+                        print(f"Simulation duration: {round(time() - start_time, 2)}s")
                         kpi = junction.get_kpi()
                         top_junctions.append([calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes])
 
