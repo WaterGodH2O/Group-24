@@ -205,7 +205,11 @@ class Arm:
         
         # return the key kpi stats
         return [round(average_wait_time, 1), round(max_wait_time, 1), self._max_queue_length]
-        
+
+    def get_total_car_count(self) -> int:
+        """Returns total car count for this arm of the junction"""
+        return self._total_car_count
+    
     def no_vehicles_within(self, distance: int) -> bool:
         """ 
         Check if any vehicles are within a given distance from the junction 
