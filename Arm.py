@@ -8,7 +8,7 @@ class Arm:
     """
     This class defines the behaviour of each entrance in the junction
     """
-    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int, bus_lane: int):
+    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int, num_arms: int, bus_lane: int):
         # the length and width of the arm in metres
         self._length: int = length
         self._width: int = width
@@ -19,9 +19,9 @@ class Arm:
         # initalise a list of all the lanes coming from a certain direction in the junction
         self._lanes: List[Lane] = []
         if(bus_lane):
-                self._lanes.append(BusLane(width / num_lanes, length))
+                self._lanes.append(BusLane(width / num_lanes, length, num_arms))
         for i in range(num_lanes):
-            self._lanes.append(CarLane(width / num_lanes, length))
+            self._lanes.append(CarLane(width / num_lanes, length, num_arms))
 
         # represents the most cars in the arm at any given point in the simulation
         self._max_queue_length: int = 0
@@ -219,7 +219,7 @@ class Arm:
         return True
     
 
-    def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> None:
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str, num_arms:int) -> None:
         """ Create a new vehicle in a random lane """
         furthest_car_distance = 0
         for lane in self._lanes:
@@ -234,7 +234,7 @@ class Arm:
             raise TooManyVehiclesException
         
         for i in range(0, len(self._lanes)):
-            v = self._lanes[i].create_vehicle(speed, source, destination, type, start_position)
+            v = self._lanes[i].create_vehicle(speed, source, destination, type, start_position, num_arms)
             if v:
                 print(f"{v._vehicle_type} created in lane {i}")
                 break

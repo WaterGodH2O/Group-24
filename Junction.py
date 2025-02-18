@@ -40,7 +40,7 @@ class Junction:
         #Initialise random number generator
         self.random = np.random.default_rng()
         #dummy data
-        self.traffic_data: list[list[int]] = [[0, 1, 2, 3], [4, 0, 5, 6], [7, 8, 0, 9], [10, 11, 12, 0]]
+        self.traffic_data: list[list[int]] = [[0, 200, 200, 200], [200, 0, 205, 206], [207, 18, 0, 209], [110, 111, 112, 0]]
         #Precompute scale values for exponential random distribution
         self.traffic_scales: list[list[int]] = [[(60*60*1000)/val if val != 0 else 0 for val in row ] for row in self.traffic_data]
         
@@ -66,7 +66,7 @@ class Junction:
         self.busses_made = 0
         self.cars = 0
         self.arms: List[Arm] = [
-            Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes, self.bus_lanes)
+            Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes, self.NUM_ARMS, self.bus_lanes)
             for i in range (4)
         ]
         self.box = Box(self.LANE_WIDTH, self.num_lanes)
@@ -158,8 +158,8 @@ class Junction:
                     self.cars_made[source][dest] += 1
                     #Create busses if a random number is less than the bus ratio
                     if self.random.uniform(0, 1) < self.bus_ratio:
-                        self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Bus")
+                        self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Bus", self.NUM_ARMS)
                         self.busses_made += 1
                     else:
-                        self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Car")
+                        self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Car", self.NUM_ARMS)
                         self.cars += 1
