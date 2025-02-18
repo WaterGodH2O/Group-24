@@ -367,6 +367,13 @@ while running:
                     if traffic_flow_rates_invalid:
                         error_messages.append("Error: All traffic flow rates must be integer values between 0 and 3000.")
 
+                    print(traffic_data)
+                    row1 = [-1,traffic_data["n2e"],traffic_data["n2s"],traffic_data["n2w"]]
+                    row2 = [traffic_data["e2n"],-1,  traffic_data["e2s"], traffic_data["e2w"]]
+                    row3 = [traffic_data["s2n"], traffic_data["s2e"],-1,  traffic_data["s2w"]]
+                    row4 = [traffic_data["w2n"], traffic_data["w2e"], traffic_data["w2s"], -1]
+                    top_junctions = [row1, row2, row3, row4]
+                    print(top_junctions)
                     #------------------------------------------------------------------------------------------------------------------
                     # validate number of lanes input
                     num_lanes_input = param_inputs["num_lanes"].get_text().strip()
@@ -461,13 +468,13 @@ while running:
                     percentage of bus, note that this is string type.
                     '''
 
-                    top_junctions = []
+
 
                     for num_lanes in lane_configs:
 
                         # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
                         junction = Junction(
-                            traffic_data,
+                            top_junctions,
                             num_lanes = num_lanes,
                             pedestrian_crossing = selected_pedestrian,
                             p_crossing_time_s = crossing_time,
