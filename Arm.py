@@ -209,9 +209,9 @@ class Arm:
         """Returns total car count for this arm of the junction"""
         return self._total_car_count
     
-    def get_current_vehicle_count(self) -> int:
-        """ Returns the number of vehicles currently in this arm of the junction to be used for graphing"""
-        return sum([lane.queue_length for lane in self._lanes])
+    def get_current_queue_length(self) -> int:
+        """ Returns the length of the largest queue of vehicles currently in this arm of the junction to be used for graphing"""
+        return max([lane.queue_length for lane in self._lanes])
     
     def no_vehicles_within(self, distance: int) -> bool:
         """ 

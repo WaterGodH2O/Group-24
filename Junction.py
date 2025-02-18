@@ -20,11 +20,11 @@ class Junction:
     #Set to 5s (2s all red time, 3s red+amber for next direction)
     TRAFFIC_LIGHT_GAP_MS: int = 5000
 
-    # stores the vehicle count at given intervals of the simulation for each arm
-    vehicle_count_array: List[List[int]] = []
+    # stores the max queue length at given intervals of the simulation for each arm
+    queue_length_array: List[List[int]] = [[] * 4 for _ in range(4)]
 
-    # the amount of time that should pass before we update the vehicle count array
-    vehicle_count_timer: int = 0
+    # the amount of time that should pass before we update the queue length
+    queue_length_timer: int = 0
 
     def __init__(self,
                  traffic_data: list[list[int]],
@@ -118,18 +118,19 @@ class Junction:
         self.arms[0]._lanes[2]._vehicles.append(Vehicle.Car(18, 0, 1, 2))
         """
         
-        # configure intervals to wait until we track vehicle count data
-        self.vehicle_count_timer = sim_time_ms / 10
+        # configure intervals to wait until we track queue count data
+        self.queue_length_timer = sim_time_ms / 10
 
         try:
             while (sim_time_ms > 0):
                 sim_time_ms -= update_length_ms
                 self.update(update_length_ms)
                 
-                # store the current vehicle count for each arm
-                if sim_time_ms % self.vehicle_count_timer == 0:
-                    current_vehicle_count = [arm.get_current_vehicle_count() for arm in self.arms]
-                    self.vehicle_count_array.append(current_vehicle_count)
+                # store the current longest queue count for each arm
+                if sim_time_ms % self.queue_length_timer == 0:
+                    for i, arm in enumerate(self.arms):
+                        current_queue_length = arm.get_current_queue_length()
+                        self.queue_length_array[i].append(current_queue_length)
 
         except TooManyVehiclesException:
             print("Too many vehicles created in an arm, exiting early")
