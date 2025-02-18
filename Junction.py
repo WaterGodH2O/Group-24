@@ -20,6 +20,12 @@ class Junction:
     #Set to 5s (2s all red time, 3s red+amber for next direction)
     TRAFFIC_LIGHT_GAP_MS: int = 5000
 
+    # stores the max queue length at given intervals of the simulation for each arm
+    queue_length_array: List[List[int]] = [[] * 4 for _ in range(4)]
+
+    # the amount of time that should pass before we update the queue length
+    queue_length_timer: int = 0
+
     def __init__(self,
                  traffic_data: list[list[int]],
                  traffic_light_interval_ms: int = 20000,
@@ -86,7 +92,6 @@ class Junction:
     def get_kpi(self) -> List[List[int]]:
         """ return the efficiency score, avg wait time, max wait time and max queue length for each arm of the junction """
         kpi_list = [arm.get_kpi() for arm in self.arms]
-        print(f"{kpi_list}\n")
         return kpi_list
 
     def get_total_car_count(self) -> List[int]:
@@ -112,18 +117,28 @@ class Junction:
         self.arms[0]._lanes[1]._vehicles.append(Vehicle.Car(18, 0, 2, 0))
         self.arms[0]._lanes[2]._vehicles.append(Vehicle.Car(18, 0, 1, 2))
         """
+        
+        # configure intervals to wait until we track queue count data
+        self.queue_length_timer = sim_time_ms / 10
+
         try:
             while (sim_time_ms > 0):
+                sim_time_ms -= update_length_ms
+                self.update(update_length_ms)
                 
-                    sim_time_ms -= update_length_ms
-                    self.update(update_length_ms)
+                # store the current longest queue count for each arm
+                if sim_time_ms % self.queue_length_timer == 0:
+                    for i, arm in enumerate(self.arms):
+                        current_queue_length = arm.get_current_queue_length()
+                        self.queue_length_array[i].append(current_queue_length)
+
         except TooManyVehiclesException:
             print("Too many vehicles created in an arm, exiting early")
         #Show cars created
         np.set_printoptions(suppress=True)
         print(self.cars_made)
         print("Simulation finished")
-        print(f"{self.box.vt} vehicles passed through out of {np.sum(self.cars_made)}")
+        print(f"{self.box.vt} vehicles passed through out of {round(np.sum(self.cars_made))}")
         print(f"{self.busses_made} busses")
     
     
