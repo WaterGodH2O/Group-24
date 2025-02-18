@@ -88,6 +88,11 @@ class Junction:
         kpi_list = [arm.get_kpi() for arm in self.arms]
         print(f"{kpi_list}\n")
         return kpi_list
+
+    def get_total_car_count(self) -> List[int]:
+        """Retruns a list of the total throughput for each arm of the junction"""
+        junction_throughput = [arm.get_total_car_count() for arm in self.arms]
+        return junction_throughput
     
     def get_junction_information(self):
         """ method to return all configuration details about this particular junction """
