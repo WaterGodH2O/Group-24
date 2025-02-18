@@ -8,7 +8,7 @@ class Arm:
     """
     This class defines the behaviour of each entrance in the junction
     """
-    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int, bus_lane: int):
+    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int, num_arms: int, bus_lane: int):
         # the length and width of the arm in metres
         self._length: int = length
         self._width: int = width
@@ -19,9 +19,9 @@ class Arm:
         # initalise a list of all the lanes coming from a certain direction in the junction
         self._lanes: List[Lane] = []
         if(bus_lane):
-                self._lanes.append(BusLane(width / num_lanes, length))
+                self._lanes.append(BusLane(width / num_lanes, length, num_arms))
         for i in range(num_lanes):
-            self._lanes.append(CarLane(width / num_lanes, length))
+            self._lanes.append(CarLane(width / num_lanes, length, num_arms))
 
         # represents the most cars in the arm at any given point in the simulation
         self._max_queue_length: int = 0
@@ -73,7 +73,7 @@ class Arm:
                 junction_box.add_vehicle(vehicle_leaving)
                 # update kpi
                 vehicle_wait_time = vehicle_leaving.wait_time / 1000 # in seconds
-                print(f"Vehicle entered box from lane {vehicle_leaving.source_lane}")
+                print(f"{vehicle_leaving.vehicle_type} entered box from lane {vehicle_leaving.source_lane}")
                 self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
                 self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1
@@ -205,7 +205,11 @@ class Arm:
         
         # return the key kpi stats
         return [round(average_wait_time, 1), round(max_wait_time, 1), self._max_queue_length]
-        
+
+    def get_total_car_count(self) -> int:
+        """Returns total car count for this arm of the junction"""
+        return self._total_car_count
+    
     def no_vehicles_within(self, distance: int) -> bool:
         """ 
         Check if any vehicles are within a given distance from the junction 
@@ -219,7 +223,7 @@ class Arm:
         return True
     
 
-    def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> None:
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str, num_arms:int) -> None:
         """ Create a new vehicle in a random lane """
         furthest_car_distance = 0
         for lane in self._lanes:
@@ -234,8 +238,8 @@ class Arm:
             raise TooManyVehiclesException
         
         for i in range(0, len(self._lanes)):
-            v = self._lanes[i].create_vehicle(speed, source, destination, type, start_position)
+            v = self._lanes[i].create_vehicle(speed, source, destination, type, start_position, num_arms)
             if v:
-                print(f"Vehicle created in lane {i}")
+                print(f"{v._vehicle_type} created in lane {i}")
                 break
                 

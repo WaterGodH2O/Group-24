@@ -8,8 +8,6 @@ from Junction import Junction
 import math
 game_state:int = 0
 
-
-
 pygame.init()
 
 # window size
@@ -387,7 +385,7 @@ while running:
                             else:
                                 start = int(parts[0])
                                 end = int(parts[1])
-                                if not(1 <= start < end <= 5):
+                                if not(2 <= start < end <= 5):
                                     num_lanes_invalid = True
                                 else:
                                     lane_configs = list(range(start, end + 1))
@@ -396,13 +394,13 @@ while running:
                                 num_lanes_invalid = True
                             else:
                                 num_lanes_input = int(num_lanes_input)
-                                if not (1 <= num_lanes_input <=5):
+                                if not (2 <= num_lanes_input <=5):
                                     num_lanes_invalid = True
                                 else:
                                     lane_configs = [num_lanes_input]
 
                     if num_lanes_invalid:
-                        error_messages.append("Error: Number of lanes must be in format X or X-Y where the range of lanes is 1-5.")
+                        error_messages.append("Error: Number of lanes must be in format X or X-Y where the range of lanes is 2-5.")
 
                     # ------------------------------------------------------------------------------------------------------------------
                     #Initialise crossing values as None
@@ -463,7 +461,6 @@ while running:
                     selected_turn : boolean
                     selected_bus : boolean
                     input box is implemented in front end, the result will be store in these two var.
-                    
                     bus_percentage_input : str
                     percentage of bus, note that this is string type.
                     '''
@@ -479,9 +476,9 @@ while running:
                             pedestrian_crossing = selected_pedestrian,
                             p_crossing_time_s = crossing_time,
                             p_crossing_freq = crossing_frequency,
-                            bus_lane = selected_bus
+                            bus_lane = True,
+                            bus_ratio = 0.2
                         )
-
                         print(junction)
                         start_time = time()
                         junction.simulate(simulation_duration*60*1000, 100)
