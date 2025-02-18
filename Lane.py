@@ -191,21 +191,23 @@ class Lane(ABC):
 
         #Vehicle's relative direction. 1 = right, 2 = forward, 3 = left
         #For more/less arms, represents the number of arms anticlockwise
-        vehicle_relative_dir = (vehicle.source - vehicle.destination) % num_arms
+        vehicle_relative_dir = vehicle.get_relative_direction(num_arms)
 
         for box_vehicle in box.get_vehicles():
-            box_v_r_d = (box_vehicle.source - box_vehicle.destination) % num_arms
+            box_v_r_d = box_vehicle.get_relative_direction(num_arms)
             #If a vehicle came from a lane to the left
             if box_vehicle.source_lane < lane_id:
                 #If the box vehicle is moving somewhere right of the vehicles target, it blocks.
                 #Eg: if the box vehicle is moving forwards (2), it blocks left (3) turns.
                 if box_v_r_d < vehicle_relative_dir:
+                    #print(f"Vehicle in {lane_id} turning {vehicle_relative_dir} blocked by vehicle in {box_vehicle.source_lane} turning {box_v_r_d}")
                     return False
 
             #If a vehicle came from the right
             elif box_vehicle.source_lane > lane_id:
                 #If the box vehicle is moving somewhere right of the vehicles target, it blocks.
                 if box_v_r_d > vehicle_relative_dir:
+                    #print(f"Vehicle in {lane_id} turning {vehicle_relative_dir} blocked by vehicle in {box_vehicle.source_lane} turning {box_v_r_d}")
                     return False
         #If the light is green and no vehicle in the box blocks it, enter the box
         return True
@@ -253,3 +255,14 @@ class BusLane(Lane):
             return True
         return False
 
+class LeftTurnLane(Lane):
+
+    def __init__(self, width: int, length: int, num_arms: int):
+        #The left arm is num_arms - 1 arms anticlockwise from the source arm.
+        super().__init__([num_arms - 1], width, length)
+
+    def can_enter_lane(self, vehicle: Vehicle, num_arms: int):
+        #Can enter only if moving left
+        if vehicle.get_relative_direction(num_arms) in self.allowed_directions:
+            return True
+        return False

@@ -1,5 +1,5 @@
 from typing import List
-from Lane import CarLane, Lane, BusLane
+from Lane import Lane, CarLane, BusLane, LeftTurnLane
 from exceptions import TooManyVehiclesException
 from Box import Box
 from bisect import bisect_right
@@ -8,7 +8,7 @@ class Arm:
     """
     This class defines the behaviour of each entrance in the junction
     """
-    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int, num_arms: int, bus_lane: int):
+    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int, num_arms: int, bus_lane: bool, left_turn_lane: bool):
         # the length and width of the arm in metres
         self._length: int = length
         self._width: int = width
@@ -20,6 +20,8 @@ class Arm:
         self._lanes: List[Lane] = []
         if(bus_lane):
                 self._lanes.append(BusLane(width / num_lanes, length, num_arms))
+        if(left_turn_lane):
+            self._lanes.append(LeftTurnLane(width / num_lanes, length, num_arms))
         for i in range(num_lanes):
             self._lanes.append(CarLane(width / num_lanes, length, num_arms))
 
@@ -73,7 +75,7 @@ class Arm:
                 junction_box.add_vehicle(vehicle_leaving)
                 # update kpi
                 vehicle_wait_time = vehicle_leaving.wait_time / 1000 # in seconds
-                print(f"{vehicle_leaving.vehicle_type} entered box from lane {vehicle_leaving.source_lane}")
+                print(f"{vehicle_leaving.vehicle_type} entered box from arm {vehicle_leaving.source}, lane {vehicle_leaving.source_lane}, turning {vehicle_leaving.get_relative_direction(num_arms)}")
                 self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
                 self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1
@@ -236,6 +238,6 @@ class Arm:
         for i in range(0, len(self._lanes)):
             v = self._lanes[i].create_vehicle(speed, source, destination, type, start_position, num_arms)
             if v:
-                print(f"{v._vehicle_type} created in lane {i}")
+                print(f"{v._vehicle_type} created in arm {source} lane {i}, turning {v.get_relative_direction(num_arms)}")
                 break
                 

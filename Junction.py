@@ -28,7 +28,8 @@ class Junction:
                  p_crossing_time_s: int = 0,
                  p_crossing_freq: int = 0,
                  bus_lane: bool = False,
-                 bus_ratio: float = 0):
+                 bus_ratio: float = 0,
+                 left_turn_lanes: bool = True):
         """
         初始化交通路口信息
         :param traffic_data: The number of vehicles per hour from each arm to another. The first index is the source arm and the second is the destination, numbered clockwise from north.
@@ -61,12 +62,17 @@ class Junction:
         self.bus_lanes = bus_lane
         self.bus_ratio = bus_ratio
 
+        #Initialise left turn lanes
+        self.left_turn_lanes = left_turn_lanes
+
         #used to test car generation
         self.cars_made = np.zeros((self.NUM_ARMS, self.NUM_ARMS))
-        self.busses_made = 0
-        self.cars = 0
+
         self.arms: List[Arm] = [
-            Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes, self.NUM_ARMS, self.bus_lanes)
+            Arm(self.LANE_WIDTH * num_lanes, 
+                self.LANE_LENGTH, self.traffic_data[i], 
+                self.num_lanes, self.NUM_ARMS,
+                self.bus_lanes, self.left_turn_lanes)
             for i in range (4)
         ]
         self.box = Box(self.LANE_WIDTH, self.num_lanes)
@@ -101,12 +107,7 @@ class Junction:
         :param sim_time_ms: The total length of time to simulate in milliseconds.
         :param update_length_ms: The length of each simulation step in milliseconds.
         """
-        #Collision test
-        """
-        self.arms[0]._lanes[0]._vehicles.append(Vehicle.Car(18, 0, 3, 2))
-        self.arms[0]._lanes[1]._vehicles.append(Vehicle.Car(18, 0, 2, 0))
-        self.arms[0]._lanes[2]._vehicles.append(Vehicle.Car(18, 0, 1, 2))
-        """
+
         try:
             while (sim_time_ms > 0):
                 
@@ -119,7 +120,6 @@ class Junction:
         print(self.cars_made)
         print("Simulation finished")
         print(f"{self.box.vt} vehicles passed through out of {np.sum(self.cars_made)}")
-        print(f"{self.busses_made} busses")
     
     
     def update(self, update_length_ms: int) -> None:
@@ -159,7 +159,5 @@ class Junction:
                     #Create busses if a random number is less than the bus ratio
                     if self.random.uniform(0, 1) < self.bus_ratio:
                         self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Bus", self.NUM_ARMS)
-                        self.busses_made += 1
                     else:
                         self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Car", self.NUM_ARMS)
-                        self.cars += 1
