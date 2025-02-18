@@ -452,14 +452,14 @@ while running:
                         hide_error_box()
 
 
-'''
-selected_turn : boolean
-selected_bus : boolean
-input box is implemented in front end, the result will be store in these two var.
-
-bus_percentage_input : str
-percentage of bus, note that this is string type.
-'''
+                    '''
+                    selected_turn : boolean
+                    selected_bus : boolean
+                    input box is implemented in front end, the result will be store in these two var.
+                    
+                    bus_percentage_input : str
+                    percentage of bus, note that this is string type.
+                    '''
 
                     top_junctions = []
 
