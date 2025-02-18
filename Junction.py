@@ -27,7 +27,8 @@ class Junction:
                  pedestrian_crossing: bool = False,
                  p_crossing_time_s: int = 0,
                  p_crossing_freq: int = 0,
-                 bus_lane: bool = False):
+                 bus_lane: bool = False,
+                 bus_ratio: float = 0):
         """
         初始化交通路口信息
         :param traffic_data: The number of vehicles per hour from each arm to another. The first index is the source arm and the second is the destination, numbered clockwise from north.
@@ -39,7 +40,7 @@ class Junction:
         #Initialise random number generator
         self.random = np.random.default_rng()
         #dummy data
-        self.traffic_data: list[list[int]] = [[0, 300, 300, 300], [300, 0, 300, 300], [300, 300, 0, 300], [300, 300, 300, 0]]
+        self.traffic_data: list[list[int]] = [[0, 1, 2, 3], [4, 0, 5, 6], [7, 8, 0, 9], [10, 11, 12, 0]]
         #Precompute scale values for exponential random distribution
         self.traffic_scales: list[list[int]] = [[(60*60*1000)/val if val != 0 else 0 for val in row ] for row in self.traffic_data]
         
@@ -55,12 +56,17 @@ class Junction:
                                           p_crossing_time_s,
                                           p_crossing_freq,
                                           self.random)
+        
+        #Initialise bus lanes
+        self.bus_lanes = bus_lane
+        self.bus_ratio = bus_ratio
 
         #used to test car generation
         self.cars_made = np.zeros((self.NUM_ARMS, self.NUM_ARMS))
-
+        self.busses_made = 0
+        self.cars = 0
         self.arms: List[Arm] = [
-            Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes, bus_lane)
+            Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes, self.bus_lanes)
             for i in range (4)
         ]
         self.box = Box(self.LANE_WIDTH, self.num_lanes)
@@ -73,7 +79,8 @@ class Junction:
                 f"  {self.traffic_data}\n"
                 f"Configurable Parameters:\n"
                 f"  Number of lanes: {self.num_lanes}\n"
-                f"  Pedestrian crossing: {'Yes' if self.traffic_light.p_crossing else 'No'}\n")
+                f"  Pedestrian crossing: {'Yes' if self.traffic_light.p_crossing else 'No'}\n"
+                f"  Bus Lanes: {'Yes' if self.bus_lanes else 'No'}, ratio {self.bus_ratio}")
 
     
     def get_kpi(self) -> List[List[int]]:
@@ -112,6 +119,7 @@ class Junction:
         print(self.cars_made)
         print("Simulation finished")
         print(f"{self.box.vt} vehicles passed through out of {np.sum(self.cars_made)}")
+        print(f"{self.busses_made} busses")
     
     
     def update(self, update_length_ms: int) -> None:
@@ -148,5 +156,10 @@ class Junction:
                     time_to_next_ms = self.random.exponential(self.traffic_scales[source][dest])
                     self.vehicle_timers_ms[source][dest] += time_to_next_ms
                     self.cars_made[source][dest] += 1
-                    
-                    self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Car")
+                    #Create busses if a random number is less than the bus ratio
+                    if self.random.uniform(0, 1) < self.bus_ratio:
+                        self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Bus")
+                        self.busses_made += 1
+                    else:
+                        self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Car")
+                        self.cars += 1

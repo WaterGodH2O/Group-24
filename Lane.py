@@ -218,10 +218,10 @@ class Lane(ABC):
         """
 
     @abstractmethod
-    def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> bool:
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> Vehicle:
         """
         Create a new vehicle, unless forbidden by lane type
-        :return: True if created successfully, false otherwise.
+        :return: The created vehicle
         """
 
 
@@ -229,17 +229,21 @@ class CarLane(Lane):
     def __init__(self, width: int, length: int):
         super().__init__([0,1,2,3], width, length)
     
-    def create_vehicle(self, speed: int, source: int, destination: int, type: str, start_position: int) -> bool:
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str, start_position: int) -> Vehicle:
         """
         Create a new vehicle with the given information.
+
+        :return: The vehicle created
         """
         if type == "Car":
-            self.add_vehicle(Car(speed, source, destination, start_position))
-            return True
+            v = Car(speed, source, destination, start_position)
+            self.add_vehicle(v)
+            return v
         if type == "Bus":
-            self.add_vehicle(Bus(speed, source, destination, start_position))
-            return True
-        return False
+            v = Bus(speed, source, destination, start_position)
+            self.add_vehicle(v)
+            return v
+        return None
     
     def can_enter_lane(self, vehicle, num_arms):
         #Car lanes can be entered by any vehicle going in any direction
@@ -252,11 +256,12 @@ class BusLane(Lane):
     def __init__(self, width: int, length: int):
         super().__init__([0,1,2,3], width, length)
     
-    def create_vehicle(self, speed: int, source: int, destination: int, type: str, start_position: int) -> bool:
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str, start_position: int) -> Vehicle:
         if type == "Bus":
-            self.add_vehicle(Bus(speed, source, destination, start_position))
-            return True
-        return False
+            v = Bus(speed, source, destination, start_position)
+            self.add_vehicle(v)
+            return v
+        return None
     
     def can_enter_lane(self, vehicle: Vehicle, num_arms: int):
         if vehicle.vehicle_type == "Bus":

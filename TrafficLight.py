@@ -64,7 +64,7 @@ class TrafficLight:
             self.traffic_light_gap_timer_ms = self.traffic_light_gap_ms
             self.prev_light_dir = self.traffic_light_dir
             self.traffic_light_dir = -1
-            print("Light changed to red")
+            #print("Light changed to red")
     
     def update_traffic_light_all_red(self, update_length_ms: int, arms: list[Arm]) -> None:
         """ Process one traffic light update when in between light cycles when no pedestrian crossing is active """
