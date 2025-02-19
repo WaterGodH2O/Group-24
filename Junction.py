@@ -46,7 +46,7 @@ class Junction:
         #Initialise random number generator
         self.random = np.random.default_rng()
         #dummy data
-        self.traffic_data: list[list[int]] = [[0, 200, 200, 200], [200, 0, 205, 206], [207, 18, 0, 209], [110, 111, 112, 0]]
+        self.traffic_data = traffic_data
         #Precompute scale values for exponential random distribution
         self.traffic_scales: list[list[int]] = [[(60*60*1000)/val if val != 0 else 0 for val in row ] for row in self.traffic_data]
         

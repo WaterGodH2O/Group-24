@@ -108,7 +108,7 @@ pedestrian_yes = pygame_gui.elements.UIButton(
 
 pedestrian_no = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((82+60, 703-40), (50, 30)),
-    text='No',
+    text='> No <',
     manager=manager,
     container=page1_container
 )
@@ -122,7 +122,7 @@ turn_yes = pygame_gui.elements.UIButton(
 
 turn_no = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((380+60, 703-40), (50, 30)),
-    text='No',
+    text='> No <',
     manager=manager,
     container=page1_container
 )
@@ -136,7 +136,7 @@ bus_yes = pygame_gui.elements.UIButton(
 
 bus_no = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((685+60, 703-40), (50, 30)),
-    text='No',
+    text='> No <',
     manager=manager,
     container=page1_container
 )
@@ -165,7 +165,6 @@ error_message_label = pygame_gui.elements.UITextBox(
 )
 
 
-
 # Modify parameters
 modify_parameters_button = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect((900, 700), (150, 50)),
@@ -174,10 +173,26 @@ modify_parameters_button = pygame_gui.elements.UIButton(
     container=page2_container
 )
 
+left_arrow = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect(50, 720, 50, 50),  # Adjust position
+    text="<",
+    manager=manager,
+    container=page2_container
+)
+
+right_arrow = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect(700, 720, 50, 50),  # Adjust position
+    text=">",
+    manager=manager,
+    container=page2_container
+)
+
 table_pos_x = 100
 table_pos_y = 50
 column_width = 150
 row_height = 120
+
+start_col = 1
 
 top_junctions = []
 
@@ -208,15 +223,30 @@ def add_config(efficiency, values, description):
     output_data[5].append(f"North: {int(values[0][2])}\nEast: {int(values[1][2])}\nSouth: {int(values[2][2])}\nWest: {int(values[3][2])}")
 
 def create_table(data):
+    global table_elements
+
+    for element in table_elements:
+        element.kill()
+    table_elements.clear()
+
     for(i,row) in enumerate(output_data):
-        for(j,value) in enumerate(row):
-            label = pygame_gui.elements.UITextBox(
-                html_text=value,
-                relative_rect=pygame.Rect(table_pos_x+j*column_width, table_pos_y+i*row_height, column_width, row_height),
+        label = pygame_gui.elements.UITextBox(
+                html_text=row[0],
+                relative_rect=pygame.Rect(table_pos_x, table_pos_y+i*row_height, column_width, row_height),
                 manager=manager,
                 container=page2_container
             )
-            table_elements.append(label)
+        table_elements.append(label)
+        for j in range(3):
+            col_index = start_col + j
+            if col_index < len(row):
+                label = pygame_gui.elements.UITextBox(
+                    html_text=row[col_index],
+                    relative_rect=pygame.Rect(table_pos_x+(j+1)*column_width, table_pos_y+i*row_height, column_width, row_height),
+                    manager=manager,
+                    container=page2_container
+                )
+                table_elements.append(label)
 
 def show_error_box(error_text):
     error_message_label.set_text(error_text)
@@ -292,9 +322,9 @@ while running:
 
         draw_font("Pedestrian Crossings", (50, 630))
 
-        draw_font("Trun Lane", (385, 630))
+        draw_font("Left turn lane", (385, 630))
 
-        draw_font("Bus Lane", (695, 630))
+        draw_font("Bus lane", (695, 630))
 
         draw_font("Crossing time\n(seconds)", (400, 550))
 
@@ -367,6 +397,14 @@ while running:
                     if traffic_flow_rates_invalid:
                         error_messages.append("Error: All traffic flow rates must be integer values between 0 and 3000.")
 
+                    print(traffic_data)
+                    row1 = [0,traffic_data["n2e"],traffic_data["n2s"],traffic_data["n2w"]]
+                    row2 = [traffic_data["e2n"],0,  traffic_data["e2s"], traffic_data["e2w"]]
+                    row3 = [traffic_data["s2n"], traffic_data["s2e"],0,  traffic_data["s2w"]]
+                    row4 = [traffic_data["w2n"], traffic_data["w2e"], traffic_data["w2s"], 0]
+                    traffic_data = [row1, row2, row3, row4]
+                    print(traffic_data)
+                    
                     #------------------------------------------------------------------------------------------------------------------
                     # validate number of lanes input
                     num_lanes_input = param_inputs["num_lanes"].get_text().strip()
@@ -463,36 +501,39 @@ while running:
 
                     top_junctions = []
 
+                    ped = [False, True] if selected_pedestrian else [False]
+                    bus = [False, True] if selected_bus else [False]
+
                     for num_lanes in lane_configs:
+                        for ped_yes in ped:
+                            for bus_yes in bus:
+                                # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
+                                junction = Junction(
+                                    traffic_data,
+                                    num_lanes = num_lanes,
+                                    pedestrian_crossing = selected_pedestrian,
+                                    p_crossing_time_s = crossing_time,
+                                    p_crossing_freq = crossing_frequency,
+                                    bus_lane = selected_bus,
+                                    bus_ratio = bus_percentage
+                                )
 
-                        # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
-                        junction = Junction(
-                            traffic_data,
-                            num_lanes = num_lanes,
-                            pedestrian_crossing = selected_pedestrian,
-                            p_crossing_time_s = crossing_time,
-                            p_crossing_freq = crossing_frequency,
-                            bus_lane = selected_bus
-                        )
-
-                        print(junction)
-                        start_time = time()
-                        junction.simulate(simulation_duration*60*1000, 100)
-                        print(f"Simulation duration: {round(time() - start_time, 2)}s")
-                        kpi = junction.get_kpi()
-                        top_junctions.append([calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes])
+                                print(junction)
+                                start_time = time()
+                                junction.simulate(simulation_duration*60*1000, 100)
+                                print(f"Simulation duration: {round(time() - start_time, 2)}s")
+                                kpi = junction.get_kpi()
+                                top_junctions.append([calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes])
 
 
                     # top 3 junctions by kpi
-                    top_junctions = sorted(top_junctions, key=lambda x: x[0], reverse=True)[:3]
+                    top_junctions = sorted(top_junctions, key=lambda x: x[0], reverse=True)
 
                     init_table()
 
                     for junction in top_junctions:
-                        config_description = f"{junction[2]} lanes\nPedestrian crossings: {'Yes' if selected_pedestrian else 'No'}"
+                        config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}"
                         add_config(junction[0],junction[1],config_description)
-
-                    create_table(output_data)
 
                     game_state = 1
 
@@ -517,7 +558,14 @@ while running:
         manager.process_events(event)
         # click on button event
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            if event.ui_element == modify_parameters_button:
+            if event.ui_element == left_arrow and start_col > 1:
+                start_col -= 1
+                create_table(output_data)
+
+            elif event.ui_element == right_arrow and start_col + 3 < len(output_data[0]):
+                start_col += 1
+                create_table(output_data)
+            elif event.ui_element == modify_parameters_button:
                 game_state = 0
                 hide_error_box()
                 init_table()
