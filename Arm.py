@@ -55,7 +55,7 @@ class Arm:
     def get_lane(self, lane_num: int) -> Lane:
         return self._lanes[lane_num] if lane_num < len(self._lanes) else None
     
-    def move_all_vehicles(self, current_time_ms: int, is_light_green: bool, junction_box: Box, update_length_ms: int, num_arms: int) -> None:
+    def move_all_vehicles(self, current_time_ms: int, traffic_light_dir: int, junction_box: Box, update_length_ms: int, num_arms: int, arm_id: int) -> None:
         """
         Method to update all the vehicles in each lane of the junction + allocate new vehicles to lanes
         Moves all the vehicles for a particular arm in the junction. For each vehicle that exits the lane,
@@ -67,7 +67,7 @@ class Arm:
         
         for i, lane in enumerate(self._lanes):
             # update the position of each vehicle in the arm, getting the vehicle leaving the lane
-            vehicles_leaving = lane.move_all_vehicles(is_light_green, update_length_ms, junction_box, i, num_arms)
+            vehicles_leaving = lane.move_all_vehicles(traffic_light_dir, update_length_ms, junction_box, arm_id, i, num_arms)
 
             # remove the vehicles from the lane if necessary
             for vehicle_leaving in vehicles_leaving:

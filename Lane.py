@@ -111,7 +111,7 @@ class Lane(ABC):
         return None
     
     
-    def move_all_vehicles(self, is_light_green: bool, update_length_ms: int, box: Box, lane_id: int, num_arms: int) -> Set[Vehicle]:
+    def move_all_vehicles(self, traffic_light_dir: int, update_length_ms: int, box: Box, arm_id: int, lane_id: int, num_arms: int) -> Set[Vehicle]:
         """
         Moves all vehicles in the lane based on speed. Cars can move if there is sufficient space
         ahead of them, or if they're at the start of the junction and the light is green
@@ -125,7 +125,7 @@ class Lane(ABC):
         for i, vehicle in enumerate(self._vehicles):
             # if the vehicles next move will put them in the junction
             if vehicle.get_next_position(update_length_ms) <= 0:
-                if self.can_enter_box(vehicle, box, lane_id, is_light_green, num_arms):
+                if self.can_enter_box(vehicle, box, arm_id, lane_id, traffic_light_dir, num_arms):
                     # this vehicle will leave the junction
                     vehicle.set_source_lane(lane_id)
                     leaving_vehicles.add(vehicle)
@@ -180,15 +180,23 @@ class Lane(ABC):
         """
         return self._vehicles[0].wait_time if self._vehicles else 0
 
-    def can_enter_box(self, vehicle: Vehicle, box: Box, lane_id: int, is_light_green: bool, num_arms: int) -> bool:
+    def can_enter_box(self, vehicle: Vehicle, box: Box, arm_id: int, lane_id: int, traffic_light_dir: int, num_arms: int) -> bool:
         """
         Indicate whether the vehicle in this lane are allowed to enter junction
         i.e. whether cooresponding traffic light is green.
         """
         #If the light is red, do not enter.
-        if (not is_light_green):
+        if (arm_id != traffic_light_dir):
             return False
 
+        return self.box_collision_check(vehicle, box, lane_id, num_arms)
+
+        
+    
+    def box_collision_check(self, vehicle: Vehicle, box: Box, lane_id: int, num_arms: int):
+        """
+        Returns true if there are no vehicles in the box blocking the path from the given lane to the given vehicles destination
+        """
         #Vehicle's relative direction. 1 = right, 2 = forward, 3 = left
         #For more/less arms, represents the number of arms anticlockwise
         vehicle_relative_dir = vehicle.get_relative_direction(num_arms)
@@ -266,3 +274,17 @@ class LeftTurnLane(Lane):
         if vehicle.get_relative_direction(num_arms) in self.allowed_directions:
             return True
         return False
+    
+    def can_enter_box(self, vehicle: Vehicle, box: Box, arm_id: int, lane_id: int, traffic_light_dir: int, num_arms: int) -> bool:
+        #Never enter during a pedestrian crossing
+        if traffic_light_dir == -1:
+            return False
+        if traffic_light_dir == arm_id:
+            #If the light is green for all cars do normal collision check
+            return self.box_collision_check(vehicle, box, lane_id, num_arms)
+        #If active arm is immediately to the left, always go as no conflicts can occur
+        if (arm_id - traffic_light_dir) % num_arms == num_arms - 1:
+            print("Vehicle turned left")
+            return True
+        return False
+

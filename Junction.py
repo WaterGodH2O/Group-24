@@ -134,8 +134,7 @@ class Junction:
 
         self.box.move_all_vehicles(update_length_ms)
         for i, arm in enumerate(self.arms):
-            green_light = i == self.traffic_light.traffic_light_dir
-            arm.move_all_vehicles(0, green_light, self.box, update_length_ms, self.NUM_ARMS)
+            arm.move_all_vehicles(0, self.traffic_light.traffic_light_dir, self.box, update_length_ms, self.NUM_ARMS, i)
     
 
     def create_new_vehicles(self, update_length_ms: int) -> None:
