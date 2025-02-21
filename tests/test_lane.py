@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 from Lane import CarLane
-from Vehicle import Vehicle
+from Vehicle import Vehicle, Car
+from Box import Box
 import unittest
 
 
@@ -80,36 +81,26 @@ class TestLanes(unittest.TestCase):
     def test_move_all_vehicles_red(self):
         """ tests if vehicles (not waiting in a queue) can still move even if the light is red """
         # create mock vehicles
-        car1 = MagicMock(spec=Vehicle)
-        car2 = MagicMock(spec=Vehicle)
-        car3 = MagicMock(spec=Vehicle)
-        car4 = MagicMock(spec=Vehicle)
+        car1 = Car(2, 0, 2, 0, 0)
+        car2 = Car(2, 0, 2, 5, 0)
+        car3 = Car(2, 0, 2, 11, 0)
+        car4 = Car(2, 0, 2, 20, 0)
 
-        # set mock values
-        car1._distance = 0
-        car1._speed = 2
         car1._stopping_distance = 5
-
-        car2._distance = 5
-        car2._speed = 2
         car2._stopping_distance = 5
-
-        car3._distance = 11
-        car3._speed = 2
         car3._stopping_distance = 5
-
-        car4._distance = 20
-        car4._speed = 2
         car4._stopping_distance = 5
 
         # create lane with mock vehicles
         self.lane._vehicles = [car1, car2, car3, car4]
 
         # update the positions of all cars (per 1 second)
-        leaving_vehicle = self.lane.move_all_vehicles(False, 1000)
+        leaving_vehicle = self.lane.move_all_vehicles(False, 1000, None, 2, 3)
 
-        # assert that the right vehicles have moved (cars 3 and 4 should have move 2m in 1 second (2m/s))
-        self.assertEqual(leaving_vehicle, None)
+        # assert that no cars have left the junction at a red light (empty set)
+        self.assertEqual(leaving_vehicle, set())
+
+        # assert that the vehicles have moved to the intended positions
         self.assertEqual(car1._distance, 0)
         self.assertEqual(car2._distance, 5)
         self.assertEqual(car3._distance, 10)
@@ -119,39 +110,46 @@ class TestLanes(unittest.TestCase):
     def test_move_all_vehicles_green(self):
         """ test that the right vehicles move when the light is green """
         # create mock vehicles
-        car1 = MagicMock(spec=Vehicle)
-        car2 = MagicMock(spec=Vehicle)
-        car3 = MagicMock(spec=Vehicle)
-        car4 = MagicMock(spec=Vehicle)
+        car1 = Car(2, 0, 2, 0, 0)
+        car2 = Car(2, 0, 2, 5, 0)
+        car3 = Car(2, 0, 2, 10, 0)
+        car4 = Car(2, 0, 2, 13, 0)
 
-        # set mock values
-        car1._distance = 0
-        car1._speed = 2
         car1._stopping_distance = 5
-
-        car2._distance = 5
-        car2._speed = 2
         car2._stopping_distance = 5
-
-        car3._distance = 10
-        car3._speed = 2
         car3._stopping_distance = 5
-
-        car4._distance = 13
-        car4._speed = 2
         car4._stopping_distance = 5
 
         # create lane with mock vehicles
         self.lane._vehicles = [car1, car2, car3, car4]
 
         # update the positions of all cars (per 1 second)
-        leaving_vehicle = self.lane.move_all_vehicles(True, 1000)
+        leaving_vehicle = self.lane.move_all_vehicles(True, 1000, Box(2, 3), 2, 3)
         
+        # assert that only car 1 has left the junction
+        self.assertEqual(leaving_vehicle, {car1})
+
         # assert that the right vehicles have moved (cars 3 and 4 should have move 2m in 1 second (2m/s))
-        self.assertEqual(leaving_vehicle, car1) # assert that car 1 has left the junction
         self.assertEqual(car2._distance, 3)
         self.assertEqual(car3._distance, 8)
         self.assertEqual(car4._distance, 13)
-
-
     
+    def test_has_space_to_move(self):
+        """ test that the program accurately determines if a given vehicle has enough space to move """
+        # create mock vehicles
+        car1 = Car(2, 0, 2, 0, 0)
+        car2 = Car(2, 0, 2, 2, 0)
+        car3 = Car(2, 0, 2, 15, 0)
+        car4 = Car(2, 0, 2, 20, 0)
+
+        # assert that car1 can move as there is no vehicle in front
+        self.assertTrue(self.lane.has_space_to_move(car1, None))
+
+        # assert that car2 can't move as there isn't enough space
+        self.assertFalse(self.lane.has_space_to_move(car2, car1))
+
+        # assert that car3 can move forward as there is enough space
+        self.assertTrue(self.lane.has_space_to_move(car3, car2))
+
+        # test it asserts false on boundary values
+        self.assertFalse(self.lane.has_space_to_move(car3, car4))

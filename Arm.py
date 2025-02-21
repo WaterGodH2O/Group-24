@@ -81,7 +81,7 @@ class Arm:
             self._max_queue_length = max(self._max_queue_length, lane.queue_length)  
             
         # change lanes
-        self.handle_lane_switching(num_arms) # TODO lane switching greatly slows down junction simulation performance (~11s to 4.4s without it) -> necessary?
+        self.handle_lane_switching(num_arms)
 
     def handle_lane_switching(self, num_arms):
         """ Attempts lane switching for all vehicles in the arm of a junction, prioritising shortest lane """
@@ -165,7 +165,6 @@ class Arm:
         vehicle_behind = lane.vehicles[new_vehicle_index] if new_vehicle_index < len(lane.vehicles) else None
 
         # check the space between the vehicle ahead and behind to ensure adequate space
-        # TODO maybe refine?
         if vehicle_ahead and vehicle.distance - vehicle_ahead.distance <= vehicle._stopping_distance:
             # return -1 to indicate we can't move into this lane
             return -1
