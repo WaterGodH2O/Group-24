@@ -396,14 +396,14 @@ while running:
 
                     if traffic_flow_rates_invalid:
                         error_messages.append("Error: All traffic flow rates must be integer values between 0 and 3000.")
-
-                    print(traffic_data)
-                    row1 = [0,traffic_data["n2e"],traffic_data["n2s"],traffic_data["n2w"]]
-                    row2 = [traffic_data["e2n"],0,  traffic_data["e2s"], traffic_data["e2w"]]
-                    row3 = [traffic_data["s2n"], traffic_data["s2e"],0,  traffic_data["s2w"]]
-                    row4 = [traffic_data["w2n"], traffic_data["w2e"], traffic_data["w2s"], 0]
-                    traffic_data = [row1, row2, row3, row4]
-                    print(traffic_data)
+                    else:
+                        print(traffic_data)
+                        row1 = [0,traffic_data["n2e"],traffic_data["n2s"],traffic_data["n2w"]]
+                        row2 = [traffic_data["e2n"],0,  traffic_data["e2s"], traffic_data["e2w"]]
+                        row3 = [traffic_data["s2n"], traffic_data["s2e"],0,  traffic_data["s2w"]]
+                        row4 = [traffic_data["w2n"], traffic_data["w2e"], traffic_data["w2s"], 0]
+                        traffic_data = [row1, row2, row3, row4]
+                        print(traffic_data)
                     
                     #------------------------------------------------------------------------------------------------------------------
                     # validate number of lanes input
