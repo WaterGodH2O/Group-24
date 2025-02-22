@@ -35,7 +35,7 @@ class Junction:
                  p_crossing_freq: int = 0,
                  bus_lane: bool = False,
                  bus_ratio: float = 0,
-                 left_turn_lanes: bool = True):
+                 left_turn_lanes: bool = False):
         """
         初始化交通路口信息
         :param traffic_data: The number of vehicles per hour from each arm to another. The first index is the source arm and the second is the destination, numbered clockwise from north.
@@ -145,7 +145,6 @@ class Junction:
         print(self.cars_made)
         print("Simulation finished")
         print(f"{self.box.vt} vehicles passed through out of {round(np.sum(self.cars_made))}")
-        print(f"{self.busses_made} busses")
     
     
     def update(self, update_length_ms: int) -> None:

@@ -470,13 +470,13 @@ while running:
                     # ------------------------------------------------------------------------------------------------------------------
                     # validate bus percentage
                     bus_percentage_input = param_inputs["bus_percentage"].get_text().strip()
-                    if bus_percentage_input:
-                        if bus_percentage_input.isdigit():
-                            if (float(bus_percentage_input) < 0) or (float(bus_percentage_input) > 1):
-                                bus_percentage_invalid = True
-                        else:
-
+                    try:
+                        if (float(bus_percentage_input) < 0) or (float(bus_percentage_input) > 1):
                             bus_percentage_invalid = True
+                        else:
+                            bus_percentage = float(bus_percentage_input)
+                    except ValueError:
+                        bus_percentage_invalid = True
 
                     if bus_percentage_invalid:
                         error_messages.append("Error: Bus percentage must be a number within 0 to 1.")
@@ -503,27 +503,30 @@ while running:
 
                     ped = [False, True] if selected_pedestrian else [False]
                     bus = [False, True] if selected_bus else [False]
+                    left = [False, True] if selected_turn else [False]
+                    combinations = [(x, y, z) for x in ped for y in bus for z in left]
 
                     for num_lanes in lane_configs:
-                        for ped_yes in ped:
-                            for bus_yes in bus:
-                                # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
-                                junction = Junction(
-                                    traffic_data,
-                                    num_lanes = num_lanes,
-                                    pedestrian_crossing = selected_pedestrian,
-                                    p_crossing_time_s = crossing_time,
-                                    p_crossing_freq = crossing_frequency,
-                                    bus_lane = selected_bus,
-                                    bus_ratio = bus_percentage
-                                )
+                        for (ped_yes, bus_yes, left_yes) in combinations:
+                            
+                            # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
+                            junction = Junction(
+                                traffic_data,
+                                num_lanes = num_lanes,
+                                pedestrian_crossing = ped_yes,
+                                p_crossing_time_s = crossing_time,
+                                p_crossing_freq = crossing_frequency,
+                                bus_lane = bus_yes,
+                                bus_ratio = bus_percentage,
+                                left_turn_lanes = left_yes
+                            )
 
-                                print(junction)
-                                start_time = time()
-                                junction.simulate(simulation_duration*60*1000, 100)
-                                print(f"Simulation duration: {round(time() - start_time, 2)}s")
-                                kpi = junction.get_kpi()
-                                top_junctions.append([calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes])
+                            print(junction)
+                            start_time = time()
+                            junction.simulate(simulation_duration*60*1000, 100)
+                            print(f"Simulation duration: {round(time() - start_time, 2)}s")
+                            kpi = junction.get_kpi()
+                            top_junctions.append([calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes, left_yes])
 
 
                     # top 3 junctions by kpi
