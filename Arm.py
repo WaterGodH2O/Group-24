@@ -1,5 +1,5 @@
 from typing import List
-from Lane import CarLane, Lane, BusLane
+from Lane import Lane, CarLane, BusLane, LeftTurnLane
 from exceptions import TooManyVehiclesException
 from Box import Box
 from bisect import bisect_right
@@ -8,7 +8,7 @@ class Arm:
     """
     This class defines the behaviour of each entrance in the junction
     """
-    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int, num_arms: int, bus_lane: int):
+    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int, num_arms: int, bus_lane: bool, left_turn_lane: bool):
         # the length and width of the arm in metres
         self._length: int = length
         self._width: int = width
@@ -20,6 +20,8 @@ class Arm:
         self._lanes: List[Lane] = []
         if(bus_lane):
                 self._lanes.append(BusLane(width / num_lanes, length, num_arms))
+        if(left_turn_lane):
+            self._lanes.append(LeftTurnLane(width / num_lanes, length, num_arms))
         for i in range(num_lanes):
             self._lanes.append(CarLane(width / num_lanes, length, num_arms))
 
@@ -53,7 +55,7 @@ class Arm:
     def get_lane(self, lane_num: int) -> Lane:
         return self._lanes[lane_num] if lane_num < len(self._lanes) else None
     
-    def move_all_vehicles(self, current_time_ms: int, is_light_green: bool, junction_box: Box, update_length_ms: int, num_arms: int) -> None:
+    def move_all_vehicles(self, current_time_ms: int, traffic_light_dir: int, junction_box: Box, update_length_ms: int, num_arms: int, arm_id: int) -> None:
         """
         Method to update all the vehicles in each lane of the junction + allocate new vehicles to lanes
         Moves all the vehicles for a particular arm in the junction. For each vehicle that exits the lane,
@@ -65,7 +67,7 @@ class Arm:
         
         for i, lane in enumerate(self._lanes):
             # update the position of each vehicle in the arm, getting the vehicle leaving the lane
-            vehicles_leaving = lane.move_all_vehicles(is_light_green, update_length_ms, junction_box, i, num_arms)
+            vehicles_leaving = lane.move_all_vehicles(traffic_light_dir, update_length_ms, junction_box, arm_id, i, num_arms)
 
             # remove the vehicles from the lane if necessary
             for vehicle_leaving in vehicles_leaving:
@@ -73,6 +75,7 @@ class Arm:
                 junction_box.add_vehicle(vehicle_leaving)
                 # update kpi
                 vehicle_wait_time = vehicle_leaving.wait_time / 1000 # in seconds
+                #print(f"{vehicle_leaving.vehicle_type} entered box from arm {vehicle_leaving.source}, lane {vehicle_leaving.source_lane}, turning {vehicle_leaving.get_relative_direction(num_arms)}")
                 self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
                 self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1
@@ -242,5 +245,6 @@ class Arm:
         for i in range(0, len(self._lanes)):
             v = self._lanes[i].create_vehicle(speed, source, destination, type, start_position, num_arms)
             if v:
+                #print(f"{v._vehicle_type} created in arm {source} lane {i}, turning {v.get_relative_direction(num_arms)}")
                 break
                 

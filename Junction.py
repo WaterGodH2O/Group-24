@@ -34,7 +34,8 @@ class Junction:
                  p_crossing_time_s: int = 0,
                  p_crossing_freq: int = 0,
                  bus_lane: bool = False,
-                 bus_ratio: float = 0):
+                 bus_ratio: float = 0,
+                 left_turn_lanes: bool = True):
         """
         初始化交通路口信息
         :param traffic_data: The number of vehicles per hour from each arm to another. The first index is the source arm and the second is the destination, numbered clockwise from north.
@@ -67,12 +68,17 @@ class Junction:
         self.bus_lanes = bus_lane
         self.bus_ratio = bus_ratio
 
+        #Initialise left turn lanes
+        self.left_turn_lanes = left_turn_lanes
+
         #used to test car generation
         self.cars_made = np.zeros((self.NUM_ARMS, self.NUM_ARMS))
-        self.busses_made = 0
-        self.cars = 0
+
         self.arms: List[Arm] = [
-            Arm(self.LANE_WIDTH * num_lanes, self.LANE_LENGTH, self.traffic_data[i], self.num_lanes, self.NUM_ARMS, self.bus_lanes)
+            Arm(self.LANE_WIDTH * num_lanes, 
+                self.LANE_LENGTH, self.traffic_data[i], 
+                self.num_lanes, self.NUM_ARMS,
+                self.bus_lanes, self.left_turn_lanes)
             for i in range (4)
         ]
         self.box = Box(self.LANE_WIDTH, self.num_lanes)
@@ -154,8 +160,7 @@ class Junction:
 
         self.box.move_all_vehicles(update_length_ms)
         for i, arm in enumerate(self.arms):
-            green_light = i == self.traffic_light.traffic_light_dir
-            arm.move_all_vehicles(0, green_light, self.box, update_length_ms, self.NUM_ARMS)
+            arm.move_all_vehicles(0, self.traffic_light.traffic_light_dir, self.box, update_length_ms, self.NUM_ARMS, i)
     
 
     def create_new_vehicles(self, update_length_ms: int) -> None:
@@ -179,7 +184,5 @@ class Junction:
                     #Create busses if a random number is less than the bus ratio
                     if self.random.uniform(0, 1) < self.bus_ratio:
                         self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Bus", self.NUM_ARMS)
-                        self.busses_made += 1
                     else:
                         self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Car", self.NUM_ARMS)
-                        self.cars += 1

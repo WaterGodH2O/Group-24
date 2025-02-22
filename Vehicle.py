@@ -53,6 +53,12 @@ class Vehicle(ABC):
 
     def update_wait_time(self, update_length_ms: int):
         self._wait_time += update_length_ms
+
+    def get_relative_direction(self, num_arms: int) -> int:
+        """
+        Returns the number of arms between the source and destination anticlockwise
+        """
+        return (self.source - self.destination) % num_arms
     
 
 class Car(Vehicle):
