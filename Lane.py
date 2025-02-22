@@ -7,7 +7,10 @@ class Lane(ABC):
     """
     The abstract class Lane, which defines the basic interface for all lanes.
     """
-    def __init__(self, allowed_directions: List[int], width: int, length: int):
+    def __init__(self, 
+                 allowed_directions: List[int], 
+                 width: int, 
+                 length: int):
         # the list of all vehicles currently in this lane
         self._vehicles: List[Vehicle] = []
 

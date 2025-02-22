@@ -8,7 +8,14 @@ class Arm:
     """
     This class defines the behaviour of each entrance in the junction
     """
-    def __init__(self, width: int, length: int, vehicles_per_hour: List[int], num_lanes: int, num_arms: int, bus_lane: bool, left_turn_lane: bool):
+    def __init__(self, 
+                 width: int, 
+                 length: int, 
+                 vehicles_per_hour: List[int], 
+                 num_lanes: int, 
+                 num_arms: int, 
+                 bus_lane: bool, 
+                 left_turn_lane: bool):
         # the length and width of the arm in metres
         self._length: int = length
         self._width: int = width
@@ -46,6 +53,9 @@ class Arm:
 
         # the longest any given vehicle has been waiting in the arm in seconds
         self._max_wait_time: float = 0
+
+        # the number of people that have left the junction
+        self._total_person_count: int = 0
 
     @property
     def length(self) -> int:
@@ -89,6 +99,7 @@ class Arm:
                 self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
                 self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1
+
             
             # update the max queue length
             self._max_queue_length = max(self._max_queue_length, lane.queue_length)  

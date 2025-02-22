@@ -1,7 +1,14 @@
 from abc import ABC
 
 class Vehicle(ABC):
-    def __init__(self, vehicle_type: str, length: float, speed: int, source: int, destination: int, start_position: float, wait_time_ms: int):
+    def __init__(self, 
+                 vehicle_type: str, 
+                 length: float, 
+                 speed: int, 
+                 source: int, 
+                 destination: int, 
+                 start_position: float,
+                 wait_time_ms: int):
         #Arm ID of the vehicle's start and end
         self._source = source
         self._destination = destination
@@ -13,6 +20,7 @@ class Vehicle(ABC):
         self._stopping_distance = length / 2
         #Speed in metres per second
         self._speed = speed
+        #Name of vehicle type
         self._vehicle_type = vehicle_type
         #How long a vehicle has been waiting at junction in milliseconds
         self._wait_time = 0
@@ -22,7 +30,6 @@ class Vehicle(ABC):
     @property
     def vehicle_type(self):
         return self._vehicle_type
-
     @property
     def source(self):
         return self._source
@@ -32,16 +39,14 @@ class Vehicle(ABC):
     @property
     def destination(self):
         return self._destination
-
     @property
     def wait_time(self):
         return self._wait_time
-    
     @property
     def source_lane(self):
         return self._source_lane
     
-    def set_position(self, position) -> None:
+    def set_position(self, position: int) -> None:
         self._distance = position
 
     def get_next_position(self, update_length_ms: int) -> int:
@@ -51,7 +56,7 @@ class Vehicle(ABC):
     def set_source_lane(self, source_lane: int) -> None:
         self._source_lane = source_lane
 
-    def update_wait_time(self, update_length_ms: int):
+    def update_wait_time(self, update_length_ms: int) -> None:
         self._wait_time += update_length_ms
 
     def get_relative_direction(self, num_arms: int) -> int:
@@ -70,7 +75,7 @@ class Car(Vehicle):
 
 class Bus(Vehicle):
     def __init__(self, speed, source, destination, start_position, wait_time_ms = 0):
-        #Busses are typically 9 to 11m long
+        #Buses are typically 9 to 11m long
         BUS_LENGTH = 10
         super().__init__("Bus", BUS_LENGTH, speed, source, destination, start_position, wait_time_ms)
 

@@ -109,7 +109,7 @@ class Junction:
         pass
     
 
-    def simulate(self, sim_time_ms: int, update_length_ms: int):
+    def simulate(self, sim_time_ms: int, update_length_ms: int) -> None:
         """
         Simulate the junction for a given period of time and at a given precision.
 
@@ -158,7 +158,7 @@ class Junction:
 
         self.box.move_all_vehicles(update_length_ms)
         for i, arm in enumerate(self.arms):
-            arm.move_all_vehicles(0, self.traffic_light.traffic_light_dir, self.box, update_length_ms, self.NUM_ARMS, i)
+            arm.move_all_vehicles(0, self.traffic_light._traffic_light_dir, self.box, update_length_ms, self.NUM_ARMS, i)
     
 
     def create_new_vehicles(self, update_length_ms: int) -> None:
@@ -179,7 +179,7 @@ class Junction:
                     time_to_next_ms = self.random.exponential(self.traffic_scales[source][dest])
                     self.vehicle_timers_ms[source][dest] += time_to_next_ms
                     self.cars_made[source][dest] += 1
-                    #Create busses if a random number is less than the bus ratio
+                    #Create buses if a random number is less than the bus ratio
                     if self.random.uniform(0, 1) < self.bus_ratio:
                         self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Bus", self.NUM_ARMS)
                     else:

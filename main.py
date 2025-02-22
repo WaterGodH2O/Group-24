@@ -419,7 +419,7 @@ while running:
                             else:
                                 start = int(parts[0])
                                 end = int(parts[1])
-                                if not(1 <= start < end <= 5):
+                                if not (1 <= start < end <= 5):
                                     num_lanes_invalid = True
                                 else:
                                     lane_configs = list(range(start, end + 1))
@@ -471,13 +471,14 @@ while running:
                     # ------------------------------------------------------------------------------------------------------------------
                     # validate bus percentage
                     bus_percentage_input = param_inputs["bus_percentage"].get_text().strip()
-                    try:
-                        if (float(bus_percentage_input) < 0) or (float(bus_percentage_input) > 1):
+                    if selected_bus:
+                        try:
+                            if (float(bus_percentage_input) < 0) or (float(bus_percentage_input) > 1):
+                                bus_percentage_invalid = True
+                            else:
+                                bus_percentage = float(bus_percentage_input)
+                        except ValueError:
                             bus_percentage_invalid = True
-                        else:
-                            bus_percentage = float(bus_percentage_input)
-                    except ValueError:
-                        bus_percentage_invalid = True
 
                     if bus_percentage_invalid:
                         error_messages.append("Error: Bus percentage must be a number within 0 to 1.")

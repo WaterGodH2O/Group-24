@@ -1,5 +1,5 @@
 from Arm import Arm
-from numpy import random
+from numpy import random as Random
 class TrafficLight:
     def __init__(self, num_arms: int,
                  traffic_light_interval_ms: int,
@@ -7,10 +7,10 @@ class TrafficLight:
                  pedestrian_crossing: bool, 
                  p_crossing_time_s: int,
                  p_crossing_freq: int,
-                 random: random
+                 random: Random
                  ):
-        #Copy random number generator
-        self.random = random
+        #Copy random number generator from junction
+        self.random: Random = random
         #Initialise traffic light to north
         self.traffic_light_dir: int = 0
         #Set the interval between changes and the traffic light timer to the given interval
@@ -21,19 +21,17 @@ class TrafficLight:
         self.traffic_light_gap_ms: int = traffic_light_gap_ms
         #Initialise value to store the light direction before pedestrian crossings and light changes
         self.prev_light_dir: int = 0
-        self.p_crossing = pedestrian_crossing
-        if(pedestrian_crossing):
+        self.p_crossing: bool = pedestrian_crossing
+        if pedestrian_crossing:
             #Calculate the scale value and take a sample for the initial time
             self.p_crossing_scale: int = 60*60*1000/p_crossing_freq
-            self.p_crossing_interval_time_ms = self.random.exponential(self.p_crossing_scale)
-            self.p_crossing_length_ms = p_crossing_time_s * 1000
-
-        #Initialise p_crossing_queued, which is called by update_traffic_light so must always be set
-        self.p_crossing_queued = False
-        #Initialise the timer for crossings
-        self.p_crossing_timer_ms = 0
-
-        self.num_arms = num_arms
+            self.p_crossing_interval_time_ms: float = self.random.exponential(self.p_crossing_scale)
+            self.p_crossing_length_ms: int = p_crossing_time_s * 1000
+            #Initialise the timer for crossings
+            self.p_crossing_timer_ms: int = 0
+            #Initialise p_crossing_queued, which is called by update_traffic_light so must always be set
+            self.p_crossing_queued: bool = False
+        self.num_arms: int = num_arms
 
     def update_traffic_light(self, update_length_ms: int, arms: list[Arm]) -> None:
         """
@@ -44,11 +42,16 @@ class TrafficLight:
         #Branch depending on if the light is currently in a gap between changes or not.
         if self.traffic_light_gap_timer_ms <= 0:
             self.update_traffic_light_green(update_length_ms, arms)
-        #If p_crossing_timer > 0, then the pedestrian crossing is active and lights are handled by that.
-        elif self.p_crossing_timer_ms <= 0:
-            self.update_traffic_light_all_red(update_length_ms, arms)
+        else:
+            #If pedestrian crossings are enabled, only do the all_red update if the pedestrian crossing is not active
+            if self.p_crossing:
+                if self.p_crossing_timer_ms <= 0:
+                    self.update_traffic_light_all_red(update_length_ms, arms)
+            else:
+                self.update_traffic_light_all_red(update_length_ms, arms)
 
-        if (self.p_crossing):
+        #If pedestrian crossings are enabled, update them every time
+        if self.p_crossing:
             self.update_pedestrian_crossing(update_length_ms)
 
         #Test print for light timing
@@ -60,10 +63,10 @@ class TrafficLight:
         self.traffic_light_time_ms -= update_length_ms
 
         #If no cars are within 100m of the light, the time is below 0, set all lights red and start the gap timer
-        if arms[self.traffic_light_dir].no_vehicles_within(100) or self.traffic_light_time_ms <= 0:       
+        if arms[self._traffic_light_dir].no_vehicles_within(100) or self.traffic_light_time_ms <= 0:       
             self.traffic_light_gap_timer_ms = self.traffic_light_gap_ms
-            self.prev_light_dir = self.traffic_light_dir
-            self.traffic_light_dir = -1
+            self.prev_light_dir = self._traffic_light_dir
+            self._traffic_light_dir = -1
             #print("Light changed to red")
     
     def update_traffic_light_all_red(self, update_length_ms: int, arms: list[Arm]) -> None:
@@ -76,10 +79,10 @@ class TrafficLight:
             self.traffic_light_time_ms = self.traffic_light_interval_ms
             #To update direction, check each direction clockwise for vehicles. If a vehicle is found, set that direction green. 
             #If none are found, set the first direction anticlockwise green
-            self.traffic_light_dir = self.prev_light_dir
+            self._traffic_light_dir = self.prev_light_dir
             for i in range(0,self.num_arms - 1):
-                self.traffic_light_dir = self.get_left_arm(self.traffic_light_dir)
-                if not arms[self.traffic_light_dir].no_vehicles_within(100):
+                self._traffic_light_dir = self.get_left_arm(self._traffic_light_dir)
+                if not arms[self._traffic_light_dir].no_vehicles_within(100):
                     break
             #print(f"Light changed to green, direction {self.traffic_light_dir}")
     
