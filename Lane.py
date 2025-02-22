@@ -282,9 +282,19 @@ class LeftTurnLane(Lane):
         if traffic_light_dir == arm_id:
             #If the light is green for all cars do normal collision check
             return self.box_collision_check(vehicle, box, lane_id, num_arms)
+        
+        vehicle_r_d = (arm_id - traffic_light_dir) % num_arms
         #If active arm is immediately to the left, always go as no conflicts can occur
-        if (arm_id - traffic_light_dir) % num_arms == num_arms - 1:
-            print("Vehicle turned left")
+        if  vehicle_r_d == num_arms - 1:
+            #print("Vehicle turned left")
             return True
-        return False
+        else:
+            #For other arms, check if a vehicle is turning into the same arm
+            for v in box.get_vehicles():
+                if v.destination == vehicle.destination:
+                    #print("Vehicle blocked from left turn")
+                    return False
+        #print("Vehicle turned left from other arm")
+        return True
+
 

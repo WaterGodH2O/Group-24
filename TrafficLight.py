@@ -64,7 +64,7 @@ class TrafficLight:
             self.traffic_light_gap_timer_ms = self.traffic_light_gap_ms
             self.prev_light_dir = self.traffic_light_dir
             self.traffic_light_dir = -1
-            print("Light changed to red")
+            #print("Light changed to red")
     
     def update_traffic_light_all_red(self, update_length_ms: int, arms: list[Arm]) -> None:
         """ Process one traffic light update when in between light cycles when no pedestrian crossing is active """
@@ -81,7 +81,7 @@ class TrafficLight:
                 self.traffic_light_dir = self.get_left_arm(self.traffic_light_dir)
                 if not arms[self.traffic_light_dir].no_vehicles_within(100):
                     break
-            print(f"Light changed to green, direction {self.traffic_light_dir}")
+            #print(f"Light changed to green, direction {self.traffic_light_dir}")
     
     def update_pedestrian_crossing(self, update_length_ms: int) -> None:
         #Crossing active
