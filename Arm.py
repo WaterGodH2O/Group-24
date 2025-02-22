@@ -1,6 +1,6 @@
 from typing import List
 from Lane import Lane, CarLane, BusLane, LeftTurnLane
-from exceptions import TooManyVehiclesException
+from exceptions import TooManyVehiclesException, NotEnoughLanesException
 from Box import Box
 from bisect import bisect_right
 
@@ -19,9 +19,19 @@ class Arm:
         # initalise a list of all the lanes coming from a certain direction in the junction
         self._lanes: List[Lane] = []
         if(bus_lane):
-                self._lanes.append(BusLane(width / num_lanes, length, num_arms))
+            self._lanes.append(BusLane(width / num_lanes, length, num_arms))
+            num_lanes -= 1
         if(left_turn_lane):
-            self._lanes.append(LeftTurnLane(width / num_lanes, length, num_arms))
+            try:
+                self._lanes.append(LeftTurnLane(width / num_lanes, length, num_arms))
+                num_lanes -= 1
+            except ZeroDivisionError:
+                #If num lanes is zero, then ignore the error as a notenoughlanes error will be thrown immediately afterwards
+                pass
+
+        if num_lanes < 1:
+            raise NotEnoughLanesException()
+        
         for i in range(num_lanes):
             self._lanes.append(CarLane(width / num_lanes, length, num_arms))
 

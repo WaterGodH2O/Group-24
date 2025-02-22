@@ -4,7 +4,7 @@ from TrafficLight import TrafficLight
 import Lane
 import Vehicle
 from typing import List
-from exceptions import TooManyVehiclesException
+from exceptions import TooManyVehiclesException, NotEnoughLanesException
 import numpy as np
 
 class Junction:
@@ -73,7 +73,6 @@ class Junction:
 
         #used to test car generation
         self.cars_made = np.zeros((self.NUM_ARMS, self.NUM_ARMS))
-
         self.arms: List[Arm] = [
             Arm(self.LANE_WIDTH * num_lanes, 
                 self.LANE_LENGTH, self.traffic_data[i], 

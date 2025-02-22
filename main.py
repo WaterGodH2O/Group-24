@@ -5,7 +5,8 @@ import pygame_gui
 
 from time import time
 from Junction import Junction
-import math
+from exceptions import NotEnoughLanesException, TooManyVehiclesException
+from numpy import zeros
 game_state:int = 0
 
 
@@ -508,25 +509,29 @@ while running:
 
                     for num_lanes in lane_configs:
                         for (ped_yes, bus_yes, left_yes) in combinations:
-                            
-                            # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
-                            junction = Junction(
-                                traffic_data,
-                                num_lanes = num_lanes,
-                                pedestrian_crossing = ped_yes,
-                                p_crossing_time_s = crossing_time,
-                                p_crossing_freq = crossing_frequency,
-                                bus_lane = bus_yes,
-                                bus_ratio = bus_percentage,
-                                left_turn_lanes = left_yes
-                            )
+                            try:
+                                # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
+                                junction = Junction(
+                                    traffic_data,
+                                    num_lanes = num_lanes,
+                                    pedestrian_crossing = ped_yes,
+                                    p_crossing_time_s = crossing_time,
+                                    p_crossing_freq = crossing_frequency,
+                                    bus_lane = bus_yes,
+                                    bus_ratio = bus_percentage,
+                                    left_turn_lanes = left_yes
+                                )
 
-                            print(junction)
-                            start_time = time()
-                            junction.simulate(simulation_duration*60*1000, 100)
-                            print(f"Simulation duration: {round(time() - start_time, 2)}s")
-                            kpi = junction.get_kpi()
-                            top_junctions.append([calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes, left_yes])
+                                print(junction)
+                                start_time = time()
+                                junction.simulate(simulation_duration*60*1000, 100)
+                                print(f"Simulation duration: {round(time() - start_time, 2)}s")
+                                kpi = junction.get_kpi()
+                                print(kpi)
+                                top_junctions.append([calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes, left_yes])
+                            except NotEnoughLanesException:
+                                #If junction failed to create, give efficiency of zero
+                                top_junctions.append([0, zeros((4,3)), num_lanes, ped_yes, bus_yes, left_yes])
 
 
                     # top 3 junctions by kpi
