@@ -1,10 +1,13 @@
-def star_decorator(func):
-    def wrapper():
-        return "*** " + func() + " ***"
-    return wrapper
 
-@star_decorator  # 直接使用装饰器
-def basic_text():
-    return "Hello, World!"
+global flag
+flag = True  # 全局变量
 
-print(basic_text())  # 输出: *** Hello, World! ***
+
+
+
+def some_function():
+    global flag  # 但后面又声明 global，导致错误
+    flag = False  # 这里 Python 认为 flag 是局部变量
+
+
+some_function()

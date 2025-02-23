@@ -1,5 +1,5 @@
 #version: 1.0
-
+import time as tm
 import pygame
 import pygame_gui
 import threading
@@ -16,6 +16,12 @@ global lane_configs
 global combinations
 global traffic_data
 global simulation_duration
+
+#=============Used for Loading capture============
+flag = True
+counter = 0
+flipper = True
+#=============Used for Loading capture============
 
 pygame.init()
 
@@ -594,6 +600,7 @@ while running:
                 create_table(output_data)
             elif event.ui_element == modify_parameters_button:
                 game_state = 0
+                flag = True
                 hide_error_box()
                 init_table()
 
@@ -605,21 +612,54 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
 
-
+        #flip the screen
         manager.update(time_delta)
         manager.draw_ui(screen)
         pygame.display.flip()
 
     elif (game_state == 2):
-        t = threading.Thread(target=runSimulation)
-        t.start()
-        t.join()
-        game_state =1
+        if flag:
+            thread = threading.Thread(target=runSimulation)
+            thread.start()
+            flag = False
 
-        # if(t.is_alive()):
-        #     pass
-        # else:
-        #     game_state = 1
+        screen.fill(WHITE)
+        page1_container.hide()
+        page2_container.hide()
 
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            manager.process_events(event)
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
+        screen.blit(coord_text, (800, 10))
+
+
+        if counter < 60:
+            counter = counter +1
+        else:
+            counter = 0
+            flipper = not flipper
+
+        if flipper:
+            draw_title("Loading.....", (200, 5))
+            draw_title("Loading.....", (400, 5))
+        else:
+            draw_title("Loading....", (200, 5))
+            draw_title("Loading....", (400, 5))
+
+        # pygame.time.delay(200)
+
+        if(thread.is_alive()):
+            pass
+        else:
+            game_state = 1
+
+        # flip the screen
+        manager.update(time_delta)
+        manager.draw_ui(screen)
+        pygame.display.flip()
 
 pygame.quit()
