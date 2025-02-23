@@ -12,7 +12,7 @@ class TrafficLight:
         #Copy random number generator from junction
         self.random: Random = random
         #Initialise traffic light to north
-        self.traffic_light_dir: int = 0
+        self._traffic_light_dir: int = 0
         #Set the interval between changes and the traffic light timer to the given interval
         self.traffic_light_time_ms: int = traffic_light_interval_ms
         self.traffic_light_interval_ms: int = traffic_light_interval_ms

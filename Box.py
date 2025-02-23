@@ -1,7 +1,9 @@
 from Vehicle import Vehicle
 
 class Box:
-    def __init__(self, lane_width: int, maximum_lane_count: int):
+    def __init__(self, 
+                 lane_width: int, 
+                 maximum_lane_count: int):
         self._vehicles: list[Vehicle] = list()
         """
         The size of the junction is equal to the width of each lane times the maximum number of lanes
@@ -11,8 +13,8 @@ class Box:
         self.vt = 0
 
     def add_vehicle(self, vehicle: Vehicle) -> None:
-        """Add a new vehicle to the box by resetting its position to 0 and adding it to the list"""
-        vehicle.set_position(self._size)
+        """Add a new vehicle to the box adding the box size to its distance and adding it to the list"""
+        vehicle.set_position(self._size + vehicle.distance)
         self._vehicles.append(vehicle)
 
     def move_all_vehicles(self, update_length_ms: int) -> None:

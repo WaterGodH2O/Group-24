@@ -131,6 +131,8 @@ class Lane(ABC):
                 if self.can_enter_box(vehicle, box, arm_id, lane_id, traffic_light_dir, num_arms):
                     # this vehicle will leave the junction
                     vehicle.set_source_lane(lane_id)
+                    #Move forwards. This allows vehicles to move in both the lane and box in one tick.
+                    vehicle.set_position(vehicle.get_next_position(update_length_ms))
                     leaving_vehicles.add(vehicle)
 
                 else:
