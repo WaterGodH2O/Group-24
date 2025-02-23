@@ -2,14 +2,20 @@
 
 import pygame
 import pygame_gui
-
+import threading
 from time import time
 from Junction import Junction
 from exceptions import NotEnoughLanesException, TooManyVehiclesException
 from numpy import zeros
 game_state:int = 0
 
-
+global crossing_time
+global crossing_frequency
+global bus_percentage
+global lane_configs
+global combinations
+global traffic_data
+global simulation_duration
 
 pygame.init()
 
@@ -54,6 +60,8 @@ def draw_font(text, position):
 def draw_bold_font(text, position):
     text_surface = bold_font.render(text, True, BLACK)
     screen.blit(text_surface, position)
+
+
 
 
 traffic_flow_positions = {
@@ -195,11 +203,13 @@ row_height = 120
 
 start_col = 1
 
+global top_junctions
 top_junctions = []
 
 output_data = []
 
 table_elements = []
+
 
 def init_table():
     global output_data
@@ -273,6 +283,50 @@ def calc_efficiency(north_arm, south_arm, east_arm, west_arm) -> int:
         # add to the total score for the junction
         total_score += arm_score
     return total_score
+
+def runSimulation():
+    global top_junctions
+    for num_lanes in lane_configs:
+        for (ped_yes, bus_yes, left_yes) in combinations:
+            try:
+                # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
+                junction = Junction(
+                    traffic_data,
+                    num_lanes=num_lanes,
+                    pedestrian_crossing=ped_yes,
+                    p_crossing_time_s=crossing_time,
+                    p_crossing_freq=crossing_frequency,
+                    bus_lane=bus_yes,
+                    bus_ratio=bus_percentage,
+                    left_turn_lanes=left_yes
+                )
+
+                print(junction)
+                start_time = time()
+
+                junction.simulate(simulation_duration * 60 * 1000, 100)
+
+                print(f"Simulation duration: {round(time() - start_time, 2)}s")
+                kpi = junction.get_kpi()
+                print(kpi)
+                top_junctions.append(
+                    [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes, left_yes])
+
+            except NotEnoughLanesException:
+                # If junction failed to create, give efficiency of zero
+                top_junctions.append([0, zeros((4, 3)), num_lanes, ped_yes, bus_yes, left_yes])
+
+    # top 3 junctions by kpi
+    top_junctions = sorted(top_junctions, key=lambda x: x[0], reverse=True)
+
+    init_table()
+
+    for junction in top_junctions:
+        config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}"
+        add_config(junction[0], junction[1], config_description)
+
+    return
+
 
 # 0 is for initial page
 game_state = 0
@@ -501,50 +555,14 @@ while running:
                     percentage of bus, note that this is string type.
                     '''
 
-                    top_junctions = []
-
                     ped = [False, True] if selected_pedestrian else [False]
                     bus = [False, True] if selected_bus else [False]
                     left = [False, True] if selected_turn else [False]
                     combinations = [(x, y, z) for x in ped for y in bus for z in left]
 
-                    for num_lanes in lane_configs:
-                        for (ped_yes, bus_yes, left_yes) in combinations:
-                            try:
-                                # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
-                                junction = Junction(
-                                    traffic_data,
-                                    num_lanes = num_lanes,
-                                    pedestrian_crossing = ped_yes,
-                                    p_crossing_time_s = crossing_time,
-                                    p_crossing_freq = crossing_frequency,
-                                    bus_lane = bus_yes,
-                                    bus_ratio = bus_percentage,
-                                    left_turn_lanes = left_yes
-                                )
-
-                                print(junction)
-                                start_time = time()
-                                junction.simulate(simulation_duration*60*1000, 100)
-                                print(f"Simulation duration: {round(time() - start_time, 2)}s")
-                                kpi = junction.get_kpi()
-                                print(kpi)
-                                top_junctions.append([calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes, left_yes])
-                            except NotEnoughLanesException:
-                                #If junction failed to create, give efficiency of zero
-                                top_junctions.append([0, zeros((4,3)), num_lanes, ped_yes, bus_yes, left_yes])
 
 
-                    # top 3 junctions by kpi
-                    top_junctions = sorted(top_junctions, key=lambda x: x[0], reverse=True)
-
-                    init_table()
-
-                    for junction in top_junctions:
-                        config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}"
-                        add_config(junction[0],junction[1],config_description)
-
-                    game_state = 1
+                    game_state = 2
 
         # update gui, flip the screen
         manager.update(time_delta)
@@ -593,7 +611,15 @@ while running:
         pygame.display.flip()
 
     elif (game_state == 2):
-        pass
+        t = threading.Thread(target=runSimulation)
+        t.start()
+        t.join()
+        game_state =1
+
+        # if(t.is_alive()):
+        #     pass
+        # else:
+        #     game_state = 1
 
 
 pygame.quit()
