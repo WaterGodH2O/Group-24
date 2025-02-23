@@ -7,7 +7,7 @@ import unittest
 
 class TestArm(unittest.TestCase):
     def setUp(self):
-        self.arm = Arm(2, 100, [20, 30, 40, 0], 3, 4, 0)
+        self.arm = Arm(2, 100, [20, 30, 40, 0], 3, 4, 0, 0)
 
     def test_get_kpi(self):
         """ ensure that the correct kpi details are returned """
@@ -54,7 +54,7 @@ class TestArm(unittest.TestCase):
         self.arm._max_queue_length = 5 # 5 vehicles
         
         # call move_all_vehicles
-        self.arm.move_all_vehicles(7000, True, box, 1000, 1)
+        self.arm.move_all_vehicles(7000, True, box, 1000, 4, 1)
 
         # assert that the kpi values have been updated as intended
         self.assertEqual(self.arm._total_car_count, 4)

@@ -95,7 +95,7 @@ class TestLanes(unittest.TestCase):
         self.lane._vehicles = [car1, car2, car3, car4]
 
         # update the positions of all cars (per 1 second)
-        leaving_vehicle = self.lane.move_all_vehicles(False, 1000, None, 2, 3)
+        leaving_vehicle = self.lane.move_all_vehicles(False, 1000, None, 2, 3, 4)
 
         # assert that no cars have left the junction at a red light (empty set)
         self.assertEqual(leaving_vehicle, set())
@@ -124,8 +124,8 @@ class TestLanes(unittest.TestCase):
         self.lane._vehicles = [car1, car2, car3, car4]
 
         # update the positions of all cars (per 1 second)
-        leaving_vehicle = self.lane.move_all_vehicles(True, 1000, Box(2, 3), 2, 3)
-        
+        leaving_vehicle = self.lane.move_all_vehicles(2, 1000, Box(2, 3), 2, 3, 4)
+
         # assert that only car 1 has left the junction
         self.assertEqual(leaving_vehicle, {car1})
 
