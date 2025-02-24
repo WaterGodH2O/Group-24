@@ -170,8 +170,8 @@ error_message_label = pygame_gui.elements.UITextBox(
 
 # Modify parameters
 modify_parameters_button = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((900, 700), (150, 50)),
-    text='Modify Parameters',
+    relative_rect=pygame.Rect((5, 5), (80, 50)),
+    text='Return',
     manager=manager,
     container=page2_container
 )
@@ -180,14 +180,16 @@ left_arrow = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect(50, 720, 50, 50),  # Adjust position
     text="<",
     manager=manager,
-    container=page2_container
+    container=page2_container,
+    visible=False
 )
 
 right_arrow = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect(700, 720, 50, 50),  # Adjust position
     text=">",
     manager=manager,
-    container=page2_container
+    container=page2_container,
+    visible=False
 )
 
 table_pos_x = 100
@@ -291,16 +293,16 @@ def draw_y_axis():
         screen.blit(label, (755, y_pos - 10))
 
     # right y-axis
-    pygame.draw.line(screen, BLACK, (1090, 50), (1090, HEIGHT - 50), 2)
-    num_ticks = 5
-    step = max_value / num_ticks
+    # pygame.draw.line(screen, BLACK, (1090, 50), (1090, HEIGHT - 50), 2)
+    # num_ticks = 5
+    # step = max_value / num_ticks
 
-    for i in range(num_ticks + 1):
-        value = int(step * i)
-        y_pos = HEIGHT - 50 - (value * scale_factor)
-        pygame.draw.line(screen, BLACK, (1085, y_pos), (1095, y_pos), 2)  # Tick mark
-        label = font.render(str(value), True, BLACK)
-        screen.blit(label, (1115, y_pos - 10))
+    # for i in range(num_ticks + 1):
+    #     value = int(step * i)
+    #     y_pos = HEIGHT - 50 - (value * scale_factor)
+    #     pygame.draw.line(screen, BLACK, (1085, y_pos), (1095, y_pos), 2)  # Tick mark
+    #     label = font.render(str(value), True, BLACK)
+    #     screen.blit(label, (1115, y_pos - 10))
 
 # 0 is for initial page
 game_state = 0
@@ -425,14 +427,6 @@ while running:
 
                     if traffic_flow_rates_invalid:
                         error_messages.append("Error: All traffic flow rates must be integer values between 0 and 3000.")
-
-                    print(traffic_data)
-                    row1 = [0,traffic_data["n2e"],traffic_data["n2s"],traffic_data["n2w"]]
-                    row2 = [traffic_data["e2n"],0,  traffic_data["e2s"], traffic_data["e2w"]]
-                    row3 = [traffic_data["s2n"], traffic_data["s2e"],0,  traffic_data["s2w"]]
-                    row4 = [traffic_data["w2n"], traffic_data["w2e"], traffic_data["w2s"], 0]
-                    traffic_data = [row1, row2, row3, row4]
-                    print(traffic_data)
                     
                     #------------------------------------------------------------------------------------------------------------------
                     # validate number of lanes input
@@ -518,6 +512,14 @@ while running:
                     else:
                         hide_error_box()
 
+                    print(traffic_data)
+                    row1 = [0,traffic_data["n2e"],traffic_data["n2s"],traffic_data["n2w"]]
+                    row2 = [traffic_data["e2n"],0,  traffic_data["e2s"], traffic_data["e2w"]]
+                    row3 = [traffic_data["s2n"], traffic_data["s2e"],0,  traffic_data["s2w"]]
+                    row4 = [traffic_data["w2n"], traffic_data["w2e"], traffic_data["w2s"], 0]
+                    traffic_data = [row1, row2, row3, row4]
+                    print(traffic_data)
+
 
                     '''
                     selected_turn : boolean
@@ -578,26 +580,36 @@ while running:
         page1_container.hide()
         page2_container.show()
 
+        left_arrow.hide()
+        right_arrow.hide()
+
+        if(len(top_junctions) > 3):
+            left_arrow.show()
+            right_arrow.show()
+
         create_table(output_data)
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
         coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
         screen.blit(coord_text, (800, 10))
 
-        data = {
-            "Config 1": (10, 15, 7),
-            "Config 2": (8, 18, 9),
-            "Config 3": (12, 20, 6)
-        }
+        data = {}
+
+        for i in range(min(3, len(top_junctions))):
+            kpi = top_junctions[i][1]
+            avg_wait = (kpi[0][0]+kpi[1][0]+kpi[2][0]+kpi[3][0])/4
+            max_wait = max(kpi[0][1],kpi[1][1],kpi[2][1],kpi[3][1])
+            max_queue = max(kpi[0][2],kpi[1][2],kpi[2][2],kpi[3][2])
+            data[(f"Config {i+1}")] = (avg_wait,max_wait,max_queue)
 
         bar_width = 20
         bar_gap = 5
         cluster_gap = (bar_width + bar_gap) * 3 + 30
         start_x = 800
 
-        chart_height = HEIGHT - 150
+        chart_height = HEIGHT - 220
         max_value = max(max(values) for values in data.values())
-        scale_factor = (HEIGHT - 150) / max_value
+        scale_factor = (HEIGHT - 220) / max_value
 
         draw_y_axis()
         
@@ -616,9 +628,9 @@ while running:
 
             x += cluster_gap
 
-        screen.blit(font.render("Avg. Wait Time", True, BLUE), (800, 50))
-        screen.blit(font.render("Max. Wait Time", True, RED), (800, 80))
-        screen.blit(font.render("Max. Queue Length", True, GREEN), (800, 110))
+        screen.blit(font.render("Avg. Wait Time", True, BLUE), (1000, 50))
+        screen.blit(font.render("Max. Wait Time", True, RED), (1000, 80))
+        screen.blit(font.render("Max. Queue Length", True, GREEN), (1000, 110))
 
         manager.process_events(event)
         # click on button event
