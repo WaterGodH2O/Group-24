@@ -16,6 +16,7 @@ global lane_configs
 global combinations
 global traffic_data
 global simulation_duration
+global top_junctions
 
 #=============Used for Loading capture============
 flag = True
@@ -38,7 +39,7 @@ page2_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), 
 
 page1_container_error = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), (WIDTH, HEIGHT)), manager=manager)
 
-# color
+# colours
 WHITE = (180, 180, 180)
 BLACK = (0, 0, 0)
 RED = (255, 50, 50)
@@ -70,9 +71,6 @@ def draw_bold_font(text, position):
     text_surface = bold_font.render(text, True, BLACK)
     screen.blit(text_surface, position)
 
-
-
-
 traffic_flow_positions = {
     "n2e": (250, 110),
     "n2s": (370, 110),
@@ -88,15 +86,13 @@ traffic_flow_positions = {
     "w2e": (250, 320),
 }
 
-
 param_positions = {
-    "num_lanes": (300, 450),
-    "crossing_time": (550, 550),
-    "crossing_frequency": (850, 550),
-    "simulation_duration": (622, 450),
-    "bus_percentage": (709, 741),
+    "num_lanes": (230, 450),
+    "crossing_time": (450, 535),
+    "crossing_frequency": (760, 535),
+    "simulation_duration": (900, 700),
+    "bus_percentage": (470, 620),
 }
-
 
 # Create the object of input box of VPH
 traffic_flow_inputs = {}
@@ -105,7 +101,7 @@ for key, pos in traffic_flow_positions.items():
 
     traffic_flow_inputs[key] = pygame_gui.elements.UITextEntryLine(relative_rect=Rectangle, placeholder_text="vph", manager=manager, container=page1_container)
 
-# other input box, not completed
+# Create parameter inputs
 param_inputs = {}
 for key, pos in param_positions.items():
     Rectangle = pygame.Rect(pos, (80, 30))
@@ -115,55 +111,73 @@ for key, pos in param_positions.items():
         container=page1_container
     )
 
-# yes or no button
-
 pedestrian_yes = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((82, 703-40), (50, 30)),
+    relative_rect=pygame.Rect((50, 550), (50, 30)),
     text='Yes',
     manager=manager,
     container=page1_container
 )
 
+pedestrian_maybe = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((50+60, 550), (80, 30)),
+    text='Maybe',
+    manager=manager,
+    container=page1_container
+)
+
 pedestrian_no = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((82+60, 703-40), (50, 30)),
+    relative_rect=pygame.Rect((50+150, 550), (50, 30)),
     text='> No <',
     manager=manager,
     container=page1_container
 )
 
 turn_yes = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((380, 703-40), (50, 30)),
+    relative_rect=pygame.Rect((50, 710), (50, 30)),
     text='Yes',
     manager=manager,
     container=page1_container
 )
 
+turn_maybe = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((50+60, 710), (80, 30)),
+    text='Maybe',
+    manager=manager,
+    container=page1_container
+)
+
 turn_no = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((380+60, 703-40), (50, 30)),
+    relative_rect=pygame.Rect((50+150, 710), (50, 30)),
     text='> No <',
     manager=manager,
     container=page1_container
 )
 
 bus_yes = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((685, 703-40), (50, 30)),
+    relative_rect=pygame.Rect((50, 630), (50, 30)),
     text='Yes',
     manager=manager,
     container=page1_container
 )
 
+bus_maybe = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((50+60, 630), (80, 30)),
+    text='Maybe',
+    manager=manager,
+    container=page1_container
+)
+
 bus_no = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((685+60, 703-40), (50, 30)),
+    relative_rect=pygame.Rect((50+150, 630), (50, 30)),
     text='> No <',
     manager=manager,
     container=page1_container
 )
 
-selected_pedestrian = False
-selected_turn = False
-selected_bus = False
+selected_pedestrian = "no"
+selected_turn = "no"
+selected_bus = "no"
 bus_percentage = 0
-
 
 # Run simulation
 run_simulation_button = pygame_gui.elements.UIButton(
@@ -175,13 +189,12 @@ run_simulation_button = pygame_gui.elements.UIButton(
 
 # error message box
 error_message_label = pygame_gui.elements.UITextBox(
-    relative_rect=pygame.Rect((700, 50), (400, 200)),
+    relative_rect=pygame.Rect((700, 50), (400, 270)),
     html_text="Errors",
     manager=manager,
     container=page1_container_error,
     visible=False
 )
-
 
 # Modify parameters
 modify_parameters_button = pygame_gui.elements.UIButton(
@@ -207,21 +220,19 @@ right_arrow = pygame_gui.elements.UIButton(
     visible=False
 )
 
-table_pos_x = 100
-table_pos_y = 50
-column_width = 150
-row_height = 120
-
+# first column of table
 start_col = 1
 
-global top_junctions
+# list of top junctions by efficiency
 top_junctions = []
 
+# list of data for table
 output_data = []
 
+# list of elements in table
 table_elements = []
 
-
+# setup table data
 def init_table():
     global output_data
     output_data = []
@@ -234,6 +245,7 @@ def init_table():
         ['Maximum queue length']
     ])
 
+# add row to table for a configuration
 def add_config(efficiency, values, description):
     config_number = len(output_data[0])
     output_data[0].append(f'Configuration {config_number}')
@@ -244,6 +256,8 @@ def add_config(efficiency, values, description):
     output_data[4].append(f"North: {int(values[0][1])}\nEast: {int(values[1][1])}\nSouth: {int(values[2][1])}\nWest: {int(values[3][1])}")
     output_data[5].append(f"North: {int(values[0][2])}\nEast: {int(values[1][2])}\nSouth: {int(values[2][2])}\nWest: {int(values[3][2])}")
 
+
+# create table with output data
 def create_table(data):
     global table_elements
 
@@ -251,10 +265,21 @@ def create_table(data):
         element.kill()
     table_elements.clear()
 
+    table_pos_x = 100
+    table_pos_y = 50
+    column_width = 150
+    row_height = 120
+
     for(i,row) in enumerate(output_data):
+        if(i==1):
+            row_height = 170
+        elif(i==2):
+            row_height = 70
+        else:
+            row_height = 120
         label = pygame_gui.elements.UITextBox(
                 html_text=row[0],
-                relative_rect=pygame.Rect(table_pos_x, table_pos_y+i*row_height, column_width, row_height),
+                relative_rect=pygame.Rect(table_pos_x, table_pos_y, column_width, row_height),
                 manager=manager,
                 container=page2_container
             )
@@ -264,11 +289,12 @@ def create_table(data):
             if col_index < len(row):
                 label = pygame_gui.elements.UITextBox(
                     html_text=row[col_index],
-                    relative_rect=pygame.Rect(table_pos_x+(j+1)*column_width, table_pos_y+i*row_height, column_width, row_height),
+                    relative_rect=pygame.Rect(table_pos_x+(j+1)*column_width, table_pos_y, column_width, row_height),
                     manager=manager,
                     container=page2_container
                 )
                 table_elements.append(label)
+        table_pos_y+=row_height
 
 def show_error_box(error_text):
     error_message_label.set_text(error_text)
@@ -278,6 +304,20 @@ def hide_error_box():
     error_message_label.set_text("")
     error_message_label.visible=False
     error_message_label.hide()
+
+def toggle_button(button_yes, button_maybe, button_no, button_selected):
+    if(button_selected == button_yes):
+        button_yes.set_text("> Yes <")
+        button_maybe.set_text("Maybe")
+        button_no.set_text("No")
+    elif(button_selected == button_maybe):
+        button_yes.set_text("Yes")
+        button_maybe.set_text("> Maybe <")
+        button_no.set_text("No")
+    else:
+        button_yes.set_text("Yes")
+        button_maybe.set_text("Maybe")
+        button_no.set_text("> No <")
 
 def calc_efficiency(north_arm, south_arm, east_arm, west_arm) -> int:
     total_score = 0
@@ -308,18 +348,6 @@ def draw_y_axis():
         label = font.render(str(value), True, BLACK)
         screen.blit(label, (755, y_pos - 10))
 
-    # right y-axis
-    # pygame.draw.line(screen, BLACK, (1090, 50), (1090, HEIGHT - 50), 2)
-    # num_ticks = 5
-    # step = max_value / num_ticks
-
-    # for i in range(num_ticks + 1):
-    #     value = int(step * i)
-    #     y_pos = HEIGHT - 50 - (value * scale_factor)
-    #     pygame.draw.line(screen, BLACK, (1085, y_pos), (1095, y_pos), 2)  # Tick mark
-    #     label = font.render(str(value), True, BLACK)
-    #     screen.blit(label, (1115, y_pos - 10))
-
 def runSimulation():
     global top_junctions
     for num_lanes in lane_configs:
@@ -349,8 +377,8 @@ def runSimulation():
                     [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes, left_yes])
 
             except NotEnoughLanesException:
-                # If junction failed to create, give efficiency of zero
-                top_junctions.append([0, zeros((4, 3)), num_lanes, ped_yes, bus_yes, left_yes])
+                # Not adding junctions that fail to create
+                pass
 
     # top 3 junctions by kpi
     top_junctions = sorted(top_junctions, key=lambda x: x[0], reverse=True)
@@ -358,7 +386,7 @@ def runSimulation():
     init_table()
 
     for junction in top_junctions:
-        config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}"
+        config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}"
         add_config(junction[0], junction[1], config_description)
 
     return
@@ -409,19 +437,19 @@ while running:
 
         draw_font("Number of lanes\n(e.g. 2-5)", (50, 450))
 
-        draw_font("Bus Percentage (input 0 to 1)", (656, 710))
+        draw_font("Bus Percentage\n(%)", (300, 615))
 
-        draw_font("Pedestrian Crossings", (50, 630))
+        draw_font("Pedestrian Crossings", (50, 520))
 
-        draw_font("Left turn lane", (385, 630))
+        draw_font("Left turn lane", (50, 680))
 
-        draw_font("Bus lane", (695, 630))
+        draw_font("Bus lane", (50, 600))
 
-        draw_font("Crossing time\n(seconds)", (400, 550))
+        draw_font("Crossing time\n(seconds)", (300, 535))
 
-        draw_font("Crossing request\nfrequency (per hour)", (650, 550))
+        draw_font("Crossing request\nfrequency (per hour)", (550, 535))
 
-        draw_font("Simulation duration\n(minutes)", (403, 450))
+        draw_font("Simulation duration\n(minutes)", (700, 700))
 
         # event handle
         for event in pygame.event.get():
@@ -433,33 +461,34 @@ while running:
             # click on button event
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == pedestrian_yes:
-                    selected_pedestrian = True
-                    pedestrian_yes.set_text("> Yes <")
-                    pedestrian_no.set_text("No")
+                    selected_pedestrian = "yes"
+                    toggle_button(pedestrian_yes,pedestrian_maybe,pedestrian_no,pedestrian_yes)
+                elif event.ui_element == pedestrian_maybe:
+                    selected_pedestrian = "maybe"
+                    toggle_button(pedestrian_yes,pedestrian_maybe,pedestrian_no,pedestrian_maybe)
                 elif event.ui_element == pedestrian_no:
-                    selected_pedestrian = False
-                    pedestrian_yes.set_text("Yes")
-                    pedestrian_no.set_text("> No <")
+                    selected_pedestrian = "no"
+                    toggle_button(pedestrian_yes,pedestrian_maybe,pedestrian_no,pedestrian_no)
 
                 elif event.ui_element == bus_yes:
-                    selected_bus = True
-                    bus_yes.set_text("> Yes <")
-                    bus_no.set_text("No")
+                    selected_bus = "yes"
+                    toggle_button(bus_yes,bus_maybe,bus_no,bus_yes)
+                elif event.ui_element == bus_maybe:
+                    selected_bus = "maybe"
+                    toggle_button(bus_yes,bus_maybe,bus_no,bus_maybe)
                 elif event.ui_element == bus_no:
-                    selected_bus = False
-                    bus_yes.set_text("Yes")
-                    bus_no.set_text("> No <")
+                    selected_bus = "no"
+                    toggle_button(bus_yes,bus_maybe,bus_no,bus_no)
 
                 elif event.ui_element == turn_yes:
-                    selected_turn = True
-                    turn_yes.set_text("> Yes <")
-                    turn_no.set_text("No")
+                    selected_turn = "yes"
+                    toggle_button(turn_yes,turn_maybe,turn_no,turn_yes)
+                elif event.ui_element == turn_maybe:
+                    selected_turn = "maybe"
+                    toggle_button(turn_yes,turn_maybe,turn_no,turn_maybe)
                 elif event.ui_element == turn_no:
-                    selected_turn = False
-                    turn_yes.set_text("Yes")
-                    turn_no.set_text("> No <")
-
-
+                    selected_turn = "no"
+                    toggle_button(turn_yes,turn_maybe,turn_no,turn_no)
 
                 elif event.ui_element == run_simulation_button:
 
@@ -473,8 +502,6 @@ while running:
                     bus_percentage_invalid = False
 
                     error_messages = []
-
-
 
                     # validate traffic flow rates
                     for key, input_box in traffic_flow_inputs.items():
@@ -531,7 +558,7 @@ while running:
                     crossing_frequency = None
                     crossing_time = None
                     # validate pedestrian crossing details
-                    if selected_pedestrian:
+                    if selected_pedestrian!="no":
                         crossing_time_input = param_inputs["crossing_time"].get_text().strip()
                         crossing_frequency_input = param_inputs["crossing_frequency"].get_text().strip()
 
@@ -550,20 +577,20 @@ while running:
                     # ------------------------------------------------------------------------------------------------------------------
                     # validate simulation duration
                     simulation_duration_input = param_inputs["simulation_duration"].get_text().strip()
-                    if not simulation_duration_input or not simulation_duration_input.isdigit() or int(simulation_duration_input) <= 0:
+                    if not simulation_duration_input or not simulation_duration_input.isdigit() or int(simulation_duration_input) <= 0 or int(simulation_duration_input) >= 1000:
                         simulation_duration_invalid = True
                     
                     if simulation_duration_invalid:
-                        error_messages.append("Error: Simulation duration must be a positive integer.")
+                        error_messages.append("Error: Simulation duration must be a positive integer less than 1000.")
                     else:
                         simulation_duration = int(simulation_duration_input)
 
                     # ------------------------------------------------------------------------------------------------------------------
                     # validate bus percentage
                     bus_percentage_input = param_inputs["bus_percentage"].get_text().strip()
-                    if selected_bus:
+                    if selected_bus!="no":
                         try:
-                            if (float(bus_percentage_input) < 0) or (float(bus_percentage_input) > 1):
+                            if not bus_percentage_input.isdigit() or not (0 <= int(bus_percentage_input) <= 100):
                                 bus_percentage_invalid = True
                             else:
                                 bus_percentage = float(bus_percentage_input)
@@ -571,7 +598,7 @@ while running:
                             bus_percentage_invalid = True
 
                     if bus_percentage_invalid:
-                        error_messages.append("Error: Bus percentage must be a number within 0 to 1.")
+                        error_messages.append("Error: Bus percentage must be an integer between 0 and 100.")
 
                     # ------------------------------------------------------------------------------------------------------------------
                     # display error
@@ -590,13 +617,29 @@ while running:
                     bus_percentage_input : str
                     percentage of bus, note that this is string type.
                     '''
+                    
+                    if selected_pedestrian == "yes":
+                        ped = [True]
+                    elif selected_pedestrian == "maybe":
+                        ped = [False, True]
+                    else:
+                        ped = [False]
 
-                    ped = [False, True] if selected_pedestrian else [False]
-                    bus = [False, True] if selected_bus else [False]
-                    left = [False, True] if selected_turn else [False]
+                    if selected_bus == "yes":
+                        bus = [True]
+                    elif selected_bus == "maybe":
+                        bus = [False, True]
+                    else:
+                        bus = [False]
+
+                    if selected_turn == "yes":
+                        left = [True]
+                    elif selected_turn == "maybe":
+                        left = [False, True]
+                    else:
+                        left = [False]
+
                     combinations = [(x, y, z) for x in ped for y in bus for z in left]
-
-
 
                     game_state = 2
 
@@ -732,7 +775,15 @@ while running:
         if(thread.is_alive()):
             pass
         else:
-            game_state = 1
+            # returning to input page if there are no valid junctions
+            if(len(top_junctions) == 0):
+                top_junctions = []
+                game_state = 0
+                flag = True
+                init_table()
+                show_error_box("Not enough lanes to model any specified junction.")
+            else:
+                game_state = 1
 
         # flip the screen
         manager.update(time_delta)
