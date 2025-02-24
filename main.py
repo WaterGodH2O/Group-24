@@ -675,6 +675,7 @@ while running:
                 start_col += 1
                 create_table(output_data)
             elif event.ui_element == modify_parameters_button:
+                top_junctions = []
                 game_state = 0
                 flag = True
                 hide_error_box()
