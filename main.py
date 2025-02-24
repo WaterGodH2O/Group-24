@@ -41,6 +41,9 @@ page1_container_error = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0
 # color
 WHITE = (180, 180, 180)
 BLACK = (0, 0, 0)
+RED = (255, 50, 50)
+GREEN = (50, 200, 50)
+BLUE = (50, 100, 255)
 
 # word configuration
 title = pygame.font.Font(None, 35)
@@ -182,8 +185,8 @@ error_message_label = pygame_gui.elements.UITextBox(
 
 # Modify parameters
 modify_parameters_button = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((900, 700), (150, 50)),
-    text='Modify Parameters',
+    relative_rect=pygame.Rect((5, 5), (80, 50)),
+    text='Return',
     manager=manager,
     container=page2_container
 )
@@ -192,14 +195,16 @@ left_arrow = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect(50, 720, 50, 50),  # Adjust position
     text="<",
     manager=manager,
-    container=page2_container
+    container=page2_container,
+    visible=False
 )
 
 right_arrow = pygame_gui.elements.UIButton(
     relative_rect=pygame.Rect(700, 720, 50, 50),  # Adjust position
     text=">",
     manager=manager,
-    container=page2_container
+    container=page2_container,
+    visible=False
 )
 
 table_pos_x = 100
@@ -289,6 +294,31 @@ def calc_efficiency(north_arm, south_arm, east_arm, west_arm) -> int:
         # add to the total score for the junction
         total_score += arm_score
     return total_score
+
+def draw_y_axis():
+    # left y-axis
+    pygame.draw.line(screen, BLACK, (790, 50), (790, HEIGHT - 50), 2)
+    num_ticks = 5
+    step = max_value / num_ticks
+
+    for i in range(num_ticks + 1):
+        value = int(step * i)
+        y_pos = HEIGHT - 50 - (value * scale_factor)
+        pygame.draw.line(screen, BLACK, (785, y_pos), (795, y_pos), 2)
+        label = font.render(str(value), True, BLACK)
+        screen.blit(label, (755, y_pos - 10))
+
+    # right y-axis
+    # pygame.draw.line(screen, BLACK, (1090, 50), (1090, HEIGHT - 50), 2)
+    # num_ticks = 5
+    # step = max_value / num_ticks
+
+    # for i in range(num_ticks + 1):
+    #     value = int(step * i)
+    #     y_pos = HEIGHT - 50 - (value * scale_factor)
+    #     pygame.draw.line(screen, BLACK, (1085, y_pos), (1095, y_pos), 2)  # Tick mark
+    #     label = font.render(str(value), True, BLACK)
+    #     screen.blit(label, (1115, y_pos - 10))
 
 def runSimulation():
     global top_junctions
@@ -582,11 +612,57 @@ while running:
         page1_container.hide()
         page2_container.show()
 
+        left_arrow.hide()
+        right_arrow.hide()
+
+        if(len(top_junctions) > 3):
+            left_arrow.show()
+            right_arrow.show()
+
         create_table(output_data)
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
         coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
         screen.blit(coord_text, (800, 10))
+
+        data = {}
+
+        for i in range(min(3, len(top_junctions))):
+            kpi = top_junctions[i][1]
+            avg_wait = (kpi[0][0]+kpi[1][0]+kpi[2][0]+kpi[3][0])/4
+            max_wait = max(kpi[0][1],kpi[1][1],kpi[2][1],kpi[3][1])
+            max_queue = max(kpi[0][2],kpi[1][2],kpi[2][2],kpi[3][2])
+            data[(f"Config {i+1}")] = (avg_wait,max_wait,max_queue)
+
+        bar_width = 20
+        bar_gap = 5
+        cluster_gap = (bar_width + bar_gap) * 3 + 30
+        start_x = 800
+
+        chart_height = HEIGHT - 220
+        max_value = max(max(values) for values in data.values())
+        scale_factor = (HEIGHT - 220) / max_value
+
+        draw_y_axis()
+
+        x = start_x
+        for config, (avg_wait, max_wait, max_queue) in data.items():
+            avg_h = avg_wait * scale_factor
+            max_h = max_wait * scale_factor
+            queue_h = max_queue * scale_factor
+
+            pygame.draw.rect(screen, BLUE, (x, HEIGHT - 50 - avg_h, bar_width, avg_h))
+            pygame.draw.rect(screen, RED, (x + bar_width + bar_gap, HEIGHT - 50 - max_h, bar_width, max_h))
+            pygame.draw.rect(screen, GREEN, (x + 2 * (bar_width + bar_gap), HEIGHT - 50 - queue_h, bar_width, queue_h))
+
+            text = font.render(config, True, BLACK)
+            screen.blit(text, (x + bar_width - text.get_width() / 2 + 20, HEIGHT - 40))
+
+            x += cluster_gap
+
+        screen.blit(font.render("Avg. Wait Time", True, BLUE), (1000, 50))
+        screen.blit(font.render("Max. Wait Time", True, RED), (1000, 80))
+        screen.blit(font.render("Max. Queue Length", True, GREEN), (1000, 110))
 
         manager.process_events(event)
         # click on button event
