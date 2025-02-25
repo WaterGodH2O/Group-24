@@ -98,7 +98,7 @@ class Arm:
                 junction_box.add_vehicle(vehicle_leaving)
                 # update kpi
                 vehicle_wait_time = vehicle_leaving.wait_time / 1000 # in seconds
-                #print(f"{vehicle_leaving.vehicle_type} entered box from arm {vehicle_leaving.source}, lane {vehicle_leaving.source_lane}, turning {vehicle_leaving.get_relative_direction()}")
+                print(f"{vehicle_leaving.vehicle_type} entered box from arm {vehicle_leaving.source}, lane {vehicle_leaving.source_lane}, turning {vehicle_leaving.get_relative_direction()}")
                 self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
                 self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1
@@ -183,6 +183,10 @@ class Arm:
         """
         # check if there is enough space for a vehicle in a new lane
         
+        # check not at the junction already
+        if vehicle.distance == 0:
+            return -1
+
         # perform a binary search to find the index where the new vehicle would be inserted
         vehicle_positions_arr = [v.distance for v in lane.vehicles]
         new_vehicle_index = bisect_right(vehicle_positions_arr, vehicle.distance)
@@ -199,7 +203,7 @@ class Arm:
         # check if there is enough space for the vehicle behind to adequately stop
         if vehicle_behind and vehicle_behind.distance - vehicle.distance <= vehicle_behind._stopping_distance:
             return -1
-
+    
         # return the index the vehicle should be isnerted
         return new_vehicle_index
 

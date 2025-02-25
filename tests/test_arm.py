@@ -1,13 +1,13 @@
 from unittest.mock import MagicMock
 from Arm import Arm
 from Lane import Lane, CarLane
-from Vehicle import Vehicle, Car
+from Vehicle import Vehicle, Car, Bus
 from Box import Box
 import unittest
 
 class TestArm(unittest.TestCase):
     def setUp(self):
-        self.arm = Arm(2, 100, [20, 30, 40, 0], 3, 4, 0, 0)
+        self.arm = Arm(2, 100, [20, 30, 40, 0], 3, 4, False, False)
 
     def test_get_kpi(self):
         """ ensure that the correct kpi details are returned """
@@ -308,3 +308,84 @@ class TestArm(unittest.TestCase):
         # assert true when none of the vehicles are within 100m of the junction
         car2.distance = 175
         self.assertTrue(self.arm.no_vehicles_within(100))
+
+class TestBusLeftTurnArm(unittest.TestCase):
+    def setUp(self):
+        self.arm = Arm(3, 1000, [0,0,0,0], 3, 4, True, True)
+    
+    def test_vehicle_creation(self):
+        """Test that buses add to lane 0, left turning cars to lane 1, others to lane 2"""
+        #Add vehicles
+        self.arm.create_vehicle(10, 2, 3, "Bus")
+        self.arm.create_vehicle(10, 2, 3, "Car")
+        self.arm.create_vehicle(10, 2, 1, "Car")
+        #Check bus in lane 0
+        self.assertEqual(self.arm._lanes[0]._vehicles[0].vehicle_type, "Bus")
+        #Check left turning car in lane 1
+        self.assertEqual(self.arm._lanes[1]._vehicles[0].vehicle_type, "Car")
+        self.assertEqual(self.arm._lanes[1]._vehicles[0].get_relative_direction(), 3)
+        #Check right turning car in lane 2
+        self.assertEqual(self.arm._lanes[2]._vehicles[0].vehicle_type, "Car")
+        self.assertNotEqual(self.arm._lanes[2]._vehicles[0].get_relative_direction(), 3)
+
+    def test_bus_lane_switching_success(self):
+        """Test that buses can move into bus lanes"""
+        #Create cars and a bus
+        car1 = Car(10, 2, 3, 0, 4)
+        car2 = Car(10, 2, 3, 8, 4)
+        bus = Bus(10, 2, 3, 16, 4)
+        for v in [car1, car2, bus]:
+            self.arm._lanes[1].add_vehicle(v)
+
+        self.arm.handle_lane_switching()
+
+        self.assertIn(bus, self.arm._lanes[0]._vehicles)
+    
+    def test_bus_lane_switching_fail(self):
+        """Test that cars can't move into bus lanes"""
+        #Create cars and a bus
+        car1 = Car(10, 2, 3, 0, 4)
+        car2 = Car(10, 2, 3, 8, 4)
+        car3 = Car(10, 2, 3, 16, 4)
+        for v in [car1, car2, car3]:
+            self.arm._lanes[1].add_vehicle(v)
+
+        self.arm.handle_lane_switching()
+        #Check the bus lane is empty
+        self.assertFalse(self.arm._lanes[0]._vehicles)
+
+    def test_left_turn_lane_switch_success(self):
+        """ Test left turning vehicles can move into the left turn lane """
+        #Initialise buses
+        bus1 = Bus(10, 2, 3, 0, 4)
+        bus2 = Bus(10, 2, 3, 15, 4)
+        for bus in [bus1, bus2]:
+            self.arm._lanes[0].add_vehicle(bus)
+        car2 = Car(10, 2, 3, 100, 4)
+        car1 = Car(10, 2, 1, 90, 4)
+        for c in [Car(10, 2, 1, i, 4) for i in range(0, 90, 10)] + [car1] + [car2]:
+            self.arm._lanes[2].add_vehicle(c)
+
+        self.arm.handle_lane_switching()
+
+        #Check that the cars and buses turning left move to lane 1
+        self.assertIn(bus2, self.arm._lanes[1]._vehicles)
+        self.assertIn(car2, self.arm._lanes[1]._vehicles)
+
+    def test_left_turn_lane_switch_fail(self):
+        """ Test left turning vehicles can move into the left turn lane """
+        #Initialise buses
+        bus1 = Bus(10, 2, 3, 0, 4)
+        bus2 = Bus(10, 2, 1, 15, 4)
+        for bus in [bus1, bus2]:
+            self.arm._lanes[0].add_vehicle(bus)
+        car2 = Car(10, 2, 1, 100, 4)
+        car1 = Car(10, 2, 1, 90, 4)
+        for c in [Car(10, 2, 1, i, 4) for i in range(0, 90, 10)] + [car1] + [car2]:
+            self.arm._lanes[2].add_vehicle(c)
+
+        self.arm.handle_lane_switching()
+
+        #Check that cars and buses that otherwise could move into the lane are prevented by their turning direction
+        self.assertNotIn(bus2, self.arm._lanes[1]._vehicles)
+        self.assertNotIn(car2, self.arm._lanes[1]._vehicles)

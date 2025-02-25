@@ -164,6 +164,7 @@ class TestBusLanes(unittest.TestCase):
         self.assertIsNotNone(self.busLane.create_vehicle(10, 0, 1, "Bus", 0))
         self.assertIsNone(self.busLane.create_vehicle(10, 0, 1, "Car", 0))
 
+
 class TestLTLanes(unittest.TestCase):
     def setUp(self):
         #Create a left turn lane lane
