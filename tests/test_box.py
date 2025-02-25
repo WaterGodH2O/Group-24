@@ -11,9 +11,9 @@ class TestBox(unittest.TestCase):
     
     def test_vehicle_addition(self):
         #Initialise vehicles
-        vehicle1 = Car(18, 0, 0, 2)
-        vehicle2 = Car(18, 0, 0, 0)
-        vehicle3 = Car(18, 0, 0, -2)
+        vehicle1 = Car(18, 0, 0, 2, 4)
+        vehicle2 = Car(18, 0, 0, 0, 4)
+        vehicle3 = Car(18, 0, 0, -2, 4)
         #Add to box
         self.box.add_vehicle(vehicle1)
         self.box.add_vehicle(vehicle2)
@@ -28,10 +28,10 @@ class TestBox(unittest.TestCase):
     
     def test_vehicle_exit(self):
         #Initialise vehicles to 2m, 1m, 0m and -2m from the end of the box
-        vehicle0 = Car(20, 0, 0, -16)
-        vehicle1 = Car(20, 0, 0, -17)
-        vehicle2 = Car(20, 0, 0, -18)
-        vehicle3 = Car(20, 0, 0, -20)
+        vehicle0 = Car(20, 0, 0, -16, 4)
+        vehicle1 = Car(20, 0, 0, -17, 4)
+        vehicle2 = Car(20, 0, 0, -18, 4)
+        vehicle3 = Car(20, 0, 0, -20, 4)
         #Add to box
         self.box.add_vehicle(vehicle0)
         self.box.add_vehicle(vehicle1)

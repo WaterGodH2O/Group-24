@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
-from Lane import CarLane
-from Vehicle import Vehicle, Car
+from Lane import CarLane, BusLane, LeftTurnLane
+from Vehicle import Vehicle, Car, Bus
 from Box import Box
 import unittest
 
@@ -8,7 +8,7 @@ import unittest
 class TestLanes(unittest.TestCase):
     def setUp(self):
         """ create a CarLane before each test"""
-        self.lane = CarLane([0, 1], 5, 100)
+        self.lane = CarLane(5, 100, 4)
     
     def test_add_vehicle(self):
         """ should return true when added successfully """
@@ -95,7 +95,7 @@ class TestLanes(unittest.TestCase):
         self.lane._vehicles = [car1, car2, car3, car4]
 
         # update the positions of all cars (per 1 second)
-        leaving_vehicle = self.lane.move_all_vehicles(False, 1000, None, 2, 3, 4)
+        leaving_vehicle = self.lane.move_all_vehicles(False, 1000, None, 2, 3)
 
         # assert that no cars have left the junction at a red light (empty set)
         self.assertEqual(leaving_vehicle, set())
@@ -110,10 +110,10 @@ class TestLanes(unittest.TestCase):
     def test_move_all_vehicles_green(self):
         """ test that the right vehicles move when the light is green """
         # create mock vehicles
-        car1 = Car(2, 0, 2, 0, 0)
-        car2 = Car(2, 0, 2, 5, 0)
-        car3 = Car(2, 0, 2, 10, 0)
-        car4 = Car(2, 0, 2, 13, 0)
+        car1 = Car(2, 0, 2, 0, 4)
+        car2 = Car(2, 0, 2, 5, 4)
+        car3 = Car(2, 0, 2, 10, 4)
+        car4 = Car(2, 0, 2, 13, 4)
 
         car1._stopping_distance = 5
         car2._stopping_distance = 5
@@ -124,7 +124,7 @@ class TestLanes(unittest.TestCase):
         self.lane._vehicles = [car1, car2, car3, car4]
 
         # update the positions of all cars (per 1 second)
-        leaving_vehicle = self.lane.move_all_vehicles(2, 1000, Box(2, 3), 2, 3, 4)
+        leaving_vehicle = self.lane.move_all_vehicles(2, 1000, Box(2, 3), 2, 3)
 
         # assert that only car 1 has left the junction
         self.assertEqual(leaving_vehicle, {car1})
@@ -153,3 +153,27 @@ class TestLanes(unittest.TestCase):
 
         # test it asserts false on boundary values
         self.assertFalse(self.lane.has_space_to_move(car3, car4))
+
+class TestBusLanes(unittest.TestCase):
+    def setUp(self):
+        #Create a bus lane
+        self.busLane = BusLane(3, 1000, 4)
+
+    def test_vehicle_creation(self):
+        """ Buses should be added, cars should not """
+        self.assertIsNotNone(self.busLane.create_vehicle(10, 0, 1, "Bus", 0))
+        self.assertIsNone(self.busLane.create_vehicle(10, 0, 1, "Car", 0))
+
+class TestLTLanes(unittest.TestCase):
+    def setUp(self):
+        #Create a left turn lane lane
+        self.leftTurnLane = LeftTurnLane(3, 1000, 4)
+
+    def test_vehicle_creation(self):
+        """ Vehicles should only be added if they are turning left """
+        self.assertIsNotNone(self.leftTurnLane.create_vehicle(10, 2, 3, "Car", 0))
+        self.assertIsNotNone(self.leftTurnLane.create_vehicle(10, 2, 3, "Bus", 0))
+        self.assertIsNone(self.leftTurnLane.create_vehicle(10, 2, 0, "Car", 0))
+        self.assertIsNone(self.leftTurnLane.create_vehicle(10, 2, 1, "Bus", 0))
+        
+        

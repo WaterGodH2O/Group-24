@@ -54,7 +54,7 @@ class TestArm(unittest.TestCase):
         self.arm._max_queue_length = 5 # 5 vehicles
         
         # call move_all_vehicles
-        self.arm.move_all_vehicles(7000, True, box, 1000, 4, 1)
+        self.arm.move_all_vehicles(7000, True, box, 1000, 1)
 
         # assert that the kpi values have been updated as intended
         self.assertEqual(self.arm._total_car_count, 4)
@@ -90,7 +90,7 @@ class TestArm(unittest.TestCase):
         self.arm._lanes = [lane1, lane2]
 
         # switch lanes
-        self.arm.handle_lane_switching(2)
+        self.arm.handle_lane_switching()
 
         # assert that the first vehicle has switched lanes properly
         self.assertTrue(vehicle1 not in lane1.vehicles)
@@ -120,7 +120,7 @@ class TestArm(unittest.TestCase):
         self.arm._lanes = [lane1, lane2]
 
         # switch lanes
-        self.arm.handle_lane_switching(2)
+        self.arm.handle_lane_switching()
 
         # assert that the first vehicle has switched lanes properly
         self.assertTrue(vehicle1 in lane1.vehicles)
