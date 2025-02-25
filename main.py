@@ -23,6 +23,7 @@ global top_junctions
 #=============Used for Loading capture============
 flag = True
 counter = 0
+counter2 = 0
 flipper = True
 #=============Used for Loading capture============
 
@@ -264,11 +265,20 @@ def increasing_bar(rate):
     if(rate == -1):
         perc_bar = 0
     else:
+        if random.random() < rate and perc_bar < 95:
+            perc_bar = perc_bar + 1
+
+        update_progress_bar(perc_bar)
+
+def increasing_bar_(rate):
+    global perc_bar
+    if(rate == -1):
+        perc_bar = 0
+    else:
         if random.random() < rate and perc_bar < 99:
             perc_bar = perc_bar + 1
 
         update_progress_bar(perc_bar)
-        print(perc_bar)
 
 
 
@@ -801,12 +811,11 @@ while running:
         # this is a inverse proportional function, approximately linear
         sum_traffic = sum(sum(row) for row in traffic_data)
 
-        estimate_time = 20
+        # experience formula
+        estimate_time = (max([1, sum_traffic*0.001029])) * (num_lanes_input*0.53) * (simulation_duration*0.0128)
+
         rate = (1/estimate_time)*1.7139
-
-
         increasing_bar(rate)
-        # simulation_duration 是模拟时间
 
 
 
@@ -826,16 +835,23 @@ while running:
         if(thread.is_alive()):
             pass
         else:
-            # returning to input page if there are no valid junctions
-            if(len(top_junctions) == 0):
-                top_junctions = []
-                game_state = 0
-                flag = True
-                init_table()
-                show_error_box("Not enough lanes to model any specified junction.")
+            if counter2 < 200:
+                increasing_bar_(0.9)
+                counter2 = counter2 + 1
             else:
-                increasing_bar(-1)
-                game_state = 1
+
+                # returning to input page if there are no valid junctions
+                if(len(top_junctions) == 0):
+                    top_junctions = []
+                    game_state = 0
+                    counter2 = 0
+                    flag = True
+                    init_table()
+                    show_error_box("Not enough lanes to model any specified junction.")
+                else:
+                    increasing_bar(-1)
+                    counter2 = 0
+                    game_state = 1
 
         # flip the screen
         manager.update(time_delta)

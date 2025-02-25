@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="488d8b33-70cf-466b-8d65-0f24cfa6f6b7" name="默认变更列表" comment="separate the calculation to sub thread">
+    <list default="true" id="488d8b33-70cf-466b-8d65-0f24cfa6f6b7" name="默认变更列表" comment="Implemented dynamic progress bar, I am try to find an empirical formula to make bar match the progress">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.txt" beforeDir="false" afterPath="$PROJECT_DIR$/test.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -137,7 +136,14 @@
       <option name="project" value="LOCAL" />
       <updated>1740341927363</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Implemented dynamic progress bar, I am try to find an empirical formula to make bar match the progress">
+      <created>1740518635799</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1740518635799</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.History.Properties">
@@ -167,14 +173,15 @@
     <MESSAGE value="fix indent bug" />
     <MESSAGE value="Fixed a bug of crash" />
     <MESSAGE value="separate the calculation to sub thread" />
-    <option name="LAST_COMMIT_MESSAGE" value="separate the calculation to sub thread" />
+    <MESSAGE value="Implemented dynamic progress bar, I am try to find an empirical formula to make bar match the progress" />
+    <option name="LAST_COMMIT_MESSAGE" value="Implemented dynamic progress bar, I am try to find an empirical formula to make bar match the progress" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/main.py</url>
-          <line>682</line>
+          <line>692</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
