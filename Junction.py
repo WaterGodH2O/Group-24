@@ -66,7 +66,7 @@ class Junction:
         
         #Initialise bus lanes
         self.bus_lanes = bus_lane
-        self.bus_ratio = bus_ratio
+        self.bus_ratio = bus_ratio / 100
 
         #Initialise left turn lanes
         self.left_turn_lanes = left_turn_lanes
@@ -158,7 +158,7 @@ class Junction:
 
         self.box.move_all_vehicles(update_length_ms)
         for i, arm in enumerate(self.arms):
-            arm.move_all_vehicles(0, self.traffic_light._traffic_light_dir, self.box, update_length_ms, self.NUM_ARMS, i)
+            arm.move_all_vehicles(0, self.traffic_light._traffic_light_dir, self.box, update_length_ms, i)
     
 
     def create_new_vehicles(self, update_length_ms: int) -> None:
@@ -181,6 +181,6 @@ class Junction:
                     self.cars_made[source][dest] += 1
                     #Create buses if a random number is less than the bus ratio
                     if self.random.uniform(0, 1) < self.bus_ratio:
-                        self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Bus", self.NUM_ARMS)
+                        self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Bus")
                     else:
-                        self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Car", self.NUM_ARMS)
+                        self.arms[source].create_vehicle(self.VEHICLE_SPEED_MPS, source, dest, "Car")

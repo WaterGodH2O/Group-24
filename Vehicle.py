@@ -8,7 +8,7 @@ class Vehicle(ABC):
                  source: int, 
                  destination: int, 
                  start_position: float,
-                 wait_time_ms: int):
+                 num_arms: int):
         #Arm ID of the vehicle's start and end
         self._source = source
         self._destination = destination
@@ -26,6 +26,8 @@ class Vehicle(ABC):
         self._wait_time = 0
         #Lane vehicle came from. Set when entering box to calculate collisions.
         self._source_lane = None
+        #Number of arms in the junction
+        self._num_arms = num_arms
 
     @property
     def vehicle_type(self):
@@ -59,24 +61,24 @@ class Vehicle(ABC):
     def update_wait_time(self, update_length_ms: int) -> None:
         self._wait_time += update_length_ms
 
-    def get_relative_direction(self, num_arms: int) -> int:
+    def get_relative_direction(self) -> int:
         """
         Returns the number of arms between the source and destination anticlockwise
         """
-        return (self.source - self.destination) % num_arms
+        return (self.source - self.destination) % self._num_arms
     
 
 class Car(Vehicle):
-    def __init__(self, speed, source, destination, start_position, wait_time_ms = 0):
+    def __init__(self, speed, source, destination, start_position, num_arms):
         #Cars are on average 4.4m long in the UK
         CAR_LENGTH = 4.4
-        super().__init__("Car", CAR_LENGTH, speed, source, destination, start_position, wait_time_ms)
+        super().__init__("Car", CAR_LENGTH, speed, source, destination, start_position, num_arms)
 
 
 class Bus(Vehicle):
-    def __init__(self, speed, source, destination, start_position, wait_time_ms = 0):
+    def __init__(self, speed, source, destination, start_position, num_arms):
         #Buses are typically 9 to 11m long
         BUS_LENGTH = 10
-        super().__init__("Bus", BUS_LENGTH, speed, source, destination, start_position, wait_time_ms)
+        super().__init__("Bus", BUS_LENGTH, speed, source, destination, start_position, num_arms)
 
 

@@ -20,17 +20,20 @@ class Arm:
         self._length: int = length
         self._width: int = width
 
+        # the number of arms in the junction
+        self._num_arms = num_arms
+
         # the number of vehicles expected per hour. Index 0 = north, 1 = east, 2 = south, 3 = west
         self._vehicles_per_hour: List[int] = vehicles_per_hour
 
         # initalise a list of all the lanes coming from a certain direction in the junction
         self._lanes: List[Lane] = []
         if(bus_lane):
-            self._lanes.append(BusLane(width / num_lanes, length, num_arms))
+            self._lanes.append(BusLane(width / num_lanes, length, self._num_arms))
             num_lanes -= 1
         if(left_turn_lane):
             try:
-                self._lanes.append(LeftTurnLane(width / num_lanes, length, num_arms))
+                self._lanes.append(LeftTurnLane(width / num_lanes, length, self._num_arms))
                 num_lanes -= 1
             except ZeroDivisionError:
                 #If num lanes is zero, then ignore the error as a notenoughlanes error will be thrown immediately afterwards
@@ -75,7 +78,7 @@ class Arm:
     def get_lane(self, lane_num: int) -> Lane:
         return self._lanes[lane_num] if lane_num < len(self._lanes) else None
     
-    def move_all_vehicles(self, current_time_ms: int, traffic_light_dir: int, junction_box: Box, update_length_ms: int, num_arms: int, arm_id: int) -> None:
+    def move_all_vehicles(self, current_time_ms: int, traffic_light_dir: int, junction_box: Box, update_length_ms: int, arm_id: int) -> None:
         """
         Method to update all the vehicles in each lane of the junction + allocate new vehicles to lanes
         Moves all the vehicles for a particular arm in the junction. For each vehicle that exits the lane,
@@ -87,7 +90,7 @@ class Arm:
         
         for i, lane in enumerate(self._lanes):
             # update the position of each vehicle in the arm, getting the vehicle leaving the lane
-            vehicles_leaving = lane.move_all_vehicles(traffic_light_dir, update_length_ms, junction_box, arm_id, i, num_arms)
+            vehicles_leaving = lane.move_all_vehicles(traffic_light_dir, update_length_ms, junction_box, arm_id, i)
 
             # remove the vehicles from the lane if necessary
             for vehicle_leaving in vehicles_leaving:
@@ -95,7 +98,7 @@ class Arm:
                 junction_box.add_vehicle(vehicle_leaving)
                 # update kpi
                 vehicle_wait_time = vehicle_leaving.wait_time / 1000 # in seconds
-                #print(f"{vehicle_leaving.vehicle_type} entered box from arm {vehicle_leaving.source}, lane {vehicle_leaving.source_lane}, turning {vehicle_leaving.get_relative_direction(num_arms)}")
+                #print(f"{vehicle_leaving.vehicle_type} entered box from arm {vehicle_leaving.source}, lane {vehicle_leaving.source_lane}, turning {vehicle_leaving.get_relative_direction()}")
                 self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
                 self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1
@@ -105,9 +108,9 @@ class Arm:
             self._max_queue_length = max(self._max_queue_length, lane.queue_length)  
             
         # change lanes
-        self.handle_lane_switching(num_arms)
+        self.handle_lane_switching()
 
-    def handle_lane_switching(self, num_arms):
+    def handle_lane_switching(self):
         """ Attempts lane switching for all vehicles in the arm of a junction, prioritising shortest lane """
 
         previous_lane = None
@@ -130,7 +133,7 @@ class Arm:
                 for new_lane in adjacent_lanes:
                     # check if the vehicle can merge into a new lane if the current lane is shorter
                     # and goes where the vehicle wants to go
-                    if self.is_new_lane_shorter(current_lane, new_lane) and new_lane.can_enter_lane(vehicle, num_arms):
+                    if self.is_new_lane_shorter(current_lane, new_lane) and new_lane.can_enter_lane(vehicle):
                         
                         # stop looping if the vehicle has successfully merged into the new lane
                         if self.move_vehicle_to_lane(vehicle, current_lane, new_lane):
@@ -249,7 +252,7 @@ class Arm:
         return True
     
 
-    def create_vehicle(self, speed: int, source: int, destination: int, type: str, num_arms:int) -> None:
+    def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> None:
         """ Create a new vehicle in a random lane """
         furthest_car_distance = 0
         for lane in self._lanes:
@@ -264,8 +267,8 @@ class Arm:
             raise TooManyVehiclesException
         
         for i in range(0, len(self._lanes)):
-            v = self._lanes[i].create_vehicle(speed, source, destination, type, start_position, num_arms)
+            v = self._lanes[i].create_vehicle(speed, source, destination, type, start_position)
             if v:
-                #print(f"{v._vehicle_type} created in arm {source} lane {i}, turning {v.get_relative_direction(num_arms)}")
+                #print(f"{v._vehicle_type} created in arm {source} lane {i}, turning {v.get_relative_direction()}")
                 break
                 
