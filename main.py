@@ -7,6 +7,8 @@ from time import time
 from Junction import Junction
 from exceptions import NotEnoughLanesException, TooManyVehiclesException
 from numpy import zeros
+import random
+
 game_state:int = 0
 
 global crossing_time
@@ -59,6 +61,9 @@ little_font.set_italic(True)
 bold_font = pygame.font.Font(None, 29)
 bold_font.set_bold(True)
 
+symbol = pygame.font.Font(None, 15)
+symbol.set_bold(True)
+
 def draw_title(text, position):
     text_surface = title.render(text, True, BLACK, )
     screen.blit(text_surface, position)
@@ -70,6 +75,11 @@ def draw_font(text, position):
 def draw_bold_font(text, position):
     text_surface = bold_font.render(text, True, BLACK)
     screen.blit(text_surface, position)
+
+def draw_text(text, position):
+    text_surface = symbol.render(text, True, BLACK)
+    screen.blit(text_surface, position)
+
 
 traffic_flow_positions = {
     "n2e": (250, 110),
@@ -231,6 +241,36 @@ output_data = []
 
 # list of elements in table
 table_elements = []
+# update progress bar, full bar contain 99 # symbols
+
+
+def update_progress_bar(percentage):
+    percentage = int(percentage)
+    percentage = percentage - 1
+    pygame.draw.rect(screen, BLACK, (245, 329, 700, 20), 3)
+
+    bar = ""
+    for i in range(0,percentage):
+        bar = bar + "#"
+
+    draw_text(bar, (250, 334))
+    return
+
+
+perc_bar = 0
+# lower rate, higher speed of increasing of bar. -1 rate for reset bar
+def increasing_bar(rate):
+    global perc_bar
+    if(rate == -1):
+        perc_bar = 0
+    else:
+        if random.random() < rate and perc_bar < 99:
+            perc_bar = perc_bar + 1
+
+        update_progress_bar(perc_bar)
+        print(perc_bar)
+
+
 
 # setup table data
 def init_table():
@@ -491,7 +531,7 @@ while running:
                     toggle_button(turn_yes,turn_maybe,turn_no,turn_no)
 
                 elif event.ui_element == run_simulation_button:
-
+                    global traffic_data
                     traffic_data = {}
                     lane_configs = []
 
@@ -515,13 +555,12 @@ while running:
                     if traffic_flow_rates_invalid:
                         error_messages.append("Error: All traffic flow rates must be integer values between 0 and 3000.")
                     else:
-                        print(traffic_data)
                         row1 = [0,traffic_data["n2e"],traffic_data["n2s"],traffic_data["n2w"]]
                         row2 = [traffic_data["e2n"],0,  traffic_data["e2s"], traffic_data["e2w"]]
                         row3 = [traffic_data["s2n"], traffic_data["s2e"],0,  traffic_data["s2w"]]
                         row4 = [traffic_data["w2n"], traffic_data["w2e"], traffic_data["w2s"], 0]
                         traffic_data = [row1, row2, row3, row4]
-                        print(traffic_data)
+
                     
                     #------------------------------------------------------------------------------------------------------------------
                     # validate number of lanes input
@@ -756,6 +795,20 @@ while running:
         coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
         screen.blit(coord_text, (800, 10))
 
+        # some calculation here
+        # 0.1441 for 12s
+        # 0.2841 for 6s
+        # this is a inverse proportional function, approximately linear
+        sum_traffic = sum(sum(row) for row in traffic_data)
+
+        estimate_time = 20
+        rate = (1/estimate_time)*1.7139
+
+
+        increasing_bar(rate)
+        # simulation_duration 是模拟时间
+
+
 
         if counter < 60:
             counter = counter +1
@@ -770,8 +823,6 @@ while running:
             draw_title("Loading....", (200, 5))
             draw_title("Loading....", (400, 5))
 
-        # pygame.time.delay(200)
-
         if(thread.is_alive()):
             pass
         else:
@@ -783,6 +834,7 @@ while running:
                 init_table()
                 show_error_box("Not enough lanes to model any specified junction.")
             else:
+                increasing_bar(-1)
                 game_state = 1
 
         # flip the screen
