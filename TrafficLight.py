@@ -62,12 +62,17 @@ class TrafficLight:
         #Subtract the length of the update from the timer
         self.traffic_light_time_ms -= update_length_ms
 
-        #If no cars are within 100m of the light, the time is below 0, set all lights red and start the gap timer
-        if arms[self._traffic_light_dir].no_vehicles_within(100) or self.traffic_light_time_ms <= 0:       
-            self.traffic_light_gap_timer_ms = self.traffic_light_gap_ms
-            self.prev_light_dir = self._traffic_light_dir
-            self._traffic_light_dir = -1
-            #print("Light changed to red")
+        #If no cars are within 100m of the light or the time is below 0
+        if arms[self._traffic_light_dir].no_vehicles_within(100) or self.traffic_light_time_ms <= 0:
+            #If there are no cars in any other direction, stay green
+            if (all([arms[i].no_vehicles_within(100) for i in range(0, self.num_arms) if i != self._traffic_light_dir])):
+                self.traffic_light_time_ms = self.traffic_light_interval_ms
+            else:
+                #Otherwise, set all lights to red and start gap timer
+                self.traffic_light_gap_timer_ms = self.traffic_light_gap_ms
+                self.prev_light_dir = self._traffic_light_dir
+                self._traffic_light_dir = -1
+                #print("Light changed to red")
     
     def update_traffic_light_all_red(self, update_length_ms: int, arms: list[Arm]) -> None:
         """ Process one traffic light update when in between light cycles when no pedestrian crossing is active """
@@ -78,9 +83,9 @@ class TrafficLight:
         if self.traffic_light_gap_timer_ms <= 0:
             self.traffic_light_time_ms = self.traffic_light_interval_ms
             #To update direction, check each direction clockwise for vehicles. If a vehicle is found, set that direction green. 
-            #If none are found, set the first direction anticlockwise green
+            #If none are found, stay green
             self._traffic_light_dir = self.prev_light_dir
-            for i in range(0,self.num_arms - 1):
+            for i in range(0,self.num_arms):
                 self._traffic_light_dir = self.get_left_arm(self._traffic_light_dir)
                 if not arms[self._traffic_light_dir].no_vehicles_within(100):
                     break
