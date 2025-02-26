@@ -300,7 +300,7 @@ def init_table():
     ])
 
 # add row to table for a configuration
-def add_config(efficiency, values, description):
+def add_config(efficiency, values, description, passed_per_arm):
     config_number = len(output_data[0])
     output_data[0].append(f'Configuration {config_number}')
 
@@ -309,7 +309,7 @@ def add_config(efficiency, values, description):
     output_data[3].append(f"North: {int(values[0][0])}\nEast: {int(values[1][0])}\nSouth: {int(values[2][0])}\nWest: {int(values[3][0])}")
     output_data[4].append(f"North: {int(values[0][1])}\nEast: {int(values[1][1])}\nSouth: {int(values[2][1])}\nWest: {int(values[3][1])}")
     output_data[5].append(f"North: {int(values[0][2])}\nEast: {int(values[1][2])}\nSouth: {int(values[2][2])}\nWest: {int(values[3][2])}")
-    output_data[6].append(f"North: {passed_per_arm[0]}\nEast: {passed_per_arm[1]}\nSouth: {passed_per_arm[2]}\nWest: {passed_per_arm[4]}")
+    output_data[6].append(f"North: {passed_per_arm[0]}\nEast: {passed_per_arm[1]}\nSouth: {passed_per_arm[2]}\nWest: {passed_per_arm[3]}")
 
 
 # create table with output data
@@ -388,9 +388,9 @@ def calc_efficiency(north_arm, south_arm, east_arm, west_arm, w_avg, w_max, w_le
     raw_sum = 0.0
     for (avg_wait, max_wait, queue_len) in arms:
         # Weighted sum for this arm
-        arn_score = (w_avg * (1.0 / (1.0 + avg_wait))
+        arm_score = (w_avg * (1.0 / (1.0 + avg_wait))
                     + w_max * (1.0 / (1.0 + max_wait))
-                    + w_queue * (1.0 / (1.0 + queue_len))
+                    + w_len * (1.0 / (1.0 + queue_len))
                     )
         raw_sum += arm_score
     # Perfect sceneario => raw_sum = 4. We want that => 100 => multiply by 25
@@ -437,7 +437,7 @@ def runSimulation():
                 passed_per_arm = junction.box.get_arm_throughputs()
                 print(kpi)
                 top_junctions.append(
-                    [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg_wait, w_max_wait, w_queue_len), kpi, num_lanes, ped_yes, bus_yes, left_yes, passed_per_arm])
+                    [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg, w_max, w_queue), kpi, num_lanes, ped_yes, bus_yes, left_yes, passed_per_arm])
 
             except NotEnoughLanesException:
                 # Not adding junctions that fail to create
@@ -556,7 +556,6 @@ while running:
                     toggle_button(turn_yes,turn_maybe,turn_no,turn_no)
 
                 elif event.ui_element == run_simulation_button:
-                    global traffic_data
                     traffic_data = {}
                     lane_configs = []
 
@@ -853,7 +852,7 @@ while running:
         sum_traffic = sum(sum(row) for row in traffic_data)
 
         # experience formula
-        estimate_time = (max([1, sum_traffic*0.001029])) * (num_lanes_input*0.53) * (simulation_duration*0.0128)
+        estimate_time = (max([1, sum_traffic*0.001029])) * (sum(lane_configs)*0.53) * (simulation_duration*0.0128)
 
         rate = (1/estimate_time)*1.7139
         increasing_bar(rate)
