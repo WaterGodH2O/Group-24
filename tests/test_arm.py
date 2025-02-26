@@ -332,8 +332,6 @@ class TestArm(unittest.TestCase):
                     self.arm._lanes[lane].remove_vehicle(cars[car])
                 else:
                     #Otherwise, it should not be blocked
-                    print(lane)
-                    print(cars[car].destination)
                     self.assertIn(cars[car], box._vehicles)
                     box._vehicles.remove(cars[car])
     
@@ -360,8 +358,6 @@ class TestArm(unittest.TestCase):
                     self.arm._lanes[lane].remove_vehicle(cars[car])
                 else:
                     #Otherwise, it should not be blocked
-                    print(lane)
-                    print(cars[car].destination)
                     self.assertIn(cars[car], box._vehicles)
                     box._vehicles.remove(cars[car])
 
@@ -388,8 +384,6 @@ class TestArm(unittest.TestCase):
                     self.arm._lanes[lane].remove_vehicle(cars[car])
                 else:
                     #Otherwise, it should not be blocked
-                    print(lane)
-                    print(cars[car].destination)
                     self.assertIn(cars[car], box._vehicles)
                     box._vehicles.remove(cars[car])
  
@@ -512,3 +506,24 @@ class TestBusLeftTurnArm(unittest.TestCase):
         self.arm.move_all_vehicles(0, 1, box, 100, 2)
 
         self.assertNotIn(car1, box._vehicles)
+
+    def test_normal_collisions_ltl(self):
+        """Test that when a car is moving in a left turn lane it does not block anything"""
+        blocking_car = Car(10, 0, 1, 20, 4)
+        blocking_car._source_lane = 1
+        box = Box(3, 4)
+        box.add_vehicle(blocking_car)
+        #Create 3 cars to test in each lane (left, forward, right)
+        cars = [Car(10, 2, 3, 0, 4), Car(10, 2, 0, 0, 4), Car(10, 2, 1, 0, 4)]
+
+        for lane in range(3):
+            for car in range(3):
+                #Reset car distance between tests
+                cars[car]._distance = 0
+                #Add car to lane
+                self.arm._lanes[lane]._vehicles.append(cars[car])
+                #Move vehicles
+                self.arm.move_all_vehicles(0, 2, box, 100, 2)
+                #Nothing should be blocked
+                self.assertIn(cars[car], box._vehicles)
+                box._vehicles.remove(cars[car])

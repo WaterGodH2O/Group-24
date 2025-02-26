@@ -214,6 +214,11 @@ class Lane(ABC):
 
         for box_vehicle in box.get_vehicles():
             box_v_r_d = box_vehicle.get_relative_direction()
+            
+            #If the box vehicle is from a different arm, it is in a left turn lane and will not cause a collision
+            if box_vehicle.source != vehicle.source:
+                continue
+
             #If a vehicle came from a lane to the left
             if box_vehicle.source_lane < lane_id:
                 #If the box vehicle is moving somewhere right of the vehicles target, it blocks.
