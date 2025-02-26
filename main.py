@@ -373,19 +373,26 @@ def toggle_button(button_yes, button_maybe, button_no, button_selected):
         button_no.set_text("> No <")
 
 def calc_efficiency(north_arm, south_arm, east_arm, west_arm) -> int:
-    total_score = 0
+    """
+    Calculates a junction-wide efficiency, ensuring that if all arms are perfect (zero wait times & zero queue), the overall
+    score is 100. This relies on w_avg + w_max + w_queue == 1.
+    Each arm is a tuple of (avg_wait, max_wait, max_queue)
+    """
+    # Gather all arms in a list
     arms = [north_arm, south_arm, east_arm, west_arm]
-
-    for arm_data in arms:
-        avg_wait, max_wait, max_queue = arm_data
-        # compute partial score
-        arn_score = 0
-        try:
-            arm_score = (100/avg_wait) + (100/max_wait) + (100/max_queue)
-        except ZeroDivisionError:
-            arm_score = 100
-        # add to the total score for the junction
-        total_score += arm_score
+    # Sum partial scores across the 4 arms
+    # Because w_avg + w_max + w_queue = 1, a perfect arm yields 1.0
+    # Summing 4 perfect arms => 4. Therefore need to scale to 100 below
+    raw_sum = 0.0
+    for (avg_wait, max_wait, queue_len) in arms:
+        # Weighted sum for this arm
+        arn_score = (w_avg * (1.0 / (1.0 + avg_wait))
+                    + w_max * (1.0 / (1.0 + max_wait))
+                    + w_queue * (1.0 / (1.0 + queue_len))
+                    )
+        raw_sum += arm_score
+    # Perfect sceneario => raw_sum = 4. We want that => 100 => multiply by 25
+    total_score = 25.0 * raw_sum
     return total_score
 
 def draw_y_axis():
@@ -427,7 +434,7 @@ def runSimulation():
                 kpi = junction.get_kpi()
                 print(kpi)
                 top_junctions.append(
-                    [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes, left_yes])
+                    [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg_wait, w_max_wait, w_queue_len), kpi, num_lanes, ped_yes, bus_yes, left_yes])
 
             except NotEnoughLanesException:
                 # Not adding junctions that fail to create
@@ -492,6 +499,8 @@ while running:
 
         draw_font("Bus Percentage\n(%)", (300, 615))
 
+        draw_font("Weightings\n(Avg Time / Max Time / Max Queue Length)", (600,420)) 
+        
         draw_font("Pedestrian Crossings", (50, 520))
 
         draw_font("Left turn lane", (50, 680))
@@ -653,9 +662,9 @@ while running:
                         error_messages.append("Error: Bus percentage must be an integer between 0 and 100.")
 
                     # validate KPI weightings
-                    w_avg_input = param_inputs["w_avg"].get_text().strip()
-                    w_max_input = param_inputs["w_max"].get_text().strip()
-                    w_avg_input = param_inputs["w_queue"].get_text().strip()
+                    w_avg_input = param_inputs["w_avg_wait"].get_text().strip()
+                    w_max_input = param_inputs["w_max_wait"].get_text().strip()
+                    w_queue_input = param_inputs["w_queue_len"].get_text().strip()
 
                     weightings_invalid = False
                     w_avg = w_max = w_queue = 0.0
