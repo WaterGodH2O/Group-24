@@ -372,7 +372,7 @@ def toggle_button(button_yes, button_maybe, button_no, button_selected):
         button_maybe.set_text("Maybe")
         button_no.set_text("> No <")
 
-def calc_efficiency(north_arm, south_arm, east_arm, west_arm) -> int:
+def calc_efficiency(north_arm, south_arm, east_arm, west_arm, w_avg, w_max, w_len) -> float:
     """
     Calculates a junction-wide efficiency, ensuring that if all arms are perfect (zero wait times & zero queue), the overall
     score is 100. This relies on w_avg + w_max + w_queue == 1.
