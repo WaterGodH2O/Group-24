@@ -7,7 +7,7 @@ import unittest
 
 class TestArm(unittest.TestCase):
     def setUp(self):
-        self.arm = Arm(2, 100, [20, 30, 40, 0], 3, 4, False, False)
+        self.arm = Arm(2, 100, [20, 30, 40, 0], 3, 4, False, False, 0)
 
     def test_get_kpi(self):
         """ ensure that the correct kpi details are returned """
@@ -311,7 +311,7 @@ class TestArm(unittest.TestCase):
 
 class TestBusLeftTurnArm(unittest.TestCase):
     def setUp(self):
-        self.arm = Arm(3, 1000, [0,0,0,0], 3, 4, True, True)
+        self.arm = Arm(3, 1000, [0,0,0,0], 3, 4, True, True, 0)
     
     def test_vehicle_creation(self):
         """Test that buses add to lane 0, left turning cars to lane 1, others to lane 2"""

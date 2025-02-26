@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 from Lane import Lane, CarLane, BusLane, LeftTurnLane
 from exceptions import TooManyVehiclesException, NotEnoughLanesException
 from Box import Box
@@ -8,6 +8,8 @@ class Arm:
     """
     This class defines the behaviour of each entrance in the junction
     """
+
+
     def __init__(self, 
                  width: int, 
                  length: int, 
@@ -15,7 +17,9 @@ class Arm:
                  num_lanes: int, 
                  num_arms: int, 
                  bus_lane: bool, 
-                 left_turn_lane: bool):
+                 left_turn_lane: bool,
+                 allowed_directions: List[Set[int]],
+                 source_direction: int):
         # the length and width of the arm in metres
         self._length: int = length
         self._width: int = width
@@ -23,27 +27,51 @@ class Arm:
         # the number of arms in the junction
         self._num_arms = num_arms
 
+        # configurations of what directions each lane can enter
+        # transforsm relative directions to absolute directions to match vehicle destionations
+        self._allowed_directions = [
+            {(source_direction + allowed_dir) % 4 for allowed_dir in relative_direction_set}
+            for relative_direction_set in allowed_directions
+        ]
+
         # the number of vehicles expected per hour. Index 0 = north, 1 = east, 2 = south, 3 = west
         self._vehicles_per_hour: List[int] = vehicles_per_hour
 
         # initalise a list of all the lanes coming from a certain direction in the junction
         self._lanes: List[Lane] = []
-        if(bus_lane):
-            self._lanes.append(BusLane(width / num_lanes, length, self._num_arms))
-            num_lanes -= 1
-        if(left_turn_lane):
-            try:
-                self._lanes.append(LeftTurnLane(width / num_lanes, length, self._num_arms))
-                num_lanes -= 1
-            except ZeroDivisionError:
-                #If num lanes is zero, then ignore the error as a notenoughlanes error will be thrown immediately afterwards
-                pass
 
-        if num_lanes < 1:
-            raise NotEnoughLanesException()
-        
         for i in range(num_lanes):
-            self._lanes.append(CarLane(width / num_lanes, length, num_arms))
+            # if we have a bus lane
+            if i == 0 and bus_lane:
+                self._lanes.append(BusLane(self._allowed_directions[i], width / num_lanes, length, self._num_arms)) # TODO temporary until figure out what we are doing here
+
+            # create a left turn lane if the lane can go left only
+            elif left_turn_lane and self._allowed_directions[i] == {(source_direction + 1) % 4}:
+                self._lanes.append(LeftTurnLane(width / num_lanes, length, self._num_arms))
+            
+            # for all other regular car lanes
+            else:
+                self._lanes.append(CarLane(self._allowed_directions[i], width / num_lanes, length, num_arms))
+
+        
+        # TODO may keep, unsure
+        # if(bus_lane):
+        #     self._lanes.append(BusLane(width / num_lanes, length, self._num_arms))
+        #     num_lanes -= 1
+        # if(left_turn_lane):
+        #     try:
+        #         self._lanes.append(LeftTurnLane(width / num_lanes, length, self._num_arms))
+        #         num_lanes -= 1
+        #     except ZeroDivisionError:
+        #         #If num lanes is zero, then ignore the error as a notenoughlanes error will be thrown immediately afterwards
+        #         pass
+
+        # if num_lanes < 1:
+        #     raise NotEnoughLanesException()
+        
+        # for i in range(num_lanes):
+        #     self._lanes.append(CarLane(width / num_lanes, length, num_arms))
+
 
         # represents the most cars in the arm at any given point in the simulation
         self._max_queue_length: int = 0
@@ -59,6 +87,9 @@ class Arm:
 
         # the number of people that have left the junction
         self._total_person_count: int = 0
+
+        # the direction of the lane
+        self._source_direction = source_direction
 
     @property
     def length(self) -> int:

@@ -8,7 +8,7 @@ class Lane(ABC):
     The abstract class Lane, which defines the basic interface for all lanes.
     """
     def __init__(self, 
-                 allowed_directions: List[int], 
+                 allowed_directions: Set[int], 
                  width: int, 
                  length: int,
                  num_arms: int):
@@ -16,7 +16,7 @@ class Lane(ABC):
         self._vehicles: List[Vehicle] = []
 
         # the directions vehicles in this lane can go
-        self._allowed_directions: Set[int] = set(allowed_directions)
+        self._allowed_directions: Set[int] = allowed_directions
 
         # the width of the lane
         self._width: int = width
@@ -254,20 +254,20 @@ class Lane(ABC):
 
 
 class CarLane(Lane):
-    def __init__(self, width: int, length: int, num_arms: int):
-        super().__init__([i for i in range(num_arms)], width, length, num_arms)
+    def __init__(self, allowed_directions: Set[int], width: int, length: int, num_arms: int):
+        super().__init__(allowed_directions, width, length, num_arms)
         
     
     def can_enter_lane(self, vehicle):
-        #Car lanes can be entered by any vehicle going in any direction
-        return True
+        # a vehicle can enter a lane if its going in the intended direction
+        return vehicle.destination in self.allowed_directions
 
 
-# !! not a must have requirement
 class BusLane(Lane):
 
-    def __init__(self, width: int, length: int, num_arms):
-        super().__init__([i for i in range(num_arms)], width, length, num_arms)
+    def __init__(self, allowed_directions: Set[int], width: int, length: int, num_arms):
+        super().__init__(allowed_directions, width, length, num_arms)
+        # set([i for i in range(num_arms)])
     
     def can_enter_lane(self, vehicle: Vehicle):
         if vehicle.vehicle_type == "Bus":

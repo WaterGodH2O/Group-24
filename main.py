@@ -232,6 +232,25 @@ output_data = []
 # list of elements in table
 table_elements = []
 
+# list of lane presets which denote which relative dirs each lane can travel in
+lane_dir_presets = [
+    # all presets for 1 lane configurations
+    [{1, 2, 3}],
+
+    # all presets for 2 lane configurations
+    [[{1}, {2, 3}], [{1, 2}, {3}]],
+
+    # all presets for 3 lane configurations
+    [[{1}, {2}, {3}], [{1, 2}, {2}, {2, 3}], [{1}, {2}, {2, 3}], [{1, 2}, {2}, {3}]],
+
+    # all presets for 4 lane configurations
+    [[{1}, {2}, {2}, {3}], [{1}, {2}, {3}, {3}], [{1}, {1}, {2}, {3}], [{1}, {1, 2}, {2, 3}, {3}],
+        [{1}, {1, 2}, {2}, {3}], [{1}, {2}, {2, 3}, {3}]]
+
+    # TODO 5 lane configurations
+
+]
+
 # setup table data
 def init_table():
     global output_data
@@ -352,33 +371,35 @@ def runSimulation():
     global top_junctions
     for num_lanes in lane_configs:
         for (ped_yes, bus_yes, left_yes) in combinations:
-            try:
-                # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
-                junction = Junction(
-                    traffic_data,
-                    num_lanes=num_lanes,
-                    pedestrian_crossing=ped_yes,
-                    p_crossing_time_s=crossing_time,
-                    p_crossing_freq=crossing_frequency,
-                    bus_lane=bus_yes,
-                    bus_ratio=bus_percentage,
-                    left_turn_lanes=left_yes
-                )
+            for lane_directions in lane_dir_presets[num_lanes - 1]: # run each lane configuration
+                try:
+                    # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
+                    junction = Junction(
+                        traffic_data,
+                        lane_directions,
+                        num_lanes=num_lanes,
+                        pedestrian_crossing=ped_yes,
+                        p_crossing_time_s=crossing_time,
+                        p_crossing_freq=crossing_frequency,
+                        bus_lane=bus_yes,
+                        bus_ratio=bus_percentage,
+                        left_turn_lanes=left_yes
+                    )
 
-                print(junction)
-                start_time = time()
+                    print(junction)
+                    start_time = time()
 
-                junction.simulate(simulation_duration * 60 * 1000, 100)
+                    junction.simulate(simulation_duration * 60 * 1000, 100)
 
-                print(f"Simulation duration: {round(time() - start_time, 2)}s")
-                kpi = junction.get_kpi()
-                print(kpi)
-                top_junctions.append(
-                    [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes, left_yes])
+                    print(f"Simulation duration: {round(time() - start_time, 2)}s")
+                    kpi = junction.get_kpi()
+                    print(kpi)
+                    top_junctions.append(
+                        [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes, left_yes, junction.get_junction_information()])
 
-            except NotEnoughLanesException:
-                # Not adding junctions that fail to create
-                pass
+                except NotEnoughLanesException:
+                    # Not adding junctions that fail to create
+                    pass
 
     # top 3 junctions by kpi
     top_junctions = sorted(top_junctions, key=lambda x: x[0], reverse=True)
@@ -386,7 +407,8 @@ def runSimulation():
     init_table()
 
     for junction in top_junctions:
-        config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}"
+        # TODO show lane configurations
+        config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}\nLanes: {junction[6]}"
         add_config(junction[0], junction[1], config_description)
 
     return
