@@ -295,7 +295,8 @@ def init_table():
         ['Efficiency'],
         ['Average wait time (seconds)'],
         ['Maximum wait time (seconds)'],
-        ['Maximum queue length']
+        ['Maximum queue length'],
+        ['Vehicles passed through']
     ])
 
 # add row to table for a configuration
@@ -308,6 +309,7 @@ def add_config(efficiency, values, description):
     output_data[3].append(f"North: {int(values[0][0])}\nEast: {int(values[1][0])}\nSouth: {int(values[2][0])}\nWest: {int(values[3][0])}")
     output_data[4].append(f"North: {int(values[0][1])}\nEast: {int(values[1][1])}\nSouth: {int(values[2][1])}\nWest: {int(values[3][1])}")
     output_data[5].append(f"North: {int(values[0][2])}\nEast: {int(values[1][2])}\nSouth: {int(values[2][2])}\nWest: {int(values[3][2])}")
+    output_data[6].append(f"North: {passed_per_arm[0]}\nEast: {passed_per_arm[1]}\nSouth: {passed_per_arm[2]}\nWest: {passed_per_arm[4]}")
 
 
 # create table with output data
@@ -432,9 +434,10 @@ def runSimulation():
 
                 print(f"Simulation duration: {round(time() - start_time, 2)}s")
                 kpi = junction.get_kpi()
+                passed_per_arm = junction.box.get_arm_throughputs()
                 print(kpi)
                 top_junctions.append(
-                    [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg_wait, w_max_wait, w_queue_len), kpi, num_lanes, ped_yes, bus_yes, left_yes])
+                    [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg_wait, w_max_wait, w_queue_len), kpi, num_lanes, ped_yes, bus_yes, left_yes, passed_per_arm])
 
             except NotEnoughLanesException:
                 # Not adding junctions that fail to create
@@ -447,7 +450,7 @@ def runSimulation():
 
     for junction in top_junctions:
         config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}"
-        add_config(junction[0], junction[1], config_description)
+        add_config(junction[0], junction[1], config_description, passed_per_arm)
 
     return
 
