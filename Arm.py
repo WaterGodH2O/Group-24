@@ -98,7 +98,7 @@ class Arm:
                 junction_box.add_vehicle(vehicle_leaving)
                 # update kpi
                 vehicle_wait_time = vehicle_leaving.wait_time / 1000 # in seconds
-                print(f"{vehicle_leaving.vehicle_type} entered box from arm {vehicle_leaving.source}, lane {vehicle_leaving.source_lane}, turning {vehicle_leaving.get_relative_direction()}")
+                #print(f"{vehicle_leaving.vehicle_type} entered box from arm {vehicle_leaving.source}, lane {vehicle_leaving.source_lane}, turning {vehicle_leaving.get_relative_direction()}")
                 self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
                 self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1
