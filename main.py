@@ -103,9 +103,9 @@ param_positions = {
     "crossing_frequency": (760, 535),
     "simulation_duration": (900, 700),
     "bus_percentage": (470, 620),
-    "w_avg_wait": (300, 700),
-    "w_max_wait": (550, 700),
-    "w_queue_len": (800, 700),
+    "w_avg_wait": (610, 470),
+    "w_max_wait": (710, 470),
+    "w_queue_len": (815, 470),
 }
 
 # Create the object of input box of VPH
@@ -326,10 +326,12 @@ def create_table(data):
     row_height = 120
 
     for(i,row) in enumerate(output_data):
-        if(i==1):
+        if(i==0):
+            row_height = 45 
+        elif(i==1):
             row_height = 170
         elif(i==2):
-            row_height = 70
+            row_height = 45
         else:
             row_height = 120
         label = pygame_gui.elements.UITextBox(
@@ -450,7 +452,7 @@ def runSimulation():
 
     for junction in top_junctions:
         config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}"
-        add_config(junction[0], junction[1], config_description, passed_per_arm)
+        add_config(junction[0], junction[1], config_description, junction[6])
 
     return
 
@@ -773,7 +775,7 @@ while running:
 
         chart_height = HEIGHT - 220
         max_value = max(max(values) for values in data.values())
-        scale_factor = (HEIGHT - 220) / max_value
+        scale_factor = (HEIGHT - 220) / max_value if max_value != 0 else 1
 
         draw_y_axis()
 
