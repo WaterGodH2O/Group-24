@@ -103,6 +103,9 @@ param_positions = {
     "crossing_frequency": (760, 535),
     "simulation_duration": (900, 700),
     "bus_percentage": (470, 620),
+    "w_avg_wait": (300, 700),
+    "w_max_wait": (550, 700),
+    "w_queue_len": (800, 700),
 }
 
 # Create the object of input box of VPH
@@ -649,6 +652,32 @@ while running:
                     if bus_percentage_invalid:
                         error_messages.append("Error: Bus percentage must be an integer between 0 and 100.")
 
+                    # validate KPI weightings
+                    w_avg_input = param_inputs["w_avg"].get_text().strip()
+                    w_max_input = param_inputs["w_max"].get_text().strip()
+                    w_avg_input = param_inputs["w_queue"].get_text().strip()
+
+                    weightings_invalid = False
+                    w_avg = w_max = w_queue = 0.0
+
+                    try:
+                        w_avg = float(w_avg_input)
+                        w_max = float(w_max_input)
+                        w_queue = float(w_queue_input)
+                        # Each weighting must be between 0 and 1 (inclusive)
+                        if not (0 <= w_avg <= 1 and 0 <= w_max <= 1 and 0 <= w_queue <= 1):
+                            weightings_invalid = True
+                        # They must sum to exactly 1 (allow a tiny float tolerance)
+                        total_weight = w_avg + w_max + w_queue
+                        if abs(total_weight - 1.0) > 1e-9:
+                            weightings_invalid = True
+                    except ValueError:
+                        weightings_invalid = True
+
+                    if weightings_invalid:
+                        error_messages.append(
+                            "Error: The weightings for Average Waiting Time, Max Waiting Time and Max Queue Length must be valid floats between 0 and 1 with the sum of the three being 1"
+                        )
                     # ------------------------------------------------------------------------------------------------------------------
                     # display error
                     if error_messages:
