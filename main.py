@@ -42,6 +42,8 @@ page2_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), 
 
 page1_container_error = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), (WIDTH, HEIGHT)), manager=manager)
 
+junction_visualisation = pygame.Surface((300, 300))
+
 # colours
 WHITE = (180, 180, 180)
 BLACK = (0, 0, 0)
@@ -81,6 +83,64 @@ def draw_text(text, position):
     text_surface = symbol.render(text, True, BLACK)
     screen.blit(text_surface, position)
 
+def draw_junction_base(surface):
+    surface.fill((200,200,200))
+    pygame.draw.rect(surface, (50, 50, 50), (100, 0, 100, 300))
+    pygame.draw.rect(surface, (50, 50, 50), (0, 100, 300, 100))
+
+    # north
+    pygame.draw.line(surface, (255, 255, 255), (150, 0), (150, 100), 2)
+    pygame.draw.line(surface, (255, 255, 255), (150, 100), (200, 100), 2)
+
+    # east
+    pygame.draw.line(surface, (255, 255, 255), (200, 150), (300, 150), 2)
+    pygame.draw.line(surface, (255, 255, 255), (200, 150), (200, 200), 2)
+
+    # south
+    pygame.draw.line(surface, (255, 255, 255), (150, 200), (150, 300), 2)
+    pygame.draw.line(surface, (255, 255, 255), (100, 200), (150, 200), 2)
+
+    # west
+    pygame.draw.line(surface, (255, 255, 255), (0, 150), (100, 150), 2)
+    pygame.draw.line(surface, (255, 255, 255), (100, 100), (100, 150), 2)
+
+def draw_junction(surface):
+    draw_junction_base(surface)
+
+    bus_lane_shift = 0
+
+    road_font = pygame.font.Font(None, 11)
+    
+    if selected_turn != "no":
+        bus_lane_shift = 20
+
+        text_n = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), 180)
+        text_e = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), -90)
+        text_s = road_font.render("TURN\nLEFT", True, (255, 255, 255))
+        text_w = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), 90)
+
+        surface.blit(text_n, (180, 40))
+        surface.blit(text_e, (40, 100))
+        surface.blit(text_s, (100, 240))
+        surface.blit(text_w, (240, 180))
+    
+    if selected_bus != "no":
+        pygame.draw.rect(surface, (155, 17, 30), (180-bus_lane_shift, 0, 20, 100))
+        pygame.draw.rect(surface, (155, 17, 30), (202, 180-bus_lane_shift, 100, 20)) 
+        pygame.draw.rect(surface, (155, 17, 30), (100+bus_lane_shift, 202, 20, 100))
+        pygame.draw.rect(surface, (155, 17, 30), (0, 100+bus_lane_shift, 100, 20))
+
+    if selected_pedestrian != "no":
+        stripe_width = 5
+        gap = 5
+
+        for i in range(11):
+            pygame.draw.rect(surface, (255, 255, 255), (95 + i * (stripe_width + gap), 80, stripe_width, 10))
+            pygame.draw.rect(surface, (255, 255, 255), (95 + i * (stripe_width + gap), 210, stripe_width, 10))
+
+        for i in range(11):
+            pygame.draw.rect(surface, (255, 255, 255), (210, 95 + i * (stripe_width + gap), 10, stripe_width))
+            pygame.draw.rect(surface, (255, 255, 255), (80, 95 + i * (stripe_width + gap), 10, stripe_width))
 
 traffic_flow_positions = {
     "n2e": (250, 110),
@@ -203,7 +263,7 @@ run_simulation_button = pygame_gui.elements.UIButton(
 
 # error message box
 error_message_label = pygame_gui.elements.UITextBox(
-    relative_rect=pygame.Rect((700, 50), (400, 270)),
+    relative_rect=pygame.Rect((695, 45), (400, 350)),
     html_text="Errors",
     manager=manager,
     container=page1_container_error,
@@ -283,7 +343,9 @@ def increasing_bar_(rate):
 
         update_progress_bar(perc_bar)
 
-
+def remove_junction_visualisation():
+    global junction_visualisation
+    junction_visualisation = None
 
 # setup table data
 def init_table():
@@ -363,6 +425,7 @@ def hide_error_box():
     error_message_label.hide()
 
 def toggle_button(button_yes, button_maybe, button_no, button_selected):
+    draw_junction(junction_visualisation)
     if(button_selected == button_yes):
         button_yes.set_text("> Yes <")
         button_maybe.set_text("Maybe")
@@ -517,6 +580,10 @@ while running:
         draw_font("Crossing request\nfrequency (per hour)", (550, 535))
 
         draw_font("Simulation duration\n(minutes)", (700, 700))
+
+        junction_visualisation.fill((255, 255, 255))
+        draw_junction(junction_visualisation)
+        screen.blit(junction_visualisation, (700, 50))
 
         # event handle
         for event in pygame.event.get():
