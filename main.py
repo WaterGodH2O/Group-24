@@ -347,6 +347,29 @@ def remove_junction_visualisation():
     global junction_visualisation
     junction_visualisation = None
 
+# list of lane presets which denote which relative dirs each lane can travel in
+lane_dir_presets = [
+    # all presets for 1 lane configurations
+    [[{1, 2, 3}]],
+
+    # all presets for 2 lane configurations
+    [[{1}, {2, 3}], [{1, 2}, {3}], [{1}, {1, 2, 3}], [{1, 2, 3}, {3}]],
+
+    # all presets for 3 lane configurations
+    [[{1}, {2}, {3}], [{1, 2}, {2}, {2, 3}], [{1}, {2}, {2, 3}], [{1, 2}, {2}, {3}],
+        [{1}, {2, 3}, {3}], [{1}, {1, 2}, {3}]],
+
+    # all presets for 4 lane configurations
+    [[{1}, {2}, {2}, {3}], [{1}, {2}, {3}, {3}], [{1}, {1}, {2}, {3}], [{1}, {1, 2}, {2, 3}, {3}],
+        [{1}, {1, 2}, {2}, {3}], [{1}, {2}, {2, 3}, {3}]],
+
+    # all presets for 5 lane configurations
+    [[{1}, {1}, {2}, {3}, {3}], [{1}, {1, 2}, {2}, {2, 3}, {3}], [{1}, {1}, {1}, {2, 3}, {3}], [{1}, {1, 2}, {3}, {3}, {3}],
+        [{1}, {1}, {2}, {2, 3}, {3}], [{1}, {1, 2}, {2}, {3}, {3}], [{1, 2}, {2}, {2}, {2}, {2, 3}],
+        [{1}, {1, 2}, {2}, {2}, {3}], [{1}, {2}, {2}, {2, 3}, {3}]]
+
+]
+
 # setup table data
 def init_table():
     global output_data
@@ -479,34 +502,37 @@ def runSimulation():
     global top_junctions
     for num_lanes in lane_configs:
         for (ped_yes, bus_yes, left_yes) in combinations:
-            try:
-                # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
-                junction = Junction(
-                    traffic_data,
-                    num_lanes=num_lanes,
-                    pedestrian_crossing=ped_yes,
-                    p_crossing_time_s=crossing_time,
-                    p_crossing_freq=crossing_frequency,
-                    bus_lane=bus_yes,
-                    bus_ratio=bus_percentage,
-                    left_turn_lanes=left_yes
-                )
+            # run each lane configuration
+            chosen_lane_presets = num_lanes - 1 if (not bus_yes or num_lanes < 2) else num_lanes - 2
+            for lane_directions in lane_dir_presets[chosen_lane_presets]:
+                try:
+                    # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
+                    junction = Junction(
+                        traffic_data,
+                        lane_directions,
+                        num_lanes=num_lanes,
+                        pedestrian_crossing=ped_yes,
+                        p_crossing_time_s=crossing_time,
+                        p_crossing_freq=crossing_frequency,
+                        bus_lane=bus_yes,
+                        bus_ratio=bus_percentage,
+                        left_turn_lanes=left_yes
+                    )
 
-                print(junction)
-                start_time = time()
+                    print(junction)
+                    start_time = time()
 
-                junction.simulate(simulation_duration * 60 * 1000, 100)
+                    junction.simulate(simulation_duration * 60 * 1000, 100)
 
-                print(f"Simulation duration: {round(time() - start_time, 2)}s")
-                kpi = junction.get_kpi()
-                passed_per_arm = junction.box.get_arm_throughputs()
-                print(kpi)
-                top_junctions.append(
-                    [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg, w_max, w_queue), kpi, num_lanes, ped_yes, bus_yes, left_yes, passed_per_arm])
+                    print(f"Simulation duration: {round(time() - start_time, 2)}s")
+                    kpi = junction.get_kpi()
+                    print(kpi)
+                    top_junctions.append(
+                        [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg, w_max, w_queue), kpi, num_lanes, ped_yes, bus_yes, left_yes, passed_per_arm])
 
-            except NotEnoughLanesException:
-                # Not adding junctions that fail to create
-                pass
+                except NotEnoughLanesException:
+                    # Not adding junctions that fail to create
+                    pass
 
     # top 3 junctions by kpi
     top_junctions = sorted(top_junctions, key=lambda x: x[0], reverse=True)
@@ -539,10 +565,6 @@ while running:
 
 
         screen.fill(WHITE)
-
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
-        screen.blit(coord_text, (800, 10))
 
         # draw text
         draw_title("Traffic flow rates", (200, 5))
@@ -822,10 +844,6 @@ while running:
 
         create_table(output_data)
 
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
-        screen.blit(coord_text, (800, 10))
-
         data = {}
 
         for i in range(min(3, len(top_junctions))):
@@ -910,6 +928,7 @@ while running:
                 running = False
             manager.process_events(event)
 
+
         mouse_x, mouse_y = pygame.mouse.get_pos()
         coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
         screen.blit(coord_text, (800, 10))
@@ -925,7 +944,6 @@ while running:
 
         rate = (1/estimate_time)*1.7139
         increasing_bar(rate)
-
 
 
         if counter < 60:

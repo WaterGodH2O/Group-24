@@ -3,7 +3,7 @@ from Box import Box
 from TrafficLight import TrafficLight
 import Lane
 import Vehicle
-from typing import List
+from typing import List, Set
 from exceptions import TooManyVehiclesException, NotEnoughLanesException
 import numpy as np
 
@@ -28,6 +28,7 @@ class Junction:
 
     def __init__(self,
                  traffic_data: list[list[int]],
+                 allowed_lane_directions: List[Set[int]],
                  traffic_light_interval_ms: int = 20000,
                  num_lanes: int = 2,
                  pedestrian_crossing: bool = False,
@@ -71,13 +72,17 @@ class Junction:
         #Initialise left turn lanes
         self.left_turn_lanes = left_turn_lanes
 
+        self._allowed_lane_directions = allowed_lane_directions
+
         #used to test car generation
         self.cars_made = np.zeros((self.NUM_ARMS, self.NUM_ARMS))
         self.arms: List[Arm] = [
             Arm(self.LANE_WIDTH * num_lanes, 
                 self.LANE_LENGTH, self.traffic_data[i], 
                 self.num_lanes, self.NUM_ARMS,
-                self.bus_lanes, self.left_turn_lanes)
+                self.bus_lanes, self.left_turn_lanes,
+                allowed_lane_directions
+            )
             for i in range (4)
         ]
         self.box = Box(self.LANE_WIDTH, self.num_lanes)
@@ -105,8 +110,8 @@ class Junction:
         return junction_throughput
     
     def get_junction_information(self):
-        """ method to return all configuration details about this particular junction """
-        pass
+        """ method to return lane configuration details about this particular junction """
+        return self._allowed_lane_directions
     
 
     def simulate(self, sim_time_ms: int, update_length_ms: int) -> None:
