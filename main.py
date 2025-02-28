@@ -235,7 +235,7 @@ table_elements = []
 # list of lane presets which denote which relative dirs each lane can travel in
 lane_dir_presets = [
     # all presets for 1 lane configurations
-    [{1, 2, 3}],
+    [[{1, 2, 3}]],
 
     # all presets for 2 lane configurations
     [[{1}, {2, 3}], [{1, 2}, {3}], [{1}, {1, 2, 3}], [{1, 2, 3}, {3}]],
@@ -248,7 +248,6 @@ lane_dir_presets = [
     [[{1}, {2}, {2}, {3}], [{1}, {2}, {3}, {3}], [{1}, {1}, {2}, {3}], [{1}, {1, 2}, {2, 3}, {3}],
         [{1}, {1, 2}, {2}, {3}], [{1}, {2}, {2, 3}, {3}]],
 
-    # TODO 5 lane configurations
     # all presets for 5 lane configurations
     [[{1}, {1}, {2}, {3}, {3}], [{1}, {1, 2}, {2}, {2, 3}, {3}], [{1}, {1}, {1}, {2, 3}, {3}], [{1}, {1, 2}, {3}, {3}, {3}],
         [{1}, {1}, {2}, {2, 3}, {3}], [{1}, {1, 2}, {2}, {3}, {3}], [{1, 2}, {2}, {2}, {2}, {2, 3}],
@@ -376,7 +375,6 @@ def runSimulation():
     global top_junctions
     for num_lanes in lane_configs:
         for (ped_yes, bus_yes, left_yes) in combinations:
-            # TODO raise an exception instead perhaps
             chosen_lane_presets = num_lanes - 1 if (not bus_yes or num_lanes < 2) else num_lanes - 2
             for lane_directions in lane_dir_presets[chosen_lane_presets]: # run each lane configuration
                 try:
@@ -414,9 +412,8 @@ def runSimulation():
     init_table()
 
     for junction in top_junctions:
-        # TODO show lane configurations -> remove temporarily
-        config_description = f"Lanes: {junction[6]}\nBus: {'Yes' if junction[4] else 'No'}\nLeft: {'Yes' if junction[5] else 'No'}"
-        # config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}"
+        # config_description = f"Lanes: {junction[6]}\nBus: {'Yes' if junction[4] else 'No'}\nLeft: {'Yes' if junction[5] else 'No'}"
+        config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}"
         add_config(junction[0], junction[1], config_description)
 
     return

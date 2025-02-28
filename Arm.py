@@ -71,16 +71,17 @@ class Arm:
         """ Creates the lanes for this arm of the junction """
         self._lanes = []
 
+        print(f"Allowed Directions: {self._allowed_directions}")
+        
         # add a bus lane if the user configured so
         if bus_lane:
             self._lanes.append(BusLane(width / num_lanes, length, self._num_arms))
             num_lanes -= 1
 
         # raise an exception if num_lanes == 0
-        if num_lanes == 0:
+        if num_lanes <= 0:
             raise NotEnoughLanesException("Number of lanes must be > 1 if using a bus lane")
         
-        # TODO temporary -> create exception for it
         if left_turn_lane and self._allowed_directions[0] != {1}:
             raise NotEnoughLanesException("This preset doesn't generate left turn lanes")
         
@@ -92,24 +93,6 @@ class Arm:
             # for all other regular car lanes
             else:
                 self._lanes.append(CarLane(self._allowed_directions[i], width / num_lanes, length, self._num_arms))
-        
-        # TODO may keep, unsure
-        # if(bus_lane):
-        #     self._lanes.append(BusLane(width / num_lanes, length, self._num_arms))
-        #     num_lanes -= 1
-        # if(left_turn_lane):
-        #     try:
-        #         self._lanes.append(LeftTurnLane(width / num_lanes, length, self._num_arms))
-        #         num_lanes -= 1
-        #     except ZeroDivisionError:
-        #         #If num lanes is zero, then ignore the error as a notenoughlanes error will be thrown immediately afterwards
-        #         pass
-
-        # if num_lanes < 1:
-        #     raise NotEnoughLanesException()
-        
-        # for i in range(num_lanes):
-        #     self._lanes.append(CarLane(width / num_lanes, length, num_arms))
 
     
     def get_lane(self, lane_num: int) -> Lane:
