@@ -258,16 +258,16 @@ class CarLane(Lane):
         super().__init__(allowed_directions, width, length, num_arms)
         
     
-    def can_enter_lane(self, vehicle):
+    def can_enter_lane(self, vehicle) -> bool:
         # a vehicle can enter a lane if its going in the intended direction
-        return vehicle.destination in self.allowed_directions
+        return (self._num_arms - vehicle.get_relative_direction()) % self._num_arms in self.allowed_directions
 
 
 class BusLane(Lane):
 
-    def __init__(self, allowed_directions: Set[int], width: int, length: int, num_arms):
+    def __init__(self, width: int, length: int, num_arms):
+        allowed_directions = {1, 2, 3} # bus lanes can go in every direction
         super().__init__(allowed_directions, width, length, num_arms)
-        # set([i for i in range(num_arms)])
     
     def can_enter_lane(self, vehicle: Vehicle):
         if vehicle.vehicle_type == "Bus":
@@ -278,13 +278,11 @@ class LeftTurnLane(Lane):
 
     def __init__(self, width: int, length: int, num_arms: int):
         #The left arm is num_arms - 1 arms anticlockwise from the source arm.
-        super().__init__([num_arms - 1], width, length, num_arms)
+        super().__init__({1}, width, length, num_arms)
 
     def can_enter_lane(self, vehicle: Vehicle):
         #Can enter only if moving left
-        if vehicle.get_relative_direction() in self.allowed_directions:
-            return True
-        return False
+        return (self._num_arms - vehicle.get_relative_direction()) % self._num_arms in self.allowed_directions
     
     def can_enter_box(self, vehicle: Vehicle, box: Box, arm_id: int, lane_id: int, traffic_light_dir: int) -> bool:
         #Never enter during a pedestrian crossing

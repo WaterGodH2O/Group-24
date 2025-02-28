@@ -238,16 +238,21 @@ lane_dir_presets = [
     [{1, 2, 3}],
 
     # all presets for 2 lane configurations
-    [[{1}, {2, 3}], [{1, 2}, {3}]],
+    [[{1}, {2, 3}], [{1, 2}, {3}], [{1}, {1, 2, 3}], [{1, 2, 3}, {3}]],
 
     # all presets for 3 lane configurations
-    [[{1}, {2}, {3}], [{1, 2}, {2}, {2, 3}], [{1}, {2}, {2, 3}], [{1, 2}, {2}, {3}]],
+    [[{1}, {2}, {3}], [{1, 2}, {2}, {2, 3}], [{1}, {2}, {2, 3}], [{1, 2}, {2}, {3}],
+        [{1}, {2, 3}, {3}], [{1}, {1, 2}, {3}]],
 
     # all presets for 4 lane configurations
     [[{1}, {2}, {2}, {3}], [{1}, {2}, {3}, {3}], [{1}, {1}, {2}, {3}], [{1}, {1, 2}, {2, 3}, {3}],
-        [{1}, {1, 2}, {2}, {3}], [{1}, {2}, {2, 3}, {3}]]
+        [{1}, {1, 2}, {2}, {3}], [{1}, {2}, {2, 3}, {3}]],
 
     # TODO 5 lane configurations
+    # all presets for 5 lane configurations
+    [[{1}, {1}, {2}, {3}, {3}], [{1}, {1, 2}, {2}, {2, 3}, {3}], [{1}, {1}, {1}, {2, 3}, {3}], [{1}, {1, 2}, {3}, {3}, {3}],
+        [{1}, {1}, {2}, {2, 3}, {3}], [{1}, {1, 2}, {2}, {3}, {3}], [{1, 2}, {2}, {2}, {2}, {2, 3}],
+        [{1}, {1, 2}, {2}, {2}, {3}], [{1}, {2}, {2}, {2, 3}, {3}]]
 
 ]
 
@@ -371,7 +376,9 @@ def runSimulation():
     global top_junctions
     for num_lanes in lane_configs:
         for (ped_yes, bus_yes, left_yes) in combinations:
-            for lane_directions in lane_dir_presets[num_lanes - 1]: # run each lane configuration
+            # TODO raise an exception instead perhaps
+            chosen_lane_presets = num_lanes - 1 if (not bus_yes or num_lanes < 2) else num_lanes - 2
+            for lane_directions in lane_dir_presets[chosen_lane_presets]: # run each lane configuration
                 try:
                     # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
                     junction = Junction(
@@ -407,8 +414,9 @@ def runSimulation():
     init_table()
 
     for junction in top_junctions:
-        # TODO show lane configurations
-        config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}\nLanes: {junction[6]}"
+        # TODO show lane configurations -> remove temporarily
+        config_description = f"Lanes: {junction[6]}\nBus: {'Yes' if junction[4] else 'No'}\nLeft: {'Yes' if junction[5] else 'No'}"
+        # config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}"
         add_config(junction[0], junction[1], config_description)
 
     return
@@ -433,10 +441,6 @@ while running:
 
 
         screen.fill(WHITE)
-
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
-        screen.blit(coord_text, (800, 10))
 
         # draw text
         draw_title("Traffic flow rates", (200, 5))
@@ -686,10 +690,6 @@ while running:
 
         create_table(output_data)
 
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
-        screen.blit(coord_text, (800, 10))
-
         data = {}
 
         for i in range(min(3, len(top_junctions))):
@@ -773,11 +773,6 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
             manager.process_events(event)
-
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
-        screen.blit(coord_text, (800, 10))
-
 
         if counter < 60:
             counter = counter +1

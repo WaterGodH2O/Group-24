@@ -18,8 +18,7 @@ class Arm:
                  num_arms: int, 
                  bus_lane: bool, 
                  left_turn_lane: bool,
-                 allowed_directions: List[Set[int]],
-                 source_direction: int):
+                 allowed_directions: List[Set[int]]):
         # the length and width of the arm in metres
         self._length: int = length
         self._width: int = width
@@ -29,30 +28,70 @@ class Arm:
 
         # configurations of what directions each lane can enter
         # transforsm relative directions to absolute directions to match vehicle destionations
-        self._allowed_directions = [
-            {(source_direction + allowed_dir) % 4 for allowed_dir in relative_direction_set}
-            for relative_direction_set in allowed_directions
-        ]
+        self._allowed_directions = allowed_directions
 
         # the number of vehicles expected per hour. Index 0 = north, 1 = east, 2 = south, 3 = west
         self._vehicles_per_hour: List[int] = vehicles_per_hour
 
         # initalise a list of all the lanes coming from a certain direction in the junction
         self._lanes: List[Lane] = []
+        self.create_lanes(bus_lane, left_turn_lane, width, length, num_lanes)
 
+        # represents the most cars in the arm at any given point in the simulation
+        self._max_queue_length: int = 0
+
+        # how long each car has been in the arm in seconds
+        self._total_wait_times: float = 0
+        
+        # the total number of vehicles that have left the junction
+        self._total_car_count: int = 0
+
+        # the longest any given vehicle has been waiting in the arm in seconds
+        self._max_wait_time: float = 0
+
+        # the number of people that have left the junction
+        self._total_person_count: int = 0
+
+    @property
+    def length(self) -> int:
+        """ Returns the length of the arm """
+        return self._length
+    
+    @property
+    def width(self) -> int:
+        """ Returns the width of the arm """
+        return self._width
+    
+    @property
+    def max_queue_length(self) -> int:
+        """ Returns the longest queue seen at any given point """
+        return self._max_queue_length
+    
+    def create_lanes(self, bus_lane: bool, left_turn_lane: bool, width: int, length: int, num_lanes: int) -> None:
+        """ Creates the lanes for this arm of the junction """
+        self._lanes = []
+
+        # add a bus lane if the user configured so
+        if bus_lane:
+            self._lanes.append(BusLane(width / num_lanes, length, self._num_arms))
+            num_lanes -= 1
+
+        # raise an exception if num_lanes == 0
+        if num_lanes == 0:
+            raise NotEnoughLanesException("Number of lanes must be > 1 if using a bus lane")
+        
+        # TODO temporary -> create exception for it
+        if left_turn_lane and self._allowed_directions[0] != {1}:
+            raise NotEnoughLanesException("This preset doesn't generate left turn lanes")
+        
         for i in range(num_lanes):
-            # if we have a bus lane
-            if i == 0 and bus_lane:
-                self._lanes.append(BusLane(self._allowed_directions[i], width / num_lanes, length, self._num_arms)) # TODO temporary until figure out what we are doing here
-
             # create a left turn lane if the lane can go left only
-            elif left_turn_lane and self._allowed_directions[i] == {(source_direction + 1) % 4}:
+            if left_turn_lane and self._allowed_directions[i] == {1}:
                 self._lanes.append(LeftTurnLane(width / num_lanes, length, self._num_arms))
             
             # for all other regular car lanes
             else:
-                self._lanes.append(CarLane(self._allowed_directions[i], width / num_lanes, length, num_arms))
-
+                self._lanes.append(CarLane(self._allowed_directions[i], width / num_lanes, length, self._num_arms))
         
         # TODO may keep, unsure
         # if(bus_lane):
@@ -72,39 +111,6 @@ class Arm:
         # for i in range(num_lanes):
         #     self._lanes.append(CarLane(width / num_lanes, length, num_arms))
 
-
-        # represents the most cars in the arm at any given point in the simulation
-        self._max_queue_length: int = 0
-
-        # how long each car has been in the arm in seconds
-        self._total_wait_times: float = 0
-        
-        # the total number of vehicles that have left the junction
-        self._total_car_count: int = 0
-
-        # the longest any given vehicle has been waiting in the arm in seconds
-        self._max_wait_time: float = 0
-
-        # the number of people that have left the junction
-        self._total_person_count: int = 0
-
-        # the direction of the lane
-        self._source_direction = source_direction
-
-    @property
-    def length(self) -> int:
-        """ Returns the length of the arm """
-        return self._length
-    
-    @property
-    def width(self) -> int:
-        """ Returns the width of the arm """
-        return self._width
-    
-    @property
-    def max_queue_length(self) -> int:
-        """ Returns the longest queue seen at any given point """
-        return self._max_queue_length
     
     def get_lane(self, lane_num: int) -> Lane:
         return self._lanes[lane_num] if lane_num < len(self._lanes) else None
@@ -129,7 +135,6 @@ class Arm:
                 junction_box.add_vehicle(vehicle_leaving)
                 # update kpi
                 vehicle_wait_time = vehicle_leaving.wait_time / 1000 # in seconds
-                print(f"{vehicle_leaving.vehicle_type} entered box from arm {vehicle_leaving.source}, lane {vehicle_leaving.source_lane}, turning {vehicle_leaving.get_relative_direction()}")
                 self._max_wait_time = max(self._max_wait_time, vehicle_wait_time)
                 self._total_wait_times += vehicle_wait_time
                 self._total_car_count += 1

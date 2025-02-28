@@ -81,8 +81,8 @@ class Junction:
                 self.LANE_LENGTH, self.traffic_data[i], 
                 self.num_lanes, self.NUM_ARMS,
                 self.bus_lanes, self.left_turn_lanes,
-                allowed_lane_directions,
-                i)
+                allowed_lane_directions
+            )
             for i in range (4)
         ]
         self.box = Box(self.LANE_WIDTH, self.num_lanes)
