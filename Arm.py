@@ -70,8 +70,6 @@ class Arm:
     def create_lanes(self, bus_lane: bool, left_turn_lane: bool, width: int, length: int, num_lanes: int) -> None:
         """ Creates the lanes for this arm of the junction """
         self._lanes = []
-
-        print(f"Allowed Directions: {self._allowed_directions}")
         
         # add a bus lane if the user configured so
         if bus_lane:
