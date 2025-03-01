@@ -24,13 +24,13 @@ class TrafficLight:
         self.p_crossing: bool = pedestrian_crossing
         if pedestrian_crossing:
             #Calculate the scale value and take a sample for the initial time
-            self.p_crossing_scale: int = 60*60*1000/p_crossing_freq
+            self.p_crossing_scale: float = 60*60*1000/p_crossing_freq
             self.p_crossing_interval_time_ms: float = self.random.exponential(self.p_crossing_scale)
             self.p_crossing_length_ms: int = p_crossing_time_s * 1000
             #Initialise the timer for crossings
             self.p_crossing_timer_ms: int = 0
-            #Initialise p_crossing_queued, which is called by update_traffic_light so must always be set
-            self.p_crossing_queued: bool = False
+        #Initialise p_crossing_queued, which is called by update_traffic_light so must always be set
+        self.p_crossing_queued: bool = False
         self.num_arms: int = num_arms
 
     def update_traffic_light(self, update_length_ms: int, arms: list[Arm]) -> None:
@@ -50,9 +50,15 @@ class TrafficLight:
             else:
                 self.update_traffic_light_all_red(update_length_ms, arms)
 
+        #If there are no vehicles within 100m, set all traffic lights to red as if at the start of a gap
+        if all([arms[i].no_vehicles_within(100) for i in range(self.num_arms)]):
+            self._traffic_light_dir = -1
+            self.traffic_light_gap_timer_ms = self.traffic_light_gap_ms
         #If pedestrian crossings are enabled, update them every time
         if self.p_crossing:
             self.update_pedestrian_crossing(update_length_ms)
+
+
 
         #Test print for light timing
         #print(f"Current light direction: {self.traffic_light_dir}\nCurrent light timer: {self.traffic_light_time_ms}\nGap timer: {self.traffic_light_gap_timer_ms}")
@@ -64,8 +70,8 @@ class TrafficLight:
 
         #If no cars are within 100m of the light or the time is below 0
         if arms[self._traffic_light_dir].no_vehicles_within(100) or self.traffic_light_time_ms <= 0:
-            #If there are no cars in any other direction, stay green
-            if (all([arms[i].no_vehicles_within(100) for i in range(0, self.num_arms) if i != self._traffic_light_dir])):
+            #If there are no cars in any other direction and no crossing request, stay green
+            if (all([arms[i].no_vehicles_within(100) for i in range(0, self.num_arms) if i != self._traffic_light_dir]) and not self.p_crossing_queued):
                 self.traffic_light_time_ms = self.traffic_light_interval_ms
             else:
                 #Otherwise, set all lights to red and start gap timer

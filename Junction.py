@@ -28,12 +28,12 @@ class Junction:
 
     def __init__(self,
                  traffic_data: list[list[int]],
-                 allowed_lane_directions: List[Set[int]],
+                 allowed_lane_directions: List[Set[int]] = None,
                  traffic_light_interval_ms: int = 20000,
                  num_lanes: int = 2,
                  pedestrian_crossing: bool = False,
                  p_crossing_time_s: int = 0,
-                 p_crossing_freq: int = 0,
+                 p_crossing_freq: float = 0,
                  bus_lane: bool = False,
                  bus_ratio: float = 0,
                  left_turn_lanes: bool = False):
@@ -45,6 +45,9 @@ class Junction:
         :param pedestrian_crossing: if the crossing road applied
         :param simulation_duration: 模拟时间
         """
+        #If no lane directions are given, allow all directions
+        if allowed_lane_directions == None:
+            allowed_lane_directions = [{i for i in range(self.NUM_ARMS)} for _ in range(num_lanes)]
         #Initialise random number generator
         self.random = np.random.default_rng()
         #dummy data
@@ -120,12 +123,6 @@ class Junction:
 
         :param sim_time_ms: The total length of time to simulate in milliseconds.
         :param update_length_ms: The length of each simulation step in milliseconds.
-        """
-        #Collision test
-        """
-        self.arms[0]._lanes[0]._vehicles.append(Vehicle.Car(18, 0, 3, 2))
-        self.arms[0]._lanes[1]._vehicles.append(Vehicle.Car(18, 0, 2, 0))
-        self.arms[0]._lanes[2]._vehicles.append(Vehicle.Car(18, 0, 1, 2))
         """
         
         # configure intervals to wait until we track queue count data
