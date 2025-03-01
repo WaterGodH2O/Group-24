@@ -1,15 +1,16 @@
-#version: 1.0
+# version: 1.0
 import time as tm
 import pygame
 import pygame_gui
 import threading
+from PIL import Image
 from time import time
 from Junction import Junction
 from exceptions import NotEnoughLanesException, TooManyVehiclesException
 from numpy import zeros
 import random
 
-game_state:int = 0
+game_state: int = 0
 
 global crossing_time
 global crossing_frequency
@@ -20,12 +21,35 @@ global traffic_data
 global simulation_duration
 global top_junctions
 
-#=============Used for Loading capture============
+# =============Used for Loading capture============
 flag = True
 counter = 0
 counter2 = 0
 flipper = True
-#=============Used for Loading capture============
+current_frame = 0
+current_frame_car = 0
+slow_flipper = True
+gif = Image.open("target2.gif")
+frames = []
+while True:
+    frame = gif.convert("RGBA")
+    pygame_frame = pygame.image.fromstring(frame.tobytes(), frame.size, "RGBA")
+    frames.append(pygame_frame)
+    try:
+        gif.seek(gif.tell() + 1)
+    except EOFError:
+        break
+gif = Image.open("target3.gif")
+frames_car = []
+while True:
+    frame = gif.convert("RGBA")
+    pygame_frame = pygame.image.fromstring(frame.tobytes(), frame.size, "RGBA")
+    frames_car.append(pygame_frame)
+    try:
+        gif.seek(gif.tell() + 1)
+    except EOFError:
+        break
+# =============Used for Loading capture============
 
 pygame.init()
 
@@ -67,24 +91,29 @@ bold_font.set_bold(True)
 symbol = pygame.font.Font(None, 15)
 symbol.set_bold(True)
 
+
 def draw_title(text, position):
     text_surface = title.render(text, True, BLACK, )
     screen.blit(text_surface, position)
+
 
 def draw_font(text, position):
     text_surface = font.render(text, True, BLACK)
     screen.blit(text_surface, position)
 
+
 def draw_bold_font(text, position):
     text_surface = bold_font.render(text, True, BLACK)
     screen.blit(text_surface, position)
+
 
 def draw_text(text, position):
     text_surface = symbol.render(text, True, BLACK)
     screen.blit(text_surface, position)
 
+
 def draw_junction_base(surface):
-    surface.fill((200,200,200))
+    surface.fill((200, 200, 200))
     pygame.draw.rect(surface, (50, 50, 50), (100, 0, 100, 300))
     pygame.draw.rect(surface, (50, 50, 50), (0, 100, 300, 100))
 
@@ -104,13 +133,14 @@ def draw_junction_base(surface):
     pygame.draw.line(surface, (255, 255, 255), (0, 150), (100, 150), 2)
     pygame.draw.line(surface, (255, 255, 255), (100, 100), (100, 150), 2)
 
+
 def draw_junction(surface):
     draw_junction_base(surface)
 
     bus_lane_shift = 0
 
     road_font = pygame.font.Font(None, 11)
-    
+
     if selected_turn != "no":
         bus_lane_shift = 20
 
@@ -123,12 +153,12 @@ def draw_junction(surface):
         surface.blit(text_e, (40, 100))
         surface.blit(text_s, (100, 240))
         surface.blit(text_w, (240, 180))
-    
+
     if selected_bus != "no":
-        pygame.draw.rect(surface, (155, 17, 30), (180-bus_lane_shift, 0, 20, 100))
-        pygame.draw.rect(surface, (155, 17, 30), (202, 180-bus_lane_shift, 100, 20)) 
-        pygame.draw.rect(surface, (155, 17, 30), (100+bus_lane_shift, 202, 20, 100))
-        pygame.draw.rect(surface, (155, 17, 30), (0, 100+bus_lane_shift, 100, 20))
+        pygame.draw.rect(surface, (155, 17, 30), (180 - bus_lane_shift, 0, 20, 100))
+        pygame.draw.rect(surface, (155, 17, 30), (202, 180 - bus_lane_shift, 100, 20))
+        pygame.draw.rect(surface, (155, 17, 30), (100 + bus_lane_shift, 202, 20, 100))
+        pygame.draw.rect(surface, (155, 17, 30), (0, 100 + bus_lane_shift, 100, 20))
 
     if selected_pedestrian != "no":
         stripe_width = 5
@@ -141,6 +171,7 @@ def draw_junction(surface):
         for i in range(11):
             pygame.draw.rect(surface, (255, 255, 255), (210, 95 + i * (stripe_width + gap), 10, stripe_width))
             pygame.draw.rect(surface, (255, 255, 255), (80, 95 + i * (stripe_width + gap), 10, stripe_width))
+
 
 traffic_flow_positions = {
     "n2e": (250, 110),
@@ -173,7 +204,8 @@ traffic_flow_inputs = {}
 for key, pos in traffic_flow_positions.items():
     Rectangle = pygame.Rect(pos, (80, 30))
 
-    traffic_flow_inputs[key] = pygame_gui.elements.UITextEntryLine(relative_rect=Rectangle, placeholder_text="vph", manager=manager, container=page1_container)
+    traffic_flow_inputs[key] = pygame_gui.elements.UITextEntryLine(relative_rect=Rectangle, placeholder_text="vph",
+                                                                   manager=manager, container=page1_container)
 
 # Create parameter inputs
 param_inputs = {}
@@ -193,14 +225,14 @@ pedestrian_yes = pygame_gui.elements.UIButton(
 )
 
 pedestrian_maybe = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((50+60, 550), (80, 30)),
+    relative_rect=pygame.Rect((50 + 60, 550), (80, 30)),
     text='Maybe',
     manager=manager,
     container=page1_container
 )
 
 pedestrian_no = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((50+150, 550), (50, 30)),
+    relative_rect=pygame.Rect((50 + 150, 550), (50, 30)),
     text='> No <',
     manager=manager,
     container=page1_container
@@ -214,14 +246,14 @@ turn_yes = pygame_gui.elements.UIButton(
 )
 
 turn_maybe = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((50+60, 710), (80, 30)),
+    relative_rect=pygame.Rect((50 + 60, 710), (80, 30)),
     text='Maybe',
     manager=manager,
     container=page1_container
 )
 
 turn_no = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((50+150, 710), (50, 30)),
+    relative_rect=pygame.Rect((50 + 150, 710), (50, 30)),
     text='> No <',
     manager=manager,
     container=page1_container
@@ -235,14 +267,14 @@ bus_yes = pygame_gui.elements.UIButton(
 )
 
 bus_maybe = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((50+60, 630), (80, 30)),
+    relative_rect=pygame.Rect((50 + 60, 630), (80, 30)),
     text='Maybe',
     manager=manager,
     container=page1_container
 )
 
 bus_no = pygame_gui.elements.UIButton(
-    relative_rect=pygame.Rect((50+150, 630), (50, 30)),
+    relative_rect=pygame.Rect((50 + 150, 630), (50, 30)),
     text='> No <',
     manager=manager,
     container=page1_container
@@ -305,6 +337,8 @@ output_data = []
 
 # list of elements in table
 table_elements = []
+
+
 # update progress bar, full bar contain 99 # symbols
 
 
@@ -314,7 +348,7 @@ def update_progress_bar(percentage):
     pygame.draw.rect(screen, BLACK, (245, 329, 700, 20), 3)
 
     bar = ""
-    for i in range(0,percentage):
+    for i in range(0, percentage):
         bar = bar + "#"
 
     draw_text(bar, (250, 334))
@@ -322,10 +356,12 @@ def update_progress_bar(percentage):
 
 
 perc_bar = 0
+
+
 # lower rate, higher speed of increasing of bar. -1 rate for reset bar
 def increasing_bar(rate):
     global perc_bar
-    if(rate == -1):
+    if (rate == -1):
         perc_bar = 0
     else:
         if random.random() < rate and perc_bar < 95:
@@ -333,9 +369,10 @@ def increasing_bar(rate):
 
         update_progress_bar(perc_bar)
 
+
 def increasing_bar_(rate):
     global perc_bar
-    if(rate == -1):
+    if (rate == -1):
         perc_bar = 0
     else:
         if random.random() < rate and perc_bar < 99:
@@ -343,9 +380,11 @@ def increasing_bar_(rate):
 
         update_progress_bar(perc_bar)
 
+
 def remove_junction_visualisation():
     global junction_visualisation
     junction_visualisation = None
+
 
 # list of lane presets which denote which relative dirs each lane can travel in
 lane_dir_presets = [
@@ -357,18 +396,20 @@ lane_dir_presets = [
 
     # all presets for 3 lane configurations
     [[{1}, {2}, {3}], [{1, 2}, {2}, {2, 3}], [{1}, {2}, {2, 3}], [{1, 2}, {2}, {3}],
-        [{1}, {2, 3}, {3}], [{1}, {1, 2}, {3}]],
+     [{1}, {2, 3}, {3}], [{1}, {1, 2}, {3}]],
 
     # all presets for 4 lane configurations
     [[{1}, {2}, {2}, {3}], [{1}, {2}, {3}, {3}], [{1}, {1}, {2}, {3}], [{1}, {1, 2}, {2, 3}, {3}],
-        [{1}, {1, 2}, {2}, {3}], [{1}, {2}, {2, 3}, {3}]],
+     [{1}, {1, 2}, {2}, {3}], [{1}, {2}, {2, 3}, {3}]],
 
     # all presets for 5 lane configurations
-    [[{1}, {1}, {2}, {3}, {3}], [{1}, {1, 2}, {2}, {2, 3}, {3}], [{1}, {1}, {1}, {2, 3}, {3}], [{1}, {1, 2}, {3}, {3}, {3}],
-        [{1}, {1}, {2}, {2, 3}, {3}], [{1}, {1, 2}, {2}, {3}, {3}], [{1, 2}, {2}, {2}, {2}, {2, 3}],
-        [{1}, {1, 2}, {2}, {2}, {3}], [{1}, {2}, {2}, {2, 3}, {3}]]
+    [[{1}, {1}, {2}, {3}, {3}], [{1}, {1, 2}, {2}, {2, 3}, {3}], [{1}, {1}, {1}, {2, 3}, {3}],
+     [{1}, {1, 2}, {3}, {3}, {3}],
+     [{1}, {1}, {2}, {2, 3}, {3}], [{1}, {1, 2}, {2}, {3}, {3}], [{1, 2}, {2}, {2}, {2}, {2, 3}],
+     [{1}, {1, 2}, {2}, {2}, {3}], [{1}, {2}, {2}, {2, 3}, {3}]]
 
 ]
+
 
 # setup table data
 def init_table():
@@ -384,6 +425,7 @@ def init_table():
         ['Vehicles passed through']
     ])
 
+
 # add row to table for a configuration
 def add_config(efficiency, values, description, passed_per_arm):
     config_number = len(output_data[0])
@@ -391,10 +433,14 @@ def add_config(efficiency, values, description, passed_per_arm):
 
     output_data[1].append(description)
     output_data[2].append(str(int(efficiency)))
-    output_data[3].append(f"North: {int(values[0][0])}\nEast: {int(values[1][0])}\nSouth: {int(values[2][0])}\nWest: {int(values[3][0])}")
-    output_data[4].append(f"North: {int(values[0][1])}\nEast: {int(values[1][1])}\nSouth: {int(values[2][1])}\nWest: {int(values[3][1])}")
-    output_data[5].append(f"North: {int(values[0][2])}\nEast: {int(values[1][2])}\nSouth: {int(values[2][2])}\nWest: {int(values[3][2])}")
-    output_data[6].append(f"North: {passed_per_arm[0]}\nEast: {passed_per_arm[1]}\nSouth: {passed_per_arm[2]}\nWest: {passed_per_arm[3]}")
+    output_data[3].append(
+        f"North: {int(values[0][0])}\nEast: {int(values[1][0])}\nSouth: {int(values[2][0])}\nWest: {int(values[3][0])}")
+    output_data[4].append(
+        f"North: {int(values[0][1])}\nEast: {int(values[1][1])}\nSouth: {int(values[2][1])}\nWest: {int(values[3][1])}")
+    output_data[5].append(
+        f"North: {int(values[0][2])}\nEast: {int(values[1][2])}\nSouth: {int(values[2][2])}\nWest: {int(values[3][2])}")
+    output_data[6].append(
+        f"North: {passed_per_arm[0]}\nEast: {passed_per_arm[1]}\nSouth: {passed_per_arm[2]}\nWest: {passed_per_arm[3]}")
 
 
 # create table with output data
@@ -410,50 +456,54 @@ def create_table(data):
     column_width = 150
     row_height = 120
 
-    for(i,row) in enumerate(output_data):
-        if(i==0):
-            row_height = 45 
-        elif(i==1):
+    for (i, row) in enumerate(output_data):
+        if (i == 0):
+            row_height = 45
+        elif (i == 1):
             row_height = 170
-        elif(i==2):
+        elif (i == 2):
             row_height = 45
         else:
             row_height = 120
         label = pygame_gui.elements.UITextBox(
-                html_text=row[0],
-                relative_rect=pygame.Rect(table_pos_x, table_pos_y, column_width, row_height),
-                manager=manager,
-                container=page2_container
-            )
+            html_text=row[0],
+            relative_rect=pygame.Rect(table_pos_x, table_pos_y, column_width, row_height),
+            manager=manager,
+            container=page2_container
+        )
         table_elements.append(label)
         for j in range(3):
             col_index = start_col + j
             if col_index < len(row):
                 label = pygame_gui.elements.UITextBox(
                     html_text=row[col_index],
-                    relative_rect=pygame.Rect(table_pos_x+(j+1)*column_width, table_pos_y, column_width, row_height),
+                    relative_rect=pygame.Rect(table_pos_x + (j + 1) * column_width, table_pos_y, column_width,
+                                              row_height),
                     manager=manager,
                     container=page2_container
                 )
                 table_elements.append(label)
-        table_pos_y+=row_height
+        table_pos_y += row_height
+
 
 def show_error_box(error_text):
     error_message_label.set_text(error_text)
     error_message_label.show()
 
+
 def hide_error_box():
     error_message_label.set_text("")
-    error_message_label.visible=False
+    error_message_label.visible = False
     error_message_label.hide()
+
 
 def toggle_button(button_yes, button_maybe, button_no, button_selected):
     draw_junction(junction_visualisation)
-    if(button_selected == button_yes):
+    if (button_selected == button_yes):
         button_yes.set_text("> Yes <")
         button_maybe.set_text("Maybe")
         button_no.set_text("No")
-    elif(button_selected == button_maybe):
+    elif (button_selected == button_maybe):
         button_yes.set_text("Yes")
         button_maybe.set_text("> Maybe <")
         button_no.set_text("No")
@@ -461,6 +511,7 @@ def toggle_button(button_yes, button_maybe, button_no, button_selected):
         button_yes.set_text("Yes")
         button_maybe.set_text("Maybe")
         button_no.set_text("> No <")
+
 
 def calc_efficiency(north_arm, south_arm, east_arm, west_arm, w_avg, w_max, w_len) -> float:
     """
@@ -477,13 +528,14 @@ def calc_efficiency(north_arm, south_arm, east_arm, west_arm, w_avg, w_max, w_le
     for (avg_wait, max_wait, queue_len) in arms:
         # Weighted sum for this arm
         arm_score = (w_avg * (1.0 / (1.0 + avg_wait))
-                    + w_max * (1.0 / (1.0 + max_wait))
-                    + w_len * (1.0 / (1.0 + queue_len))
-                    )
+                     + w_max * (1.0 / (1.0 + max_wait))
+                     + w_len * (1.0 / (1.0 + queue_len))
+                     )
         raw_sum += arm_score
     # Perfect sceneario => raw_sum = 4. We want that => 100 => multiply by 25
     total_score = 25.0 * raw_sum
     return total_score
+
 
 def draw_y_axis():
     # left y-axis
@@ -497,6 +549,7 @@ def draw_y_axis():
         pygame.draw.line(screen, BLACK, (785, y_pos), (795, y_pos), 2)
         label = font.render(str(value), True, BLACK)
         screen.blit(label, (755, y_pos - 10))
+
 
 def runSimulation():
     global top_junctions
@@ -529,7 +582,8 @@ def runSimulation():
                     passed_per_arm = junction.box.get_arm_throughputs()
                     print(kpi)
                     top_junctions.append(
-                        [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg, w_max, w_queue), kpi, num_lanes, ped_yes, bus_yes, left_yes, passed_per_arm])
+                        [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg, w_max, w_queue), kpi, num_lanes,
+                         ped_yes, bus_yes, left_yes, passed_per_arm])
 
                 except NotEnoughLanesException:
                     # Not adding junctions that fail to create
@@ -559,11 +613,9 @@ while running:
     # ----um my cursor flashing in 60fps so I just changed it to 240, dont mind it
     time_delta = clock.tick(240)
 
-
     if (game_state == 0):
         page2_container.hide()
         page1_container.show()
-
 
         screen.fill(WHITE)
 
@@ -583,15 +635,14 @@ while running:
         draw_bold_font("In", (50, 85))
         pygame.draw.line(screen, BLACK, (15, 45), (125, 110), 4)
 
-
         draw_title("Configurable parameters", (50, 400))
 
         draw_font("Number of lanes\n(e.g. 2-5)", (50, 450))
 
         draw_font("Bus Percentage\n(%)", (300, 615))
 
-        draw_font("Weightings\n(Avg Time / Max Time / Max Queue Length)", (600,420)) 
-        
+        draw_font("Weightings\n(Avg Time / Max Time / Max Queue Length)", (600, 420))
+
         draw_font("Pedestrian Crossings", (50, 520))
 
         draw_font("Left turn lane", (50, 680))
@@ -619,33 +670,33 @@ while running:
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == pedestrian_yes:
                     selected_pedestrian = "yes"
-                    toggle_button(pedestrian_yes,pedestrian_maybe,pedestrian_no,pedestrian_yes)
+                    toggle_button(pedestrian_yes, pedestrian_maybe, pedestrian_no, pedestrian_yes)
                 elif event.ui_element == pedestrian_maybe:
                     selected_pedestrian = "maybe"
-                    toggle_button(pedestrian_yes,pedestrian_maybe,pedestrian_no,pedestrian_maybe)
+                    toggle_button(pedestrian_yes, pedestrian_maybe, pedestrian_no, pedestrian_maybe)
                 elif event.ui_element == pedestrian_no:
                     selected_pedestrian = "no"
-                    toggle_button(pedestrian_yes,pedestrian_maybe,pedestrian_no,pedestrian_no)
+                    toggle_button(pedestrian_yes, pedestrian_maybe, pedestrian_no, pedestrian_no)
 
                 elif event.ui_element == bus_yes:
                     selected_bus = "yes"
-                    toggle_button(bus_yes,bus_maybe,bus_no,bus_yes)
+                    toggle_button(bus_yes, bus_maybe, bus_no, bus_yes)
                 elif event.ui_element == bus_maybe:
                     selected_bus = "maybe"
-                    toggle_button(bus_yes,bus_maybe,bus_no,bus_maybe)
+                    toggle_button(bus_yes, bus_maybe, bus_no, bus_maybe)
                 elif event.ui_element == bus_no:
                     selected_bus = "no"
-                    toggle_button(bus_yes,bus_maybe,bus_no,bus_no)
+                    toggle_button(bus_yes, bus_maybe, bus_no, bus_no)
 
                 elif event.ui_element == turn_yes:
                     selected_turn = "yes"
-                    toggle_button(turn_yes,turn_maybe,turn_no,turn_yes)
+                    toggle_button(turn_yes, turn_maybe, turn_no, turn_yes)
                 elif event.ui_element == turn_maybe:
                     selected_turn = "maybe"
-                    toggle_button(turn_yes,turn_maybe,turn_no,turn_maybe)
+                    toggle_button(turn_yes, turn_maybe, turn_no, turn_maybe)
                 elif event.ui_element == turn_no:
                     selected_turn = "no"
-                    toggle_button(turn_yes,turn_maybe,turn_no,turn_no)
+                    toggle_button(turn_yes, turn_maybe, turn_no, turn_no)
 
                 elif event.ui_element == run_simulation_button:
                     traffic_data = {}
@@ -669,16 +720,16 @@ while running:
                             traffic_data[key] = int(value)
 
                     if traffic_flow_rates_invalid:
-                        error_messages.append("Error: All traffic flow rates must be integer values between 0 and 3000.")
+                        error_messages.append(
+                            "Error: All traffic flow rates must be integer values between 0 and 3000.")
                     else:
-                        row1 = [0,traffic_data["n2e"],traffic_data["n2s"],traffic_data["n2w"]]
-                        row2 = [traffic_data["e2n"],0,  traffic_data["e2s"], traffic_data["e2w"]]
-                        row3 = [traffic_data["s2n"], traffic_data["s2e"],0,  traffic_data["s2w"]]
+                        row1 = [0, traffic_data["n2e"], traffic_data["n2s"], traffic_data["n2w"]]
+                        row2 = [traffic_data["e2n"], 0, traffic_data["e2s"], traffic_data["e2w"]]
+                        row3 = [traffic_data["s2n"], traffic_data["s2e"], 0, traffic_data["s2w"]]
                         row4 = [traffic_data["w2n"], traffic_data["w2e"], traffic_data["w2s"], 0]
                         traffic_data = [row1, row2, row3, row4]
 
-                    
-                    #------------------------------------------------------------------------------------------------------------------
+                    # ------------------------------------------------------------------------------------------------------------------
                     # validate number of lanes input
                     num_lanes_input = param_inputs["num_lanes"].get_text().strip()
                     if not num_lanes_input:
@@ -700,20 +751,21 @@ while running:
                                 num_lanes_invalid = True
                             else:
                                 num_lanes_input = int(num_lanes_input)
-                                if not (1 <= num_lanes_input <=5):
+                                if not (1 <= num_lanes_input <= 5):
                                     num_lanes_invalid = True
                                 else:
                                     lane_configs = [num_lanes_input]
 
                     if num_lanes_invalid:
-                        error_messages.append("Error: Number of lanes must be in format X or X-Y where the range of lanes is 1-5.")
+                        error_messages.append(
+                            "Error: Number of lanes must be in format X or X-Y where the range of lanes is 1-5.")
 
                     # ------------------------------------------------------------------------------------------------------------------
-                    #Initialise crossing values as None
+                    # Initialise crossing values as None
                     crossing_frequency = None
                     crossing_time = None
                     # validate pedestrian crossing details
-                    if selected_pedestrian!="no":
+                    if selected_pedestrian != "no":
                         crossing_time_input = param_inputs["crossing_time"].get_text().strip()
                         crossing_frequency_input = param_inputs["crossing_frequency"].get_text().strip()
 
@@ -727,14 +779,16 @@ while running:
                             crossing_frequency = int(crossing_frequency_input)
 
                     if pedestrian_details_invalid:
-                        error_messages.append("Error: Crossing time and crossing frequency request must be filled in with integer values.")
+                        error_messages.append(
+                            "Error: Crossing time and crossing frequency request must be filled in with integer values.")
 
                     # ------------------------------------------------------------------------------------------------------------------
                     # validate simulation duration
                     simulation_duration_input = param_inputs["simulation_duration"].get_text().strip()
-                    if not simulation_duration_input or not simulation_duration_input.isdigit() or int(simulation_duration_input) <= 0 or int(simulation_duration_input) >= 1000:
+                    if not simulation_duration_input or not simulation_duration_input.isdigit() or int(
+                            simulation_duration_input) <= 0 or int(simulation_duration_input) >= 1000:
                         simulation_duration_invalid = True
-                    
+
                     if simulation_duration_invalid:
                         error_messages.append("Error: Simulation duration must be a positive integer less than 1000.")
                     else:
@@ -743,7 +797,7 @@ while running:
                     # ------------------------------------------------------------------------------------------------------------------
                     # validate bus percentage
                     bus_percentage_input = param_inputs["bus_percentage"].get_text().strip()
-                    if selected_bus!="no":
+                    if selected_bus != "no":
                         try:
                             if not bus_percentage_input.isdigit() or not (0 <= int(bus_percentage_input) <= 100):
                                 bus_percentage_invalid = True
@@ -764,9 +818,14 @@ while running:
                     w_avg = w_max = w_queue = 0.0
 
                     try:
-                        w_avg = float(w_avg_input)
-                        w_max = float(w_max_input)
-                        w_queue = float(w_queue_input)
+                        if (w_avg_input == "" and w_max_input == "" and w_queue_input == ""):
+                            w_avg = 0.3333
+                            w_max = 0.3333
+                            w_queue = 0.3334
+                        else:
+                            w_avg = float(w_avg_input)
+                            w_max = float(w_max_input)
+                            w_queue = float(w_queue_input)
                         # Each weighting must be between 0 and 1 (inclusive)
                         if not (0 <= w_avg <= 1 and 0 <= w_max <= 1 and 0 <= w_queue <= 1):
                             weightings_invalid = True
@@ -789,7 +848,6 @@ while running:
                     else:
                         hide_error_box()
 
-
                     '''
                     selected_turn : boolean
                     selected_bus : boolean
@@ -798,7 +856,7 @@ while running:
                     bus_percentage_input : str
                     percentage of bus, note that this is string type.
                     '''
-                    
+
                     if selected_pedestrian == "yes":
                         ped = [True]
                     elif selected_pedestrian == "maybe":
@@ -829,7 +887,7 @@ while running:
         manager.draw_ui(screen)
         pygame.display.flip()
 
-    elif(game_state == 1):
+    elif (game_state == 1):
 
         screen.fill(WHITE)
 
@@ -839,7 +897,7 @@ while running:
         left_arrow.hide()
         right_arrow.hide()
 
-        if(len(top_junctions) > 3):
+        if (len(top_junctions) > 3):
             left_arrow.show()
             right_arrow.show()
 
@@ -849,10 +907,10 @@ while running:
 
         for i in range(min(3, len(top_junctions))):
             kpi = top_junctions[i][1]
-            avg_wait = (kpi[0][0]+kpi[1][0]+kpi[2][0]+kpi[3][0])/4
-            max_wait = max(kpi[0][1],kpi[1][1],kpi[2][1],kpi[3][1])
-            max_queue = max(kpi[0][2],kpi[1][2],kpi[2][2],kpi[3][2])
-            data[(f"Config {i+1}")] = (avg_wait,max_wait,max_queue)
+            avg_wait = (kpi[0][0] + kpi[1][0] + kpi[2][0] + kpi[3][0]) / 4
+            max_wait = max(kpi[0][1], kpi[1][1], kpi[2][1], kpi[3][1])
+            max_queue = max(kpi[0][2], kpi[1][2], kpi[2][2], kpi[3][2])
+            data[(f"Config {i + 1}")] = (avg_wait, max_wait, max_queue)
 
         bar_width = 20
         bar_gap = 5
@@ -909,7 +967,7 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
 
-        #flip the screen
+        # flip the screen
         manager.update(time_delta)
         manager.draw_ui(screen)
         pygame.display.flip()
@@ -929,7 +987,6 @@ while running:
                 running = False
             manager.process_events(event)
 
-
         mouse_x, mouse_y = pygame.mouse.get_pos()
         coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
         screen.blit(coord_text, (800, 10))
@@ -941,26 +998,41 @@ while running:
         sum_traffic = sum(sum(row) for row in traffic_data)
 
         # experience formula
-        estimate_time = (max([1, sum_traffic*0.001029])) * (sum(lane_configs)*0.53) * (simulation_duration*0.0128)
+        estimate_time = (max([1, sum_traffic * 0.001029])) * (sum(lane_configs) * 0.53) * (simulation_duration * 0.0328)
 
-        rate = (1/estimate_time)*1.7139
+        rate = (1 / estimate_time) * 1.7139
         increasing_bar(rate)
 
-
-        if counter < 60:
-            counter = counter +1
+        if counter % 80 != 0:
+            counter = counter + 1
         else:
-            counter = 0
+            counter = counter + 1
             flipper = not flipper
 
-        if flipper:
-            draw_title("Loading.....", (200, 5))
-            draw_title("Loading.....", (400, 5))
-        else:
-            draw_title("Loading....", (200, 5))
-            draw_title("Loading....", (400, 5))
+        if counter % 2 == 0:
+            slow_flipper = not slow_flipper
 
-        if(thread.is_alive()):
+
+
+        if flipper:
+
+            draw_title("Loading.....", (400, 303))
+
+        else:
+
+            draw_title("Loading....", (400, 303))
+
+
+        if slow_flipper:
+            current_frame = (current_frame + 1) % len(frames)
+            current_frame_car = (current_frame_car + 1) % len(frames_car)
+
+
+
+        screen.blit(frames[current_frame], (514, 379))
+        screen.blit(frames_car[current_frame_car], (590, 238))
+
+        if (thread.is_alive()):
             pass
         else:
             if counter2 < 200:
@@ -969,7 +1041,7 @@ while running:
             else:
 
                 # returning to input page if there are no valid junctions
-                if(len(top_junctions) == 0):
+                if (len(top_junctions) == 0):
                     top_junctions = []
                     game_state = 0
                     counter2 = 0
