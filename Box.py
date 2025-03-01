@@ -11,6 +11,7 @@ class Box:
         """
         self._size = lane_width * maximum_lane_count * 2
         self.vt = 0
+        self._arm_throughputs = [0, 0, 0, 0]
 
     def add_vehicle(self, vehicle: Vehicle) -> None:
         """Add a new vehicle to the box adding the box size to its distance and adding it to the list"""
@@ -24,6 +25,7 @@ class Box:
             if (vehicle.distance <= 0):
                 vehicles_to_delete.append(vehicle)
                 self.vt += 1
+                self._arm_throughputs[vehicle.source] += 1
         if len(vehicles_to_delete) != 0:
             #Remove all vehicles have distances below 0
             self._vehicles = [v for v in self._vehicles if v not in vehicles_to_delete]
@@ -31,3 +33,6 @@ class Box:
 
     def get_vehicles(self) -> list[Vehicle]:
         return self._vehicles
+
+    def get_arm_throughputs(self):
+        return self._arm_throughputs

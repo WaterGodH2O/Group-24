@@ -1,13 +1,13 @@
 from unittest.mock import MagicMock
 from Arm import Arm
-from Lane import Lane, CarLane
+from Lane import Lane, CarLane, BusLane, LeftTurnLane
 from Vehicle import Vehicle, Car, Bus
 from Box import Box
 import unittest
 
 class TestArm(unittest.TestCase):
     def setUp(self):
-        self.arm = Arm(2, 100, [20, 30, 40, 0], 3, 4, False, False)
+        self.arm = Arm(2, 100, [20, 30, 40, 0], 3, 4, False, False, [{1}, {2}, {3}])
 
     def test_get_kpi(self):
         """ ensure that the correct kpi details are returned """
@@ -72,25 +72,25 @@ class TestArm(unittest.TestCase):
     def test_handle_lane_switching_true(self):
         """Test that lane switching logic is correctly executed"""
         # create two mock lanes
-        lane1 = CarLane([3], 15, 3)
-        lane2 = CarLane([1, 2], 15, 3)
+        lane1 = CarLane({1, 2}, 15, 3, 4)
+        lane2 = CarLane({1, 2}, 15, 3, 4)
         
         # create two mock cars
-        vehicle1 = Car(5, 0, 1, 5, 5)
-        vehicle2 = Car(5, 0, 1, 15, 5)
+        vehicle1 = Car(5, 0, 1, 5, 4)
+        vehicle2 = Car(5, 0, 1, 15, 4)
         
         # configure lanes
         lane1._vehicles = [vehicle1, vehicle2]
         lane1._queue_length = 2
         lane2._vehicles = []
         lane2._queue_length = 0
-        lane2._allowed_directions = {1, 2}
 
         # configure arm
         self.arm._lanes = [lane1, lane2]
 
         # switch lanes
         self.arm.handle_lane_switching()
+
 
         # assert that the first vehicle has switched lanes properly
         self.assertTrue(vehicle1 not in lane1.vehicles)
@@ -102,12 +102,13 @@ class TestArm(unittest.TestCase):
 
     def test_handle_lane_switching_false(self):
         """Test that vehicles don't switch lane with valid counts"""
+        # TODO extend properly to check it doesn't switch lane if can't enter
         # create two mock lanes
-        lane1 = CarLane([3], 15, 3)
-        lane2 = CarLane([1, 2], 15, 3)
+        lane1 = CarLane({1}, 15, 3, 4)
+        lane2 = CarLane({1, 2}, 15, 3, 4)
         
         # create two mock cars
-        vehicle1 = Car(5, 0, 1, 5, 5)
+        vehicle1 = Car(5, 0, 1, 5, 4)
         
         # configure lanes
         lane1._vehicles = [vehicle1]
@@ -309,9 +310,133 @@ class TestArm(unittest.TestCase):
         car2.distance = 175
         self.assertTrue(self.arm.no_vehicles_within(100))
 
+    def test_lane_creation(self):
+        """ Tests that bus lanes, car lanes and left turn lanes are properly created """
+        # test lane configurations are properly passed in
+        self.arm._allowed_directions = [{1}, {1, 2}, {3}]
+        self.arm.create_lanes(False, False, 50, 100, 3)
+
+        # assert that the allowed directions for the lanes match
+        for i, lane in enumerate(self.arm._lanes):
+            self.assertEqual(lane.allowed_directions, self.arm._allowed_directions[i])
+        
+        
+        # test bus lane is properly created
+        self.arm._allowed_directions = [{1, 2}, {3}]
+        self.arm.create_lanes(True, False, 50, 100, 3)
+        lane = self.arm._lanes
+
+        # check the first lane is a bus lane
+        self.assertIsInstance(lane[0], BusLane)
+        self.assertEqual(lane[0].allowed_directions, {1, 2, 3})
+
+        #  check the remaining lanes are care lanes and properly allocated
+        self.assertIsInstance(lane[1], CarLane)
+        self.assertIsInstance(lane[2], CarLane)
+        self.assertEqual(lane[1].allowed_directions, self.arm._allowed_directions[0])
+        self.assertEqual(lane[2].allowed_directions, self.arm._allowed_directions[1])
+
+        
+        # test left turn lane is properly created
+        self.arm._allowed_directions = [{1}, {1}, {2, 3}, {3}]
+        self.arm.create_lanes(False, True, 50, 100, 4)
+        lane = self.arm._lanes
+
+        # check the first two lanes are left turn lanes (can only go left)
+        self.assertIsInstance(lane[0], LeftTurnLane)
+        self.assertIsInstance(lane[1], LeftTurnLane)
+        self.assertEqual(lane[0].allowed_directions, {1})
+        self.assertEqual(lane[1].allowed_directions, {1})
+
+        #  check the remaining lanes are care lanes and properly allocated
+        self.assertIsInstance(lane[2], CarLane)
+        self.assertIsInstance(lane[3], CarLane)
+        self.assertEqual(lane[2].allowed_directions, self.arm._allowed_directions[2])
+        self.assertEqual(lane[3].allowed_directions, self.arm._allowed_directions[3])
+
+    def test_collisions_forward(self):
+        """Test that when a car is moving forward in the middle lane, vehicles turning across the junction can't"""
+        blocking_car = Car(10, 2, 0, 20, 4)
+        blocking_car._source_lane = 1
+        box = Box(3, 4)
+        box.add_vehicle(blocking_car)
+        #Create 3 cars to test in each lane (left, forward, right)
+        cars = [Car(10, 2, 3, 0, 4), Car(10, 2, 0, 0, 4), Car(10, 2, 1, 0, 4)]
+
+        for lane in range(3):
+            for car in range(3):
+                #Reset car distance between tests
+                cars[car]._distance = 0
+                #Add car to lane
+                self.arm._lanes[lane]._vehicles.append(cars[car])
+                #Move vehicles
+                self.arm.move_all_vehicles(0, 2, box, 100, 2)
+                if (lane, car) == (0, 2) or (lane, car) == (2, 0):
+                    #If in the left lane turning right or right lane turning left, it should be blocked
+                    self.assertNotIn(cars[car], box._vehicles)
+                    self.arm._lanes[lane].remove_vehicle(cars[car])
+                else:
+                    #Otherwise, it should not be blocked
+                    self.assertIn(cars[car], box._vehicles)
+                    box._vehicles.remove(cars[car])
+    
+    def test_collisions_left(self):
+        """Test that when a car is turning left in the middle lane, it blocks all vehicles in the left lane not also turning left"""
+        blocking_car = Car(10, 2, 3, 20, 4)
+        blocking_car._source_lane = 1
+        box = Box(3, 4)
+        box.add_vehicle(blocking_car)
+        #Create 3 cars to test in each lane (left, forward, right)
+        cars = [Car(10, 2, 3, 0, 4), Car(10, 2, 0, 0, 4), Car(10, 2, 1, 0, 4)]
+
+        for lane in range(3):
+            for car in range(3):
+                #Reset car distance between tests
+                cars[car]._distance = 0
+                #Add car to lane
+                self.arm._lanes[lane]._vehicles.append(cars[car])
+                #Move vehicles
+                self.arm.move_all_vehicles(0, 2, box, 100, 2)
+                if (lane, car) == (0, 1) or (lane, car) == (0, 2):
+                    #If in the left lane and not turning left, it should be blocked
+                    self.assertNotIn(cars[car], box._vehicles)
+                    self.arm._lanes[lane].remove_vehicle(cars[car])
+                else:
+                    #Otherwise, it should not be blocked
+                    self.assertIn(cars[car], box._vehicles)
+                    box._vehicles.remove(cars[car])
+
+    def test_collisions_right(self):
+        """Test that when a car is turning right in the middle lane, it blocks all vehicles in the right lane not also turning right"""
+        blocking_car = Car(10, 2, 1, 20, 4)
+        blocking_car._source_lane = 1
+        box = Box(3, 4)
+        box.add_vehicle(blocking_car)
+        #Create 3 cars to test in each lane (left, forward, right)
+        cars = [Car(10, 2, 3, 0, 4), Car(10, 2, 0, 0, 4), Car(10, 2, 1, 0, 4)]
+
+        for lane in range(3):
+            for car in range(3):
+                #Reset car distance between tests
+                cars[car]._distance = 0
+                #Add car to lane
+                self.arm._lanes[lane]._vehicles.append(cars[car])
+                #Move vehicles
+                self.arm.move_all_vehicles(0, 2, box, 100, 2)
+                if (lane, car) == (2, 1) or (lane, car) == (2, 0):
+                    #If in the left lane and not turning left, it should be blocked
+                    self.assertNotIn(cars[car], box._vehicles)
+                    self.arm._lanes[lane].remove_vehicle(cars[car])
+                else:
+                    #Otherwise, it should not be blocked
+                    self.assertIn(cars[car], box._vehicles)
+                    box._vehicles.remove(cars[car])
+
 class TestBusLeftTurnArm(unittest.TestCase):
+    #Tests for arms that have bus lanes and left turn lanes
     def setUp(self):
-        self.arm = Arm(3, 1000, [0,0,0,0], 3, 4, True, True)
+        lane_config = [{1}, {2, 3}]
+        self.arm = Arm(3, 1000, [0,0,0,0], 3, 4, True, True, lane_config)
     
     def test_vehicle_creation(self):
         """Test that buses add to lane 0, left turning cars to lane 1, others to lane 2"""
@@ -373,7 +498,7 @@ class TestBusLeftTurnArm(unittest.TestCase):
         self.assertIn(car2, self.arm._lanes[1]._vehicles)
 
     def test_left_turn_lane_switch_fail(self):
-        """ Test left turning vehicles can move into the left turn lane """
+        """ Test right turning vehicles can't move into the left turn lane """
         #Initialise buses
         bus1 = Bus(10, 2, 3, 0, 4)
         bus2 = Bus(10, 2, 1, 15, 4)
@@ -389,3 +514,60 @@ class TestBusLeftTurnArm(unittest.TestCase):
         #Check that cars and buses that otherwise could move into the lane are prevented by their turning direction
         self.assertNotIn(bus2, self.arm._lanes[1]._vehicles)
         self.assertNotIn(car2, self.arm._lanes[1]._vehicles)
+
+    def test_ltl_traffic_light_success(self):
+        """ Test that vehicles move into the box when either"""
+    def test_vehicle_collision_ltl_success(self):
+        """ Test that vehicles in a left turn lane can enter when there are vehicles moving in the same direction or going to different arms """
+        #Initalise vehicles
+        #Target vehicle
+        car1 = Car(10, 2, 3, 0, 4)
+        #Vehicles that should not block car1
+        car2 = Car(10, 2, 3, 5, 4)
+        car3 = Car(10, 1, 2, 5, 4)
+        box = Box(3, 3)
+        #Add cars 2 and 3 to box, car 1 to lt lane
+        box._vehicles.append(car2)
+        box._vehicles.append(car3)
+        self.arm._lanes[1]._vehicles.append(car1)
+
+        self.arm.move_all_vehicles(0, 1, box, 100, 2)
+
+        self.assertIn(car1, box._vehicles)
+
+    def test_vehicle_collision_ltl_fail(self):
+        """ Test that vehicles in a left turn lane can't enter when other vehicles in the box are moving to the same arm """
+        #Initalise vehicles
+        #Target vehicle
+        car1 = Car(10, 2, 3, 0, 4)
+        #This comes from a different arm and goes to the same arm, so has priority.
+        car2 = Car(10, 1, 3, 5, 4)
+        box = Box(3, 3)
+        #Add car 2 to box, car 1 to lt lane
+        box._vehicles.append(car2)
+        self.arm._lanes[1]._vehicles.append(car1)
+
+        self.arm.move_all_vehicles(0, 1, box, 100, 2)
+
+        self.assertNotIn(car1, box._vehicles)
+
+    def test_normal_collisions_ltl(self):
+        """Test that when a car is moving in a left turn lane it does not block anything"""
+        blocking_car = Car(10, 0, 1, 20, 4)
+        blocking_car._source_lane = 1
+        box = Box(3, 4)
+        box.add_vehicle(blocking_car)
+        #Create 3 cars to test in each lane (left, forward, right)
+        cars = [Car(10, 2, 3, 0, 4), Car(10, 2, 0, 0, 4), Car(10, 2, 1, 0, 4)]
+
+        for lane in range(3):
+            for car in range(3):
+                #Reset car distance between tests
+                cars[car]._distance = 0
+                #Add car to lane
+                self.arm._lanes[lane]._vehicles.append(cars[car])
+                #Move vehicles
+                self.arm.move_all_vehicles(0, 2, box, 100, 2)
+                #Nothing should be blocked
+                self.assertIn(cars[car], box._vehicles)
+                box._vehicles.remove(cars[car])

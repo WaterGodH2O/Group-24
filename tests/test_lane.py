@@ -8,7 +8,7 @@ import unittest
 class TestLanes(unittest.TestCase):
     def setUp(self):
         """ create a CarLane before each test"""
-        self.lane = CarLane(5, 100, 4)
+        self.lane = CarLane({2}, 5, 100, 4)
     
     def test_add_vehicle(self):
         """ should return true when added successfully """
@@ -81,10 +81,10 @@ class TestLanes(unittest.TestCase):
     def test_move_all_vehicles_red(self):
         """ tests if vehicles (not waiting in a queue) can still move even if the light is red """
         # create mock vehicles
-        car1 = Car(2, 0, 2, 0, 0)
-        car2 = Car(2, 0, 2, 5, 0)
-        car3 = Car(2, 0, 2, 11, 0)
-        car4 = Car(2, 0, 2, 20, 0)
+        car1 = Car(2, 0, 2, 0, 4)
+        car2 = Car(2, 0, 2, 5, 4)
+        car3 = Car(2, 0, 2, 11, 4)
+        car4 = Car(2, 0, 2, 20, 4)
 
         car1._stopping_distance = 5
         car2._stopping_distance = 5
@@ -137,10 +137,10 @@ class TestLanes(unittest.TestCase):
     def test_has_space_to_move(self):
         """ test that the program accurately determines if a given vehicle has enough space to move """
         # create mock vehicles
-        car1 = Car(2, 0, 2, 0, 0)
-        car2 = Car(2, 0, 2, 2, 0)
-        car3 = Car(2, 0, 2, 15, 0)
-        car4 = Car(2, 0, 2, 20, 0)
+        car1 = Car(2, 0, 2, 0, 4)
+        car2 = Car(2, 0, 2, 2, 4)
+        car3 = Car(2, 0, 2, 15, 4)
+        car4 = Car(2, 0, 2, 20, 4)
 
         # assert that car1 can move as there is no vehicle in front
         self.assertTrue(self.lane.has_space_to_move(car1, None))
@@ -153,6 +153,21 @@ class TestLanes(unittest.TestCase):
 
         # test it asserts false on boundary values
         self.assertFalse(self.lane.has_space_to_move(car3, car4))
+    
+    def test_can_enter_lane(self):
+        # create a mock car
+        car = Car(2, 0, 2, 40, 4)
+
+        # can enter lane if going forward
+        self.assertTrue(self.lane.can_enter_lane(car))
+        
+        # adjust the destination to turning left + check the car now can't enter the lane
+        car._destination = 1
+        self.assertFalse(self.lane.can_enter_lane(car))
+
+        # check if the vehicle can enter a lane with multiple allowed directions
+        self.lane._allowed_directions = {1, 2}
+        self.assertTrue(self.lane.can_enter_lane(car))
 
 class TestBusLanes(unittest.TestCase):
     def setUp(self):
@@ -171,10 +186,9 @@ class TestLTLanes(unittest.TestCase):
         self.leftTurnLane = LeftTurnLane(3, 1000, 4)
 
     def test_vehicle_creation(self):
+        
         """ Vehicles should only be added if they are turning left """
         self.assertIsNotNone(self.leftTurnLane.create_vehicle(10, 2, 3, "Car", 0))
         self.assertIsNotNone(self.leftTurnLane.create_vehicle(10, 2, 3, "Bus", 0))
         self.assertIsNone(self.leftTurnLane.create_vehicle(10, 2, 0, "Car", 0))
         self.assertIsNone(self.leftTurnLane.create_vehicle(10, 2, 1, "Bus", 0))
-        
-        

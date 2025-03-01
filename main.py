@@ -42,6 +42,8 @@ page2_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), 
 
 page1_container_error = pygame_gui.core.UIContainer(relative_rect=pygame.Rect((0, 0), (WIDTH, HEIGHT)), manager=manager)
 
+junction_visualisation = pygame.Surface((300, 300))
+
 # colours
 WHITE = (180, 180, 180)
 BLACK = (0, 0, 0)
@@ -81,6 +83,64 @@ def draw_text(text, position):
     text_surface = symbol.render(text, True, BLACK)
     screen.blit(text_surface, position)
 
+def draw_junction_base(surface):
+    surface.fill((200,200,200))
+    pygame.draw.rect(surface, (50, 50, 50), (100, 0, 100, 300))
+    pygame.draw.rect(surface, (50, 50, 50), (0, 100, 300, 100))
+
+    # north
+    pygame.draw.line(surface, (255, 255, 255), (150, 0), (150, 100), 2)
+    pygame.draw.line(surface, (255, 255, 255), (150, 100), (200, 100), 2)
+
+    # east
+    pygame.draw.line(surface, (255, 255, 255), (200, 150), (300, 150), 2)
+    pygame.draw.line(surface, (255, 255, 255), (200, 150), (200, 200), 2)
+
+    # south
+    pygame.draw.line(surface, (255, 255, 255), (150, 200), (150, 300), 2)
+    pygame.draw.line(surface, (255, 255, 255), (100, 200), (150, 200), 2)
+
+    # west
+    pygame.draw.line(surface, (255, 255, 255), (0, 150), (100, 150), 2)
+    pygame.draw.line(surface, (255, 255, 255), (100, 100), (100, 150), 2)
+
+def draw_junction(surface):
+    draw_junction_base(surface)
+
+    bus_lane_shift = 0
+
+    road_font = pygame.font.Font(None, 11)
+    
+    if selected_turn != "no":
+        bus_lane_shift = 20
+
+        text_n = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), 180)
+        text_e = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), -90)
+        text_s = road_font.render("TURN\nLEFT", True, (255, 255, 255))
+        text_w = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), 90)
+
+        surface.blit(text_n, (180, 40))
+        surface.blit(text_e, (40, 100))
+        surface.blit(text_s, (100, 240))
+        surface.blit(text_w, (240, 180))
+    
+    if selected_bus != "no":
+        pygame.draw.rect(surface, (155, 17, 30), (180-bus_lane_shift, 0, 20, 100))
+        pygame.draw.rect(surface, (155, 17, 30), (202, 180-bus_lane_shift, 100, 20)) 
+        pygame.draw.rect(surface, (155, 17, 30), (100+bus_lane_shift, 202, 20, 100))
+        pygame.draw.rect(surface, (155, 17, 30), (0, 100+bus_lane_shift, 100, 20))
+
+    if selected_pedestrian != "no":
+        stripe_width = 5
+        gap = 5
+
+        for i in range(11):
+            pygame.draw.rect(surface, (255, 255, 255), (95 + i * (stripe_width + gap), 80, stripe_width, 10))
+            pygame.draw.rect(surface, (255, 255, 255), (95 + i * (stripe_width + gap), 210, stripe_width, 10))
+
+        for i in range(11):
+            pygame.draw.rect(surface, (255, 255, 255), (210, 95 + i * (stripe_width + gap), 10, stripe_width))
+            pygame.draw.rect(surface, (255, 255, 255), (80, 95 + i * (stripe_width + gap), 10, stripe_width))
 
 traffic_flow_positions = {
     "n2e": (250, 110),
@@ -103,6 +163,9 @@ param_positions = {
     "crossing_frequency": (760, 535),
     "simulation_duration": (900, 700),
     "bus_percentage": (470, 620),
+    "w_avg_wait": (610, 470),
+    "w_max_wait": (710, 470),
+    "w_queue_len": (815, 470),
 }
 
 # Create the object of input box of VPH
@@ -200,7 +263,7 @@ run_simulation_button = pygame_gui.elements.UIButton(
 
 # error message box
 error_message_label = pygame_gui.elements.UITextBox(
-    relative_rect=pygame.Rect((700, 50), (400, 270)),
+    relative_rect=pygame.Rect((695, 45), (400, 350)),
     html_text="Errors",
     manager=manager,
     container=page1_container_error,
@@ -280,7 +343,32 @@ def increasing_bar_(rate):
 
         update_progress_bar(perc_bar)
 
+def remove_junction_visualisation():
+    global junction_visualisation
+    junction_visualisation = None
 
+# list of lane presets which denote which relative dirs each lane can travel in
+lane_dir_presets = [
+    # all presets for 1 lane configurations
+    [[{1, 2, 3}]],
+
+    # all presets for 2 lane configurations
+    [[{1}, {2, 3}], [{1, 2}, {3}], [{1}, {1, 2, 3}], [{1, 2, 3}, {3}]],
+
+    # all presets for 3 lane configurations
+    [[{1}, {2}, {3}], [{1, 2}, {2}, {2, 3}], [{1}, {2}, {2, 3}], [{1, 2}, {2}, {3}],
+        [{1}, {2, 3}, {3}], [{1}, {1, 2}, {3}]],
+
+    # all presets for 4 lane configurations
+    [[{1}, {2}, {2}, {3}], [{1}, {2}, {3}, {3}], [{1}, {1}, {2}, {3}], [{1}, {1, 2}, {2, 3}, {3}],
+        [{1}, {1, 2}, {2}, {3}], [{1}, {2}, {2, 3}, {3}]],
+
+    # all presets for 5 lane configurations
+    [[{1}, {1}, {2}, {3}, {3}], [{1}, {1, 2}, {2}, {2, 3}, {3}], [{1}, {1}, {1}, {2, 3}, {3}], [{1}, {1, 2}, {3}, {3}, {3}],
+        [{1}, {1}, {2}, {2, 3}, {3}], [{1}, {1, 2}, {2}, {3}, {3}], [{1, 2}, {2}, {2}, {2}, {2, 3}],
+        [{1}, {1, 2}, {2}, {2}, {3}], [{1}, {2}, {2}, {2, 3}, {3}]]
+
+]
 
 # setup table data
 def init_table():
@@ -292,11 +380,12 @@ def init_table():
         ['Efficiency'],
         ['Average wait time (seconds)'],
         ['Maximum wait time (seconds)'],
-        ['Maximum queue length']
+        ['Maximum queue length'],
+        ['Vehicles passed through']
     ])
 
 # add row to table for a configuration
-def add_config(efficiency, values, description):
+def add_config(efficiency, values, description, passed_per_arm):
     config_number = len(output_data[0])
     output_data[0].append(f'Configuration {config_number}')
 
@@ -305,6 +394,7 @@ def add_config(efficiency, values, description):
     output_data[3].append(f"North: {int(values[0][0])}\nEast: {int(values[1][0])}\nSouth: {int(values[2][0])}\nWest: {int(values[3][0])}")
     output_data[4].append(f"North: {int(values[0][1])}\nEast: {int(values[1][1])}\nSouth: {int(values[2][1])}\nWest: {int(values[3][1])}")
     output_data[5].append(f"North: {int(values[0][2])}\nEast: {int(values[1][2])}\nSouth: {int(values[2][2])}\nWest: {int(values[3][2])}")
+    output_data[6].append(f"North: {passed_per_arm[0]}\nEast: {passed_per_arm[1]}\nSouth: {passed_per_arm[2]}\nWest: {passed_per_arm[3]}")
 
 
 # create table with output data
@@ -321,10 +411,12 @@ def create_table(data):
     row_height = 120
 
     for(i,row) in enumerate(output_data):
-        if(i==1):
+        if(i==0):
+            row_height = 45 
+        elif(i==1):
             row_height = 170
         elif(i==2):
-            row_height = 70
+            row_height = 45
         else:
             row_height = 120
         label = pygame_gui.elements.UITextBox(
@@ -356,6 +448,7 @@ def hide_error_box():
     error_message_label.hide()
 
 def toggle_button(button_yes, button_maybe, button_no, button_selected):
+    draw_junction(junction_visualisation)
     if(button_selected == button_yes):
         button_yes.set_text("> Yes <")
         button_maybe.set_text("Maybe")
@@ -369,20 +462,27 @@ def toggle_button(button_yes, button_maybe, button_no, button_selected):
         button_maybe.set_text("Maybe")
         button_no.set_text("> No <")
 
-def calc_efficiency(north_arm, south_arm, east_arm, west_arm) -> int:
-    total_score = 0
+def calc_efficiency(north_arm, south_arm, east_arm, west_arm, w_avg, w_max, w_len) -> float:
+    """
+    Calculates a junction-wide efficiency, ensuring that if all arms are perfect (zero wait times & zero queue), the overall
+    score is 100. This relies on w_avg + w_max + w_queue == 1.
+    Each arm is a tuple of (avg_wait, max_wait, max_queue)
+    """
+    # Gather all arms in a list
     arms = [north_arm, south_arm, east_arm, west_arm]
-
-    for arm_data in arms:
-        avg_wait, max_wait, max_queue = arm_data
-        # compute partial score
-        arn_score = 0
-        try:
-            arm_score = (100/avg_wait) + (100/max_wait) + (100/max_queue)
-        except ZeroDivisionError:
-            arm_score = 100
-        # add to the total score for the junction
-        total_score += arm_score
+    # Sum partial scores across the 4 arms
+    # Because w_avg + w_max + w_queue = 1, a perfect arm yields 1.0
+    # Summing 4 perfect arms => 4. Therefore need to scale to 100 below
+    raw_sum = 0.0
+    for (avg_wait, max_wait, queue_len) in arms:
+        # Weighted sum for this arm
+        arm_score = (w_avg * (1.0 / (1.0 + avg_wait))
+                    + w_max * (1.0 / (1.0 + max_wait))
+                    + w_len * (1.0 / (1.0 + queue_len))
+                    )
+        raw_sum += arm_score
+    # Perfect sceneario => raw_sum = 4. We want that => 100 => multiply by 25
+    total_score = 25.0 * raw_sum
     return total_score
 
 def draw_y_axis():
@@ -402,33 +502,38 @@ def runSimulation():
     global top_junctions
     for num_lanes in lane_configs:
         for (ped_yes, bus_yes, left_yes) in combinations:
-            try:
-                # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
-                junction = Junction(
-                    traffic_data,
-                    num_lanes=num_lanes,
-                    pedestrian_crossing=ped_yes,
-                    p_crossing_time_s=crossing_time,
-                    p_crossing_freq=crossing_frequency,
-                    bus_lane=bus_yes,
-                    bus_ratio=bus_percentage,
-                    left_turn_lanes=left_yes
-                )
+            # run each lane configuration
+            chosen_lane_presets = num_lanes - 1 if (not bus_yes or num_lanes < 2) else num_lanes - 2
+            for lane_directions in lane_dir_presets[chosen_lane_presets]:
+                try:
+                    # initialise junction, ** is to unpack the dictionary and pass the key-value pair into class
+                    junction = Junction(
+                        traffic_data,
+                        lane_directions,
+                        num_lanes=num_lanes,
+                        pedestrian_crossing=ped_yes,
+                        p_crossing_time_s=crossing_time,
+                        p_crossing_freq=crossing_frequency,
+                        bus_lane=bus_yes,
+                        bus_ratio=bus_percentage,
+                        left_turn_lanes=left_yes
+                    )
 
-                print(junction)
-                start_time = time()
+                    print(junction)
+                    start_time = time()
 
-                junction.simulate(simulation_duration * 60 * 1000, 100)
+                    junction.simulate(simulation_duration * 60 * 1000, 100)
 
-                print(f"Simulation duration: {round(time() - start_time, 2)}s")
-                kpi = junction.get_kpi()
-                print(kpi)
-                top_junctions.append(
-                    [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3]), kpi, num_lanes, ped_yes, bus_yes, left_yes])
+                    print(f"Simulation duration: {round(time() - start_time, 2)}s")
+                    kpi = junction.get_kpi()
+                    passed_per_arm = junction.box.get_arm_throughputs()
+                    print(kpi)
+                    top_junctions.append(
+                        [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg, w_max, w_queue), kpi, num_lanes, ped_yes, bus_yes, left_yes, passed_per_arm])
 
-            except NotEnoughLanesException:
-                # Not adding junctions that fail to create
-                pass
+                except NotEnoughLanesException:
+                    # Not adding junctions that fail to create
+                    pass
 
     # top 3 junctions by kpi
     top_junctions = sorted(top_junctions, key=lambda x: x[0], reverse=True)
@@ -437,7 +542,7 @@ def runSimulation():
 
     for junction in top_junctions:
         config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}"
-        add_config(junction[0], junction[1], config_description)
+        add_config(junction[0], junction[1], config_description, junction[6])
 
     return
 
@@ -462,10 +567,6 @@ while running:
 
         screen.fill(WHITE)
 
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
-        screen.blit(coord_text, (800, 10))
-
         # draw text
         draw_title("Traffic flow rates", (200, 5))
         draw_font("North", (50, 125))
@@ -489,6 +590,8 @@ while running:
 
         draw_font("Bus Percentage\n(%)", (300, 615))
 
+        draw_font("Weightings\n(Avg Time / Max Time / Max Queue Length)", (600,420)) 
+        
         draw_font("Pedestrian Crossings", (50, 520))
 
         draw_font("Left turn lane", (50, 680))
@@ -500,6 +603,10 @@ while running:
         draw_font("Crossing request\nfrequency (per hour)", (550, 535))
 
         draw_font("Simulation duration\n(minutes)", (700, 700))
+
+        junction_visualisation.fill((255, 255, 255))
+        draw_junction(junction_visualisation)
+        screen.blit(junction_visualisation, (700, 50))
 
         # event handle
         for event in pygame.event.get():
@@ -541,7 +648,6 @@ while running:
                     toggle_button(turn_yes,turn_maybe,turn_no,turn_no)
 
                 elif event.ui_element == run_simulation_button:
-                    global traffic_data
                     traffic_data = {}
                     lane_configs = []
 
@@ -649,6 +755,32 @@ while running:
                     if bus_percentage_invalid:
                         error_messages.append("Error: Bus percentage must be an integer between 0 and 100.")
 
+                    # validate KPI weightings
+                    w_avg_input = param_inputs["w_avg_wait"].get_text().strip()
+                    w_max_input = param_inputs["w_max_wait"].get_text().strip()
+                    w_queue_input = param_inputs["w_queue_len"].get_text().strip()
+
+                    weightings_invalid = False
+                    w_avg = w_max = w_queue = 0.0
+
+                    try:
+                        w_avg = float(w_avg_input)
+                        w_max = float(w_max_input)
+                        w_queue = float(w_queue_input)
+                        # Each weighting must be between 0 and 1 (inclusive)
+                        if not (0 <= w_avg <= 1 and 0 <= w_max <= 1 and 0 <= w_queue <= 1):
+                            weightings_invalid = True
+                        # They must sum to exactly 1 (allow a tiny float tolerance)
+                        total_weight = w_avg + w_max + w_queue
+                        if abs(total_weight - 1.0) > 1e-9:
+                            weightings_invalid = True
+                    except ValueError:
+                        weightings_invalid = True
+
+                    if weightings_invalid:
+                        error_messages.append(
+                            "Error: The weightings for Average Waiting Time, Max Waiting Time and Max Queue Length must be valid floats between 0 and 1 with the sum of the three being 1"
+                        )
                     # ------------------------------------------------------------------------------------------------------------------
                     # display error
                     if error_messages:
@@ -713,10 +845,6 @@ while running:
 
         create_table(output_data)
 
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
-        screen.blit(coord_text, (800, 10))
-
         data = {}
 
         for i in range(min(3, len(top_junctions))):
@@ -733,7 +861,7 @@ while running:
 
         chart_height = HEIGHT - 220
         max_value = max(max(values) for values in data.values())
-        scale_factor = (HEIGHT - 220) / max_value
+        scale_factor = (HEIGHT - 220) / max_value if max_value != 0 else 1
 
         draw_y_axis()
 
@@ -801,6 +929,7 @@ while running:
                 running = False
             manager.process_events(event)
 
+
         mouse_x, mouse_y = pygame.mouse.get_pos()
         coord_text = little_font.render(f"Mouse Position: ({mouse_x}, {mouse_y})", True, BLACK)
         screen.blit(coord_text, (800, 10))
@@ -812,11 +941,10 @@ while running:
         sum_traffic = sum(sum(row) for row in traffic_data)
 
         # experience formula
-        estimate_time = (max([1, sum_traffic*0.001029])) * (num_lanes_input*0.53) * (simulation_duration*0.0128)
+        estimate_time = (max([1, sum_traffic*0.001029])) * (sum(lane_configs)*0.53) * (simulation_duration*0.0128)
 
         rate = (1/estimate_time)*1.7139
         increasing_bar(rate)
-
 
 
         if counter < 60:
