@@ -10,7 +10,6 @@ class Box:
         in a given arm.
         """
         self._size = lane_width * maximum_lane_count * 2
-        self.vt = 0
         self._arm_throughputs = [0, 0, 0, 0]
 
     def add_vehicle(self, vehicle: Vehicle) -> None:
@@ -19,12 +18,14 @@ class Box:
         self._vehicles.append(vehicle)
 
     def move_all_vehicles(self, update_length_ms: int) -> None:
+        """ Move all vehicles in the box and delete any that have left"""
         vehicles_to_delete: list[Vehicle] = []
         for vehicle in self._vehicles:
+            #Move each vehicle
             vehicle.set_position(vehicle.get_next_position(update_length_ms))
+            #If distance is less than 0, set vehicle to be deleted
             if (vehicle.distance <= 0):
                 vehicles_to_delete.append(vehicle)
-                self.vt += 1
                 self._arm_throughputs[vehicle.source] += 1
         if len(vehicles_to_delete) != 0:
             #Remove all vehicles have distances below 0

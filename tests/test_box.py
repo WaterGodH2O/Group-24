@@ -48,4 +48,5 @@ class TestBox(unittest.TestCase):
         #Move again, and check vehicle 0 has left
         self.box.move_all_vehicles(50)
         self.assertNotIn(vehicle0, self.box._vehicles)
+    
 

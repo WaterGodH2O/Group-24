@@ -71,3 +71,18 @@ class TestJunction(unittest.TestCase):
         self.assertGreater(len(self.junction.arms[0]._lanes[0]._vehicles),2)
         #Check no vehicles were created elsewhere
         self.assertEqual(len(self.junction.arms[2]._lanes[0]._vehicles), 0)
+
+    def test_arm_box_combined_movement(self):
+        """ Test that vehicles move seamlessly between arms and box """
+        cars = [Car(10, 0, 2, 0, 4), Car(10, 0, 2, 6.6, 4), Car(10, 0, 2, 13.2, 4)]
+        self.junction.arms[0]._lanes[0].add_vehicle(cars[0])
+        self.junction.arms[0]._lanes[0].add_vehicle(cars[1])
+        self.junction.arms[0]._lanes[0].add_vehicle(cars[2])
+        self.junction.simulate(1000, 1000)
+        #Check that after 1 second, 
+        self.assertAlmostEqual(cars[0].distance, 8)
+        self.assertAlmostEqual(cars[1].distance, 14.6)
+        self.assertAlmostEqual(cars[2].distance, 3.2)
+        self.assertIn(cars[0], self.junction.box._vehicles)
+        self.assertIn(cars[1], self.junction.box._vehicles)
+        self.assertIn(cars[2], self.junction.arms[0]._lanes[0]._vehicles)
