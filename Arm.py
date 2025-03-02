@@ -147,6 +147,10 @@ class Arm:
                 # sort the adjacent lanes by min queue_length to prioritise shorter lanes
                 adjacent_lanes.sort(key=lambda lane: lane.queue_length)
 
+                # stop checking if no more vehicles can switch lanes
+                if len(adjacent_lanes) > 0 and current_lane.queue_length - adjacent_lanes[0].queue_length < 2:
+                    break
+
                 for new_lane in adjacent_lanes:
                     # check if the vehicle can merge into a new lane if the current lane is shorter
                     # and goes where the vehicle wants to go

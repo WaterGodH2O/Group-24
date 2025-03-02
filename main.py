@@ -553,6 +553,7 @@ def draw_y_axis():
 
 def runSimulation():
     global top_junctions
+    start_time = time()
     for num_lanes in lane_configs:
         for (ped_yes, bus_yes, left_yes) in combinations:
             # run each lane configuration
@@ -572,15 +573,14 @@ def runSimulation():
                         left_turn_lanes=left_yes
                     )
 
-                    print(junction)
-                    start_time = time()
+                    # print(junction)
+                    
 
                     junction.simulate(simulation_duration * 60 * 1000, 100)
 
-                    print(f"Simulation duration: {round(time() - start_time, 2)}s")
                     kpi = junction.get_kpi()
                     passed_per_arm = junction.box.get_arm_throughputs()
-                    print(kpi)
+                    # print(kpi)
                     top_junctions.append(
                         [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg, w_max, w_queue), kpi, num_lanes,
                          ped_yes, bus_yes, left_yes, passed_per_arm])
@@ -588,6 +588,8 @@ def runSimulation():
                 except NotEnoughLanesException:
                     # Not adding junctions that fail to create
                     pass
+
+    print(f"Simulation duration: {round(time() - start_time, 2)}s")
 
     # top 3 junctions by kpi
     top_junctions = sorted(top_junctions, key=lambda x: x[0], reverse=True)

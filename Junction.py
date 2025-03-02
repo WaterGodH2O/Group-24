@@ -143,9 +143,9 @@ class Junction:
             print("Too many vehicles created in an arm, exiting early")
         #Show cars created
         np.set_printoptions(suppress=True)
-        print(self.cars_made)
-        print("Simulation finished")
-        print(f"{self.box.vt} vehicles passed through out of {round(np.sum(self.cars_made))}")
+        # print(self.cars_made)
+        # print("Simulation finished")
+        # print(f"{self.box.vt} vehicles passed through out of {round(np.sum(self.cars_made))}")
     
     
     def update(self, update_length_ms: int) -> None:
