@@ -167,15 +167,18 @@ class TestArm(unittest.TestCase):
         # mock the vehicle we want to merge
         car1 = MagicMock(spec=Vehicle)
         car1.distance = 6
-        car1.stopping_distance = 5
+        car1.stopping_distance = 3
+        car1.length = 2
         
         # mock vehicles already in the lane
         car2 = MagicMock(spec=Vehicle)
         car3 = MagicMock(spec=Vehicle)
         car2.distance = 0
-        car2.stopping_distance = 5
+        car2.stopping_distance = 3
+        car2.length = 2
         car3.distance = 12
-        car3.stopping_distance = 5
+        car3.stopping_distance = 3
+        car3.length = 2
 
         # mock the lane to merge into
         lane = MagicMock(spec=Lane)
@@ -205,15 +208,18 @@ class TestArm(unittest.TestCase):
         # mock the vehicle we want to merge
         car1 = MagicMock(spec=Vehicle)
         car1.distance = 6
-        car1.stopping_distance = 5
+        car1.stopping_distance = 3
+        car1.length = 2
         
         # mock vehicles already in the lane
         car2 = MagicMock(spec=Vehicle)
         car3 = MagicMock(spec=Vehicle)
         car2.distance = 3
-        car2.stopping_distance = 5
+        car2.stopping_distance = 3
+        car2.length = 2
         car3.distance = 12
-        car3.stopping_distance = 5
+        car3.stopping_distance = 3
+        car3.length = 2
 
         # mock the lane to merge into
         lane = MagicMock(spec=Lane)

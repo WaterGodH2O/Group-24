@@ -218,12 +218,12 @@ class Arm:
         vehicle_behind = lane.vehicles[new_vehicle_index] if new_vehicle_index < len(lane.vehicles) else None
 
         # check the space between the vehicle ahead and behind to ensure adequate space
-        if vehicle_ahead and vehicle.distance - vehicle_ahead.distance <= vehicle.stopping_distance:
+        if vehicle_ahead and vehicle.distance - vehicle_ahead.distance - vehicle_ahead.length <= vehicle.stopping_distance:
             # return -1 to indicate we can't move into this lane
             return -1
         
         # check if there is enough space for the vehicle behind to adequately stop
-        if vehicle_behind and vehicle_behind.distance - vehicle.distance <= vehicle_behind.stopping_distance:
+        if vehicle_behind and vehicle_behind.distance - vehicle.distance - vehicle.length <= vehicle_behind.stopping_distance:
             return -1
     
         # return the index the vehicle should be isnerted

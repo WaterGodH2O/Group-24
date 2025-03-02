@@ -86,10 +86,14 @@ class TestLanes(unittest.TestCase):
         car3 = Car(2, 0, 2, 11, 4)
         car4 = Car(2, 0, 2, 20, 4)
 
-        car1._stopping_distance = 5
-        car2._stopping_distance = 5
-        car3._stopping_distance = 5
-        car4._stopping_distance = 5
+        car1._stopping_distance = 2
+        car1._length = 3
+        car2._stopping_distance = 2
+        car2._length = 2
+        car3._stopping_distance = 3
+        car3._length = 3
+        car4._stopping_distance = 2
+        car4._length = 3
 
         # create lane with mock vehicles
         self.lane._vehicles = [car1, car2, car3, car4]
@@ -115,10 +119,14 @@ class TestLanes(unittest.TestCase):
         car3 = Car(2, 0, 2, 10, 4)
         car4 = Car(2, 0, 2, 13, 4)
 
-        car1._stopping_distance = 5
-        car2._stopping_distance = 5
-        car3._stopping_distance = 5
-        car4._stopping_distance = 5
+        car1._stopping_distance = 2
+        car1._length = 3
+        car2._stopping_distance = 2
+        car2._length = 3
+        car3._stopping_distance = 2
+        car3._length = 3
+        car4._stopping_distance = 2
+        car4._length = 3
 
         # create lane with mock vehicles
         self.lane._vehicles = [car1, car2, car3, car4]
