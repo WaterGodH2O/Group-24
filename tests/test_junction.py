@@ -59,3 +59,15 @@ class TestJunction(unittest.TestCase):
         self.assertIn(cars[6], junction1.arms[2]._lanes[2]._vehicles)
         self.assertNotIn(cars[7], junction1.arms[2]._lanes[2]._vehicles)
         self.assertIn(cars[8], junction1.arms[2]._lanes[2]._vehicles)
+
+    def test_vehicle_creation(self):
+        """ Test that vehicles are created, and that multiple vehicles can be created in 1 tick"""
+        #Initialise traffic data to allow only cars from arm 0 to arm 0
+        self.junction.traffic_data = [[1,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+        #Initialise scales. Average interval between vehicles is 1ms, so almost certain to create at least 2 in 100ms
+        self.junction.traffic_scales = [[1,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+        self.junction.create_new_vehicles(100)
+        #Check at least two cars were created
+        self.assertGreater(len(self.junction.arms[0]._lanes[0]._vehicles),2)
+        #Check no vehicles were created elsewhere
+        self.assertEqual(len(self.junction.arms[2]._lanes[0]._vehicles), 0)
