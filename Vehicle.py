@@ -39,6 +39,12 @@ class Vehicle(ABC):
     def distance(self):
         return self._distance
     @property
+    def length(self):
+        return self._length
+    @property
+    def stopping_distance(self):
+        return self._stopping_distance
+    @property
     def destination(self):
         return self._destination
     @property
@@ -56,6 +62,7 @@ class Vehicle(ABC):
         return self._distance - (self._speed * update_length_ms / 1000)
     
     def set_source_lane(self, source_lane: int) -> None:
+        """ When entering the box, keep track of which lane the vehicle came from """
         self._source_lane = source_lane
 
     def update_wait_time(self, update_length_ms: int) -> None:

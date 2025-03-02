@@ -143,7 +143,7 @@ class Lane(ABC):
 
                 else:
                     # set distance to 0 if at front of queue, otherwise move forward if space
-                    new_vehicle_distance = min(vehicle_ahead.distance + vehicle._stopping_distance, vehicle.distance) if vehicle_ahead else 0
+                    new_vehicle_distance = min(vehicle_ahead.distance + vehicle.stopping_distance, vehicle.distance) if vehicle_ahead else 0
                     
                     # update wait time if the vehicle hasn't moved
                     if new_vehicle_distance == vehicle.distance:
@@ -161,7 +161,7 @@ class Lane(ABC):
                 # new position is the furthest the vehicle can travel in the time step ensuring it doesn't get too
                 # close to the vehicle ahead
                 new_vehicle_distance = max(vehicle.get_next_position(update_length_ms),
-                                           vehicle_ahead.distance + vehicle._stopping_distance)
+                                           vehicle_ahead.distance + vehicle.stopping_distance)
                 
                 vehicle.set_position(new_vehicle_distance)
 
@@ -178,7 +178,7 @@ class Lane(ABC):
         """ checks if there is any space between a vehicle and the car ahead """
         if vehicle_ahead is None:
             return True
-        return vehicle.distance > vehicle_ahead.distance + vehicle._stopping_distance
+        return vehicle.distance > vehicle_ahead.distance + vehicle.stopping_distance
         
 
     

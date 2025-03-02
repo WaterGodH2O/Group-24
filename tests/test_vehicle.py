@@ -37,4 +37,8 @@ class TestVehicle(unittest.TestCase):
         self.assertEqual(vehicle4.get_relative_direction(), 0)
         self.assertEqual(vehicle8.get_relative_direction(), 0)
 
+    def test_stopping_distance_calc(self):
+        """ Create a car and bus and check stopping distance is set correctly """
+        self.assertEqual(self.vehicle.stopping_distance, 2.2)
+        self.assertEqual(Bus(0,0,0,0,0).stopping_distance, 5)
     

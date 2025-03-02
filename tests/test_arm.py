@@ -20,6 +20,16 @@ class TestArm(unittest.TestCase):
         # ensure that the get kpi method returns the correct values
         self.assertEqual(self.arm.get_kpi(), [5, 10, 4])
 
+    def test_create_vehicle(self):
+        """ test that vehicles are created correctly """
+        self.arm.create_vehicle(0, 3, 0, "Car")
+        self.arm.create_vehicle(0, 3, 0, "Car")
+        self.arm.create_vehicle(0, 3, 0, "Car")
+        self.assertEqual(self.arm._lanes[0]._vehicles[0].distance, 0)
+        #Use almost equal to account for floating point rounding
+        self.assertAlmostEqual(self.arm._lanes[0]._vehicles[1].distance, 6.6)
+        self.assertAlmostEqual(self.arm._lanes[0]._vehicles[2].distance, 13.2)
+
     def test_move_all_vehicles(self):
         # create some mock lanes
         lane1 = MagicMock(spec=Lane)
@@ -157,15 +167,15 @@ class TestArm(unittest.TestCase):
         # mock the vehicle we want to merge
         car1 = MagicMock(spec=Vehicle)
         car1.distance = 6
-        car1._stopping_distance = 5
+        car1.stopping_distance = 5
         
         # mock vehicles already in the lane
         car2 = MagicMock(spec=Vehicle)
         car3 = MagicMock(spec=Vehicle)
         car2.distance = 0
-        car2._stopping_distance = 5
+        car2.stopping_distance = 5
         car3.distance = 12
-        car3._stopping_distance = 5
+        car3.stopping_distance = 5
 
         # mock the lane to merge into
         lane = MagicMock(spec=Lane)
@@ -195,15 +205,15 @@ class TestArm(unittest.TestCase):
         # mock the vehicle we want to merge
         car1 = MagicMock(spec=Vehicle)
         car1.distance = 6
-        car1._stopping_distance = 5
+        car1.stopping_distance = 5
         
         # mock vehicles already in the lane
         car2 = MagicMock(spec=Vehicle)
         car3 = MagicMock(spec=Vehicle)
         car2.distance = 3
-        car2._stopping_distance = 5
+        car2.stopping_distance = 5
         car3.distance = 12
-        car3._stopping_distance = 5
+        car3.stopping_distance = 5
 
         # mock the lane to merge into
         lane = MagicMock(spec=Lane)

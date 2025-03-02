@@ -2,6 +2,7 @@ from typing import List, Set
 from Lane import Lane, CarLane, BusLane, LeftTurnLane
 from exceptions import TooManyVehiclesException, NotEnoughLanesException
 from Box import Box
+from Vehicle import Vehicle
 from bisect import bisect_right
 
 class Arm:
@@ -168,7 +169,7 @@ class Arm:
         for lane, vehicle in vehicles_to_remove:
             lane.remove_vehicle(vehicle)
 
-    def move_vehicle_to_lane(self, vehicle, current_lane, target_lane):
+    def move_vehicle_to_lane(self, vehicle : Vehicle, current_lane: Lane, target_lane: Lane) -> bool:
         """
         Moves a given vehicle into a new lane at a specified position
 
@@ -194,7 +195,7 @@ class Arm:
         return False
 
     
-    def enough_space_to_merge(self, vehicle, lane):
+    def enough_space_to_merge(self, vehicle: Vehicle, lane: Lane) -> int:
         """ 
         Checks if there is enough space for a given vehicle to fit in a new lane
         
@@ -217,18 +218,18 @@ class Arm:
         vehicle_behind = lane.vehicles[new_vehicle_index] if new_vehicle_index < len(lane.vehicles) else None
 
         # check the space between the vehicle ahead and behind to ensure adequate space
-        if vehicle_ahead and vehicle.distance - vehicle_ahead.distance <= vehicle._stopping_distance:
+        if vehicle_ahead and vehicle.distance - vehicle_ahead.distance <= vehicle.stopping_distance:
             # return -1 to indicate we can't move into this lane
             return -1
         
         # check if there is enough space for the vehicle behind to adequately stop
-        if vehicle_behind and vehicle_behind.distance - vehicle.distance <= vehicle_behind._stopping_distance:
+        if vehicle_behind and vehicle_behind.distance - vehicle.distance <= vehicle_behind.stopping_distance:
             return -1
     
         # return the index the vehicle should be isnerted
         return new_vehicle_index
 
-    def is_new_lane_shorter(self, current_lane, new_lane):
+    def is_new_lane_shorter(self, current_lane: Lane, new_lane: Lane) -> bool:
         """ Checks if there is at least two cars difference between two adjacent lanes """
         return current_lane.queue_length - new_lane.queue_length > 1
 
@@ -278,16 +279,16 @@ class Arm:
     
 
     def create_vehicle(self, speed: int, source: int, destination: int, type: str) -> None:
-        """ Create a new vehicle in a random lane """
+        """ Create a new vehicle in the first """
         furthest_car_distance = 0
         for lane in self._lanes:
             vehicle = lane.get_last_vehicle()
             if vehicle == None:
                 dist = 0
             else:
-                dist = vehicle.distance
+                dist = vehicle.distance + vehicle.length + vehicle.stopping_distance
             furthest_car_distance = max(furthest_car_distance, dist)
-        start_position = furthest_car_distance + 20
+        start_position = furthest_car_distance
         if start_position > self._length:
             raise TooManyVehiclesException
         
