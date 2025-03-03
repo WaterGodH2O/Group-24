@@ -538,17 +538,25 @@ def create_table(data):
                     # draw lane arrows
                     for lane in range(num_lanes):
                         lane_x = (lane * lane_width) + (lane_width // 2)  # centre of each lane
-                        arrow_y = row_height - 90  # Arrow start position
+                        arrow_y = row_height - 90  # arrow start position
 
-                        if lane < len(dirs):
-                            for direction_set in dirs[lane]:
-                                direction_set = {direction_set} if isinstance(direction_set, int) else direction_set
-                                if 2 in direction_set:  # forward
-                                    draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x, arrow_y - 20))
-                                if 1 in direction_set:  # left
-                                    draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 20, arrow_y))
-                                if 3 in direction_set:  # right
-                                    draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x + 20, arrow_y))
+                        if (bus and lane == 0):
+                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x, arrow_y - 20))
+                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 20, arrow_y))
+                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x + 20, arrow_y))
+                        else:
+                            lane_index = lane - 1 if bus else lane  # shift lane index if bus exists
+
+                            if lane_index < len(dirs):
+                                for direction_set in dirs[lane_index]:
+                                    direction_set = {direction_set} if isinstance(direction_set, int) else direction_set
+                                    if 2 in direction_set:  # forward
+                                        draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x, arrow_y - 20))
+                                    if 1 in direction_set:  # left
+                                        draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 20, arrow_y))
+                                    if 3 in direction_set:  # right
+                                        draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x + 20, arrow_y))
+
                     
                     junction_image = pygame_gui.elements.UIImage(
                         relative_rect=pygame.Rect(table_pos_x + (j + 1) * column_width + 2, table_pos_y + 2, column_width - 4, row_height - 4),
