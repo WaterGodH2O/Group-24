@@ -140,25 +140,25 @@ def draw_junction(surface):
     bus_lane_shift = 0
 
     road_font = pygame.font.Font(None, 11)
+    
+    if selected_bus != "no":   
+        bus_lane_shift = 20
+        pygame.draw.rect(surface, (155, 17, 30), (180, 0, 20, 100))
+        pygame.draw.rect(surface, (155, 17, 30), (202, 180, 100, 20))
+        pygame.draw.rect(surface, (155, 17, 30), (100, 202, 20, 100))
+        pygame.draw.rect(surface, (155, 17, 30), (0, 100, 100, 20))
 
     if selected_turn != "no":
-        bus_lane_shift = 20
 
         text_n = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), 180)
-        text_e = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), -90)
+        text_e = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), 90)
         text_s = road_font.render("TURN\nLEFT", True, (255, 255, 255))
-        text_w = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), 90)
+        text_w = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), -90)
 
-        surface.blit(text_n, (180, 40))
-        surface.blit(text_e, (40, 100))
-        surface.blit(text_s, (100, 240))
-        surface.blit(text_w, (240, 180))
-
-    if selected_bus != "no":
-        pygame.draw.rect(surface, (155, 17, 30), (180 - bus_lane_shift, 0, 20, 100))
-        pygame.draw.rect(surface, (155, 17, 30), (202, 180 - bus_lane_shift, 100, 20))
-        pygame.draw.rect(surface, (155, 17, 30), (100 + bus_lane_shift, 202, 20, 100))
-        pygame.draw.rect(surface, (155, 17, 30), (0, 100 + bus_lane_shift, 100, 20))
+        surface.blit(text_n, (180 - bus_lane_shift, 40))
+        surface.blit(text_w, (40, 100 + bus_lane_shift))
+        surface.blit(text_s, (100 + bus_lane_shift, 240))
+        surface.blit(text_e, (240, 180 - bus_lane_shift))
 
     if selected_pedestrian != "no":
         stripe_width = 5
@@ -475,14 +475,88 @@ def create_table(data):
         for j in range(3):
             col_index = start_col + j
             if col_index < len(row):
-                label = pygame_gui.elements.UITextBox(
+                if (i!=1):
+                    label = pygame_gui.elements.UITextBox(
                     html_text=row[col_index],
                     relative_rect=pygame.Rect(table_pos_x + (j + 1) * column_width, table_pos_y, column_width,
                                               row_height),
                     manager=manager,
                     container=page2_container
-                )
-                table_elements.append(label)
+                    )
+                    table_elements.append(label)
+                else:
+                    num_lanes = row[col_index][0]
+                    pedestrian = row[col_index][1]
+                    bus = row[col_index][2]
+                    dirs = row[col_index][3]
+
+                    junction_surface = pygame.Surface((column_width, row_height))
+                    junction_surface.fill((255, 255, 255))
+                    
+                    pygame.draw.rect(junction_surface, (50, 50, 50), (0, 0, column_width, row_height))
+                    
+                    lane_width = column_width // (num_lanes)
+
+                    if(bus):
+                        pygame.draw.rect(junction_surface, (155, 17, 30), (0, 0, lane_width, row_height))
+                    
+                    for lane in range(num_lanes-1):
+                        lane_x = lane * lane_width + lane_width
+                        pygame.draw.line(junction_surface, (255, 255, 255), (lane_x, 0), (lane_x, row_height), 3)
+
+                    if(pedestrian):
+                        stripe_width = 10
+                        gap = 10
+
+                        for k in range(9):
+                            pygame.draw.rect(junction_surface, (255, 255, 255), (k * (stripe_width + gap), 20, stripe_width, 20))
+
+                    def draw_arrow(surface, start, end):
+                        pygame.draw.line(surface, (255, 255, 255), start, end, 3)
+                        direction = (end[0] - start[0], end[1] - start[1])
+
+                        # draw arrowhead
+                        if direction == (0, -20):  # up arrow
+                            pygame.draw.polygon(surface, (255, 255, 255), [
+                                (end[0] - 5, end[1] + 10),
+                                (end[0] + 5, end[1] + 10),
+                                (end[0], end[1])
+                            ])
+                        elif direction == (-20, 0):  # left arrow
+                            pygame.draw.polygon(surface, (255, 255, 255), [
+                                (end[0] + 10, end[1] - 5),
+                                (end[0] + 10, end[1] + 5),
+                                (end[0], end[1])
+                            ])
+                        elif direction == (20, 0):  # right arrow
+                            pygame.draw.polygon(surface, (255, 255, 255), [
+                                (end[0] - 10, end[1] - 5),
+                                (end[0] - 10, end[1] + 5),
+                                (end[0], end[1])
+                            ])
+
+                    # draw lane arrows
+                    for lane in range(num_lanes):
+                        lane_x = (lane * lane_width) + (lane_width // 2)  # centre of each lane
+                        arrow_y = row_height - 90  # Arrow start position
+
+                        if lane < len(dirs):
+                            for direction_set in dirs[lane]:
+                                direction_set = {direction_set} if isinstance(direction_set, int) else direction_set
+                                if 2 in direction_set:  # forward
+                                    draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x, arrow_y - 20))
+                                if 1 in direction_set:  # left
+                                    draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 20, arrow_y))
+                                if 3 in direction_set:  # right
+                                    draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x + 20, arrow_y))
+                    
+                    junction_image = pygame_gui.elements.UIImage(
+                        relative_rect=pygame.Rect(table_pos_x + (j + 1) * column_width + 2, table_pos_y + 2, column_width - 4, row_height - 4),
+                        image_surface=junction_surface,
+                        manager=manager,
+                        container=page2_container
+                    )
+                    table_elements.append(junction_image)
         table_pos_y += row_height
 
 
@@ -583,7 +657,7 @@ def runSimulation():
                     # print(kpi)
                     top_junctions.append(
                         [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg, w_max, w_queue), kpi, num_lanes,
-                         ped_yes, bus_yes, left_yes, passed_per_arm])
+                         ped_yes, bus_yes, left_yes, passed_per_arm, lane_directions])
 
                 except NotEnoughLanesException:
                     # Not adding junctions that fail to create
@@ -597,7 +671,8 @@ def runSimulation():
     init_table()
 
     for junction in top_junctions:
-        config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}"
+        #config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}\n{junction[7]}"
+        config_description = [junction[2], junction[3], junction[4], junction[7]]
         add_config(junction[0], junction[1], config_description, junction[6])
 
     return
@@ -957,6 +1032,7 @@ while running:
             elif event.ui_element == modify_parameters_button:
                 top_junctions = []
                 game_state = 0
+                start_col = 1
                 flag = True
                 hide_error_box()
                 init_table()
