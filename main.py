@@ -150,10 +150,10 @@ def draw_junction(surface):
 
     if selected_turn != "no":
 
-        text_n = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), 180)
-        text_e = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), 90)
-        text_s = road_font.render("TURN\nLEFT", True, (255, 255, 255))
-        text_w = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (255, 255, 255)), -90)
+        text_n = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (0, 255, 0)), 180)
+        text_e = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (0, 255, 0)), 90)
+        text_s = road_font.render("TURN\nLEFT", True, (0, 255, 0))
+        text_w = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (0, 255, 0)), -90)
 
         surface.blit(text_n, (180 - bus_lane_shift, 40))
         surface.blit(text_w, (40, 100 + bus_lane_shift))
@@ -167,10 +167,12 @@ def draw_junction(surface):
         for i in range(11):
             pygame.draw.rect(surface, (255, 255, 255), (95 + i * (stripe_width + gap), 80, stripe_width, 10))
             pygame.draw.rect(surface, (255, 255, 255), (95 + i * (stripe_width + gap), 210, stripe_width, 10))
-
-        for i in range(11):
             pygame.draw.rect(surface, (255, 255, 255), (210, 95 + i * (stripe_width + gap), 10, stripe_width))
             pygame.draw.rect(surface, (255, 255, 255), (80, 95 + i * (stripe_width + gap), 10, stripe_width))
+
+    pygame.draw.circle(surface, (255, 0, 0), (250, 30), 10)
+    pygame.draw.circle(surface, (255, 165, 0), (250, 30 + 20), 10)
+    pygame.draw.circle(surface, (0, 255, 0), (250, 30 + 40), 10)
 
 
 traffic_flow_positions = {
@@ -489,6 +491,7 @@ def create_table(data):
                     pedestrian = row[col_index][1]
                     bus = row[col_index][2]
                     dirs = row[col_index][3]
+                    left = row[col_index][4]
 
                     junction_surface = pygame.Surface((column_width, row_height))
                     junction_surface.fill((255, 255, 255))
@@ -548,7 +551,7 @@ def create_table(data):
                             lane_index = lane - 1 if bus else lane  # shift lane index if bus exists
 
                             if lane_index < len(dirs):
-                                if dirs[lane_index] == {1}:
+                                if left and dirs[lane_index] == {1}:
                                     draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 15, arrow_y), (0, 255, 0))
                                 else:
                                     for direction in dirs[lane_index]:
@@ -682,7 +685,7 @@ def runSimulation():
 
     for junction in top_junctions:
         #config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}\n{junction[7]}"
-        config_description = [junction[2], junction[3], junction[4], junction[7]]
+        config_description = [junction[2], junction[3], junction[4], junction[7], junction[5]]
         add_config(junction[0], junction[1], config_description, junction[6])
 
     return
