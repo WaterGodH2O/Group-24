@@ -511,27 +511,27 @@ def create_table(data):
                         for k in range(9):
                             pygame.draw.rect(junction_surface, (255, 255, 255), (k * (stripe_width + gap), 20, stripe_width, 20))
 
-                    def draw_arrow(surface, start, end):
-                        pygame.draw.line(surface, (255, 255, 255), start, end, 3)
+                    def draw_arrow(surface, start, end, colour = (255, 255, 255)):
+                        pygame.draw.line(surface, colour, start, end, 2)
                         direction = (end[0] - start[0], end[1] - start[1])
 
                         # draw arrowhead
-                        if direction == (0, -20):  # up arrow
-                            pygame.draw.polygon(surface, (255, 255, 255), [
-                                (end[0] - 5, end[1] + 10),
-                                (end[0] + 5, end[1] + 10),
+                        if direction == (0, -15):  # up arrow
+                            pygame.draw.polygon(surface, colour, [
+                                (end[0] - 4, end[1] + 8),
+                                (end[0] + 4, end[1] + 8),
                                 (end[0], end[1])
                             ])
-                        elif direction == (-20, 0):  # left arrow
-                            pygame.draw.polygon(surface, (255, 255, 255), [
-                                (end[0] + 10, end[1] - 5),
-                                (end[0] + 10, end[1] + 5),
+                        elif direction == (-15, 0):  # left arrow
+                            pygame.draw.polygon(surface, colour, [
+                                (end[0] + 8, end[1] - 4),
+                                (end[0] + 8, end[1] + 4),
                                 (end[0], end[1])
                             ])
-                        elif direction == (20, 0):  # right arrow
-                            pygame.draw.polygon(surface, (255, 255, 255), [
-                                (end[0] - 10, end[1] - 5),
-                                (end[0] - 10, end[1] + 5),
+                        elif direction == (15, 0):  # right arrow
+                            pygame.draw.polygon(surface, colour, [
+                                (end[0] - 8, end[1] - 4),
+                                (end[0] - 8, end[1] + 4),
                                 (end[0], end[1])
                             ])
 
@@ -541,21 +541,23 @@ def create_table(data):
                         arrow_y = row_height - 90  # arrow start position
 
                         if (bus and lane == 0):
-                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x, arrow_y - 20))
-                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 20, arrow_y))
-                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x + 20, arrow_y))
+                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x, arrow_y - 15))
+                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 15, arrow_y))
+                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x + 15, arrow_y))
                         else:
                             lane_index = lane - 1 if bus else lane  # shift lane index if bus exists
 
                             if lane_index < len(dirs):
-                                for direction_set in dirs[lane_index]:
-                                    direction_set = {direction_set} if isinstance(direction_set, int) else direction_set
-                                    if 2 in direction_set:  # forward
-                                        draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x, arrow_y - 20))
-                                    if 1 in direction_set:  # left
-                                        draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 20, arrow_y))
-                                    if 3 in direction_set:  # right
-                                        draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x + 20, arrow_y))
+                                if dirs[lane_index] == {1}:
+                                    draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 15, arrow_y), (0, 255, 0))
+                                else:
+                                    for direction in dirs[lane_index]:
+                                        if direction == 2:  # forward
+                                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x, arrow_y - 15))
+                                        if direction == 1:  # left
+                                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 15, arrow_y))
+                                        if direction == 3:  # right
+                                            draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x + 15, arrow_y))
 
                     
                     junction_image = pygame_gui.elements.UIImage(
