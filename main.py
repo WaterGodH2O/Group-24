@@ -33,43 +33,43 @@ current_frame = 0
 current_frame_car = 0
 slow_flipper = True
 
-#
-# def resource_path(relative_path):
-#     """Get the absolute path to the resource, works for dev and for PyInstaller"""
-#     if getattr(sys, 'frozen', False):
-#         # Running in a PyInstaller bundle
-#         base_path = sys._MEIPASS
-#     else:
-#         # Running in a normal Python environment
-#         base_path = os.path.abspath(".")
-#     return os.path.join(base_path, relative_path)
-#
-#
-#
-# gif_path = resource_path("target2.gif")
-# gif = Image.open(gif_path)
-# frames = []
-# while True:
-#     frame = gif.convert("RGBA")
-#     pygame_frame = pygame.image.fromstring(frame.tobytes(), frame.size, "RGBA")
-#     frames.append(pygame_frame)
-#     try:
-#         gif.seek(gif.tell() + 1)
-#     except EOFError:
-#         break
-#
-#
-# gif_path = resource_path("target3.gif")
-# gif = Image.open(gif_path)
-# frames_car = []
-# while True:
-#     frame = gif.convert("RGBA")
-#     pygame_frame = pygame.image.fromstring(frame.tobytes(), frame.size, "RGBA")
-#     frames_car.append(pygame_frame)
-#     try:
-#         gif.seek(gif.tell() + 1)
-#     except EOFError:
-#         break
+
+def resource_path(relative_path):
+    """Get the absolute path to the resource, works for dev and for PyInstaller"""
+    if getattr(sys, 'frozen', False):
+        # Running in a PyInstaller bundle
+        base_path = sys._MEIPASS
+    else:
+        # Running in a normal Python environment
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+
+
+gif_path = resource_path("target2.gif")
+gif = Image.open(gif_path)
+frames = []
+while True:
+    frame = gif.convert("RGBA")
+    pygame_frame = pygame.image.fromstring(frame.tobytes(), frame.size, "RGBA")
+    frames.append(pygame_frame)
+    try:
+        gif.seek(gif.tell() + 1)
+    except EOFError:
+        break
+
+
+gif_path = resource_path("target3.gif")
+gif = Image.open(gif_path)
+frames_car = []
+while True:
+    frame = gif.convert("RGBA")
+    pygame_frame = pygame.image.fromstring(frame.tobytes(), frame.size, "RGBA")
+    frames_car.append(pygame_frame)
+    try:
+        gif.seek(gif.tell() + 1)
+    except EOFError:
+        break
 # =============Used for Loading capture============
 
 pygame.init()
@@ -1131,12 +1131,12 @@ while running:
 
             draw_title("Loading....", (400, 303))
 
-        # if slow_flipper:
-        #     current_frame = (current_frame + 1) % len(frames)
-        #     current_frame_car = (current_frame_car + 1) % len(frames_car)
-        #
-        # screen.blit(frames[current_frame], (514, 379))
-        # screen.blit(frames_car[current_frame_car], (590, 238))
+        if slow_flipper:
+            current_frame = (current_frame + 1) % len(frames)
+            current_frame_car = (current_frame_car + 1) % len(frames_car)
+
+        screen.blit(frames[current_frame], (514, 379))
+        screen.blit(frames_car[current_frame_car], (590, 238))
 
         if (thread.is_alive()):
             pass
