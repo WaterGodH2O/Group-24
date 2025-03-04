@@ -1,5 +1,4 @@
 # version: 1.0
-import time as tm
 import pygame
 import pygame_gui
 import threading
@@ -9,6 +8,10 @@ from Junction import Junction
 from exceptions import NotEnoughLanesException, TooManyVehiclesException
 from numpy import zeros
 import random
+import sys
+import os
+import io
+import pkgutil
 
 game_state: int = 0
 
@@ -29,26 +32,44 @@ flipper = True
 current_frame = 0
 current_frame_car = 0
 slow_flipper = True
-gif = Image.open("target2.gif")
-frames = []
-while True:
-    frame = gif.convert("RGBA")
-    pygame_frame = pygame.image.fromstring(frame.tobytes(), frame.size, "RGBA")
-    frames.append(pygame_frame)
-    try:
-        gif.seek(gif.tell() + 1)
-    except EOFError:
-        break
-gif = Image.open("target3.gif")
-frames_car = []
-while True:
-    frame = gif.convert("RGBA")
-    pygame_frame = pygame.image.fromstring(frame.tobytes(), frame.size, "RGBA")
-    frames_car.append(pygame_frame)
-    try:
-        gif.seek(gif.tell() + 1)
-    except EOFError:
-        break
+
+#
+# def resource_path(relative_path):
+#     """Get the absolute path to the resource, works for dev and for PyInstaller"""
+#     if getattr(sys, 'frozen', False):
+#         # Running in a PyInstaller bundle
+#         base_path = sys._MEIPASS
+#     else:
+#         # Running in a normal Python environment
+#         base_path = os.path.abspath(".")
+#     return os.path.join(base_path, relative_path)
+#
+#
+#
+# gif_path = resource_path("target2.gif")
+# gif = Image.open(gif_path)
+# frames = []
+# while True:
+#     frame = gif.convert("RGBA")
+#     pygame_frame = pygame.image.fromstring(frame.tobytes(), frame.size, "RGBA")
+#     frames.append(pygame_frame)
+#     try:
+#         gif.seek(gif.tell() + 1)
+#     except EOFError:
+#         break
+#
+#
+# gif_path = resource_path("target3.gif")
+# gif = Image.open(gif_path)
+# frames_car = []
+# while True:
+#     frame = gif.convert("RGBA")
+#     pygame_frame = pygame.image.fromstring(frame.tobytes(), frame.size, "RGBA")
+#     frames_car.append(pygame_frame)
+#     try:
+#         gif.seek(gif.tell() + 1)
+#     except EOFError:
+#         break
 # =============Used for Loading capture============
 
 pygame.init()
@@ -140,8 +161,8 @@ def draw_junction(surface):
     bus_lane_shift = 0
 
     road_font = pygame.font.Font(None, 11)
-    
-    if selected_bus != "no":   
+
+    if selected_bus != "no":
         bus_lane_shift = 20
         pygame.draw.rect(surface, (155, 17, 30), (180, 0, 20, 100))
         pygame.draw.rect(surface, (155, 17, 30), (202, 180, 100, 20))
@@ -149,7 +170,6 @@ def draw_junction(surface):
         pygame.draw.rect(surface, (155, 17, 30), (0, 100, 100, 20))
 
     if selected_turn != "no":
-
         text_n = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (0, 255, 0)), 180)
         text_e = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (0, 255, 0)), 90)
         text_s = road_font.render("TURN\nLEFT", True, (0, 255, 0))
@@ -477,13 +497,13 @@ def create_table(data):
         for j in range(3):
             col_index = start_col + j
             if col_index < len(row):
-                if (i!=1):
+                if (i != 1):
                     label = pygame_gui.elements.UITextBox(
-                    html_text=row[col_index],
-                    relative_rect=pygame.Rect(table_pos_x + (j + 1) * column_width, table_pos_y, column_width,
-                                              row_height),
-                    manager=manager,
-                    container=page2_container
+                        html_text=row[col_index],
+                        relative_rect=pygame.Rect(table_pos_x + (j + 1) * column_width, table_pos_y, column_width,
+                                                  row_height),
+                        manager=manager,
+                        container=page2_container
                     )
                     table_elements.append(label)
                 else:
@@ -495,26 +515,27 @@ def create_table(data):
 
                     junction_surface = pygame.Surface((column_width, row_height))
                     junction_surface.fill((255, 255, 255))
-                    
+
                     pygame.draw.rect(junction_surface, (50, 50, 50), (0, 0, column_width, row_height))
-                    
+
                     lane_width = column_width // (num_lanes)
 
-                    if(bus):
+                    if (bus):
                         pygame.draw.rect(junction_surface, (155, 17, 30), (0, 0, lane_width, row_height))
-                    
-                    for lane in range(num_lanes-1):
+
+                    for lane in range(num_lanes - 1):
                         lane_x = lane * lane_width + lane_width
                         pygame.draw.line(junction_surface, (255, 255, 255), (lane_x, 0), (lane_x, row_height), 3)
 
-                    if(pedestrian):
+                    if (pedestrian):
                         stripe_width = 10
                         gap = 10
 
                         for k in range(9):
-                            pygame.draw.rect(junction_surface, (255, 255, 255), (k * (stripe_width + gap), 20, stripe_width, 20))
+                            pygame.draw.rect(junction_surface, (255, 255, 255),
+                                             (k * (stripe_width + gap), 20, stripe_width, 20))
 
-                    def draw_arrow(surface, start, end, colour = (255, 255, 255)):
+                    def draw_arrow(surface, start, end, colour=(255, 255, 255)):
                         pygame.draw.line(surface, colour, start, end, 2)
                         direction = (end[0] - start[0], end[1] - start[1])
 
@@ -562,9 +583,9 @@ def create_table(data):
                                         if direction == 3:  # right
                                             draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x + 15, arrow_y))
 
-                    
                     junction_image = pygame_gui.elements.UIImage(
-                        relative_rect=pygame.Rect(table_pos_x + (j + 1) * column_width + 2, table_pos_y + 2, column_width - 4, row_height - 4),
+                        relative_rect=pygame.Rect(table_pos_x + (j + 1) * column_width + 2, table_pos_y + 2,
+                                                  column_width - 4, row_height - 4),
                         image_surface=junction_surface,
                         manager=manager,
                         container=page2_container
@@ -661,7 +682,6 @@ def runSimulation():
                     )
 
                     # print(junction)
-                    
 
                     junction.simulate(simulation_duration * 60 * 1000, 100)
 
@@ -684,7 +704,7 @@ def runSimulation():
     init_table()
 
     for junction in top_junctions:
-        #config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}\n{junction[7]}"
+        # config_description = f"Lanes: {junction[2]}\nPedestrian crossings: {'Yes' if junction[3] else 'No'}\nBus lanes: {'Yes' if junction[4] else 'No'}\nLeft turn lanes: {'Yes' if junction[5] else 'No'}\n{junction[7]}"
         config_description = [junction[2], junction[3], junction[4], junction[7], junction[5]]
         add_config(junction[0], junction[1], config_description, junction[6])
 
@@ -1103,8 +1123,6 @@ while running:
         if counter % 2 == 0:
             slow_flipper = not slow_flipper
 
-
-
         if flipper:
 
             draw_title("Loading.....", (400, 303))
@@ -1113,15 +1131,12 @@ while running:
 
             draw_title("Loading....", (400, 303))
 
-
-        if slow_flipper:
-            current_frame = (current_frame + 1) % len(frames)
-            current_frame_car = (current_frame_car + 1) % len(frames_car)
-
-
-
-        screen.blit(frames[current_frame], (514, 379))
-        screen.blit(frames_car[current_frame_car], (590, 238))
+        # if slow_flipper:
+        #     current_frame = (current_frame + 1) % len(frames)
+        #     current_frame_car = (current_frame_car + 1) % len(frames_car)
+        #
+        # screen.blit(frames[current_frame], (514, 379))
+        # screen.blit(frames_car[current_frame_car], (590, 238))
 
         if (thread.is_alive()):
             pass
