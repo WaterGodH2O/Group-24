@@ -828,7 +828,10 @@ while running:
                     for key, input_box in traffic_flow_inputs.items():
                         value = input_box.get_text().strip()
 
-                        if not value.isdigit() or not (0 <= int(value) <= 3000):
+                        if not value:
+                            input_box.set_text("100")
+                            traffic_data[key] = 100
+                        elif not value.isdigit() or not (0 <= int(value) <= 3000):
                             traffic_flow_rates_invalid = True
                         else:
                             traffic_data[key] = int(value)
@@ -847,7 +850,8 @@ while running:
                     # validate number of lanes input
                     num_lanes_input = param_inputs["num_lanes"].get_text().strip()
                     if not num_lanes_input:
-                        num_lanes_invalid = True
+                        param_inputs["num_lanes"].set_text("3")
+                        lane_configs = [3]
                     else:
                         if "-" in num_lanes_input:
                             parts = num_lanes_input.split("-")
@@ -885,12 +889,20 @@ while running:
 
                         if not crossing_time_input.isdigit() or int(crossing_time_input) <= 0:
                             pedestrian_details_invalid = True
-
                         if not crossing_frequency_input.isdigit() or int(crossing_frequency_input) <= 0:
                             pedestrian_details_invalid = True
                         if (not pedestrian_details_invalid):
                             crossing_time = int(crossing_time_input)
                             crossing_frequency = int(crossing_frequency_input)
+                        if (not crossing_time_input and not crossing_frequency_input):
+                            pedestrian_details_invalid = False
+                        if (not crossing_time_input):
+                            param_inputs["crossing_time"].set_text("15")
+                            crossing_time = 10
+                        if (not crossing_frequency_input):
+                            param_inputs["crossing_frequency"].set_text("10")
+                            crossing_frequency = 30
+                           
 
                     if pedestrian_details_invalid:
                         error_messages.append(
@@ -904,9 +916,12 @@ while running:
                         simulation_duration_invalid = True
 
                     if simulation_duration_invalid:
-                        error_messages.append("Error: Simulation duration must be a positive integer less than 1000.")
-                    else:
-                        simulation_duration = int(simulation_duration_input)
+                        if not simulation_duration_input:
+                            param_inputs["simulation_duration"].set_text("60")
+                        else:
+                            error_messages.append("Error: Simulation duration must be a positive integer less than 1000.")
+                    simulation_duration_input = param_inputs["simulation_duration"].get_text().strip()
+                    simulation_duration = int(simulation_duration_input)
 
                     # ------------------------------------------------------------------------------------------------------------------
                     # validate bus percentage
@@ -921,7 +936,11 @@ while running:
                             bus_percentage_invalid = True
 
                     if bus_percentage_invalid:
-                        error_messages.append("Error: Bus percentage must be an integer between 0 and 100.")
+                        if not bus_percentage_input:
+                            param_inputs["bus_percentage"].set_text("1")
+                            bus_percentage = 1
+                        else:
+                            error_messages.append("Error: Bus percentage must be an integer between 0 and 100.")
 
                     # validate KPI weightings
                     w_avg_input = param_inputs["w_avg_wait"].get_text().strip()
@@ -934,8 +953,11 @@ while running:
                     try:
                         if (w_avg_input == "" and w_max_input == "" and w_queue_input == ""):
                             w_avg = 0.3333
+                            param_inputs["w_avg_wait"].set_text("0.3333")
                             w_max = 0.3333
+                            param_inputs["w_max_wait"].set_text("0.3333")
                             w_queue = 0.3334
+                            param_inputs["w_queue_len"].set_text("0.3334")
                         else:
                             w_avg = float(w_avg_input)
                             w_max = float(w_max_input)
