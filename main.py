@@ -92,9 +92,9 @@ junction_visualisation = pygame.Surface((300, 300))
 # colours
 WHITE = (180, 180, 180)
 BLACK = (0, 0, 0)
-RED = (255, 50, 50)
-GREEN = (50, 200, 50)
-BLUE = (50, 100, 255)
+RED = (200, 50, 50)
+GREEN = (0, 128, 0)
+BLUE = (50, 50, 200)
 
 # word configuration
 title = pygame.font.Font(None, 35)
@@ -1052,9 +1052,9 @@ while running:
 
             x += cluster_gap
 
-        screen.blit(font.render("Avg. Wait Time", True, BLUE), (1000, 50))
-        screen.blit(font.render("Max. Wait Time", True, RED), (1000, 80))
-        screen.blit(font.render("Max. Queue Length", True, GREEN), (1000, 110))
+        screen.blit(font.render("Avg. Wait Time (s)", True, BLUE), (1000, 50))
+        screen.blit(font.render("Max. Wait Time (s)", True, RED), (1000, 80))
+        screen.blit(font.render("Max. Queue Length\n(vehicles)", True, GREEN), (1000, 110))
 
         manager.process_events(event)
         # click on button event
