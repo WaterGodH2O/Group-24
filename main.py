@@ -454,7 +454,7 @@ def add_config(efficiency, values, description, passed_per_arm):
     output_data[0].append(f'Configuration {config_number}')
 
     output_data[1].append(description)
-    output_data[2].append(str(int(efficiency)))
+    output_data[2].append(str("{:.2f}".format(efficiency)))
     output_data[3].append(
         f"North: {int(values[0][0])}\nEast: {int(values[1][0])}\nSouth: {int(values[2][0])}\nWest: {int(values[3][0])}")
     output_data[4].append(
