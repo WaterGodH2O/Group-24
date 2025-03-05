@@ -1008,6 +1008,9 @@ while running:
         page1_container.hide()
         page2_container.show()
 
+        screen.blit(font.render("Bus lane", True, (155, 17, 30)), (10, 100))
+        screen.blit(font.render("Left turn\nlane", True, (0, 255, 0)), (10, 120))
+
         left_arrow.hide()
         right_arrow.hide()
 
