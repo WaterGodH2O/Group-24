@@ -627,6 +627,10 @@ def calc_efficiency(north_arm, south_arm, east_arm, west_arm, w_avg, w_max, w_le
     score is 100. This relies on w_avg + w_max + w_queue == 1.
     Each arm is a tuple of (avg_wait, max_wait, max_queue)
     """
+    # Scale constants (expected values for each of the metrics)
+    avg_wait_scale = 20
+    max_wait_scale = 60
+    max_queue_scale = 30
     # Gather all arms in a list
     arms = [north_arm, south_arm, east_arm, west_arm]
     # Sum partial scores across the 4 arms
@@ -635,9 +639,9 @@ def calc_efficiency(north_arm, south_arm, east_arm, west_arm, w_avg, w_max, w_le
     raw_sum = 0.0
     for (avg_wait, max_wait, queue_len) in arms:
         # Weighted sum for this arm
-        arm_score = (w_avg * (1.0 / (1.0 + avg_wait))
-                     + w_max * (1.0 / (1.0 + max_wait))
-                     + w_len * (1.0 / (1.0 + queue_len))
+        arm_score = (w_avg * (1.0 / (1.0 + avg_wait/avg_wait_scale))
+                     + w_max * (1.0 / (1.0 + max_wait/max_wait_scale))
+                     + w_len * (1.0 / (1.0 + queue_len/max_queue_scale))
                      )
         raw_sum += arm_score
     # Perfect sceneario => raw_sum = 4. We want that => 100 => multiply by 25
