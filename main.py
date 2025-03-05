@@ -170,10 +170,10 @@ def draw_junction(surface):
         pygame.draw.rect(surface, (155, 17, 30), (0, 100, 100, 20))
 
     if selected_turn != "no":
-        text_n = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (0, 255, 0)), 180)
-        text_e = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (0, 255, 0)), 90)
-        text_s = road_font.render("TURN\nLEFT", True, (0, 255, 0))
-        text_w = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (0, 255, 0)), -90)
+        text_n = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (50, 150, 50)), 180)
+        text_e = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (50, 150, 50)), 90)
+        text_s = road_font.render("TURN\nLEFT", True, (50, 150, 50))
+        text_w = pygame.transform.rotate(road_font.render("TURN\nLEFT", True, (50, 150, 50)), -90)
 
         surface.blit(text_n, (180 - bus_lane_shift, 40))
         surface.blit(text_w, (40, 100 + bus_lane_shift))
@@ -192,7 +192,7 @@ def draw_junction(surface):
 
     pygame.draw.circle(surface, (255, 0, 0), (250, 30), 10)
     pygame.draw.circle(surface, (255, 165, 0), (250, 30 + 20), 10)
-    pygame.draw.circle(surface, (0, 255, 0), (250, 30 + 40), 10)
+    pygame.draw.circle(surface, (0, 255,0), (250, 30 + 40), 10)
 
 
 traffic_flow_positions = {
@@ -573,7 +573,7 @@ def create_table(data):
 
                             if lane_index < len(dirs):
                                 if left and dirs[lane_index] == {1}:
-                                    draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 15, arrow_y), (0, 255, 0))
+                                    draw_arrow(junction_surface, (lane_x, arrow_y), (lane_x - 15, arrow_y), (50, 150, 50))
                                 else:
                                     for direction in dirs[lane_index]:
                                         if direction == 2:  # forward
@@ -1031,7 +1031,8 @@ while running:
         page2_container.show()
 
         screen.blit(font.render("Bus lane", True, (155, 17, 30)), (10, 100))
-        screen.blit(font.render("Left turn\nlane", True, (0, 255, 0)), (10, 120))
+        screen.blit(font.render("Left turn\nlane", True, (50, 150, 50)), (10, 120))
+        screen.blit(font.render("Regular\nlane", True, (50, 50, 50)), (10, 160))
 
         left_arrow.hide()
         right_arrow.hide()
