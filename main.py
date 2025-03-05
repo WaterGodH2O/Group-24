@@ -686,7 +686,7 @@ def runSimulation():
                     junction.simulate(simulation_duration * 60 * 1000, 100)
 
                     kpi = junction.get_kpi()
-                    passed_per_arm = junction.box.get_arm_throughputs()
+                    passed_per_arm = junction.get_arm_throughputs()
                     # print(kpi)
                     top_junctions.append(
                         [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg, w_max, w_queue), kpi, num_lanes,

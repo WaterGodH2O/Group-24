@@ -23,7 +23,7 @@ class Lane(ABC):
         self._length: int = length
 
         # the number of vehicles currently in the lane
-        self._queue_length: int = 0
+        self.queue_length: int = 0
 
         # the number of arms in the junction
         self._num_arms: int = num_arms
@@ -41,9 +41,6 @@ class Lane(ABC):
     @property
     def length(self) -> int:
         return self._length
-    @property
-    def queue_length(self) -> int:
-        return self._queue_length
 
     def get_first_vehicle(self) -> Vehicle:
         """
@@ -95,14 +92,14 @@ class Lane(ABC):
         """
         # add the given vehicle to the end of the lane
         self._vehicles.append(vehicle)
-        self._queue_length += 1
+        self.queue_length += 1
         return True
 
 
     def add_vehicle_to_index(self, vehicle: Vehicle, index: int) -> None:
         """ Method do add a vehicle to a specified index """
         self._vehicles.insert(index, vehicle)
-        self._queue_length += 1
+        self.queue_length += 1
 
 
     def remove_vehicle(self, vehicle: Vehicle) -> Vehicle:
@@ -115,7 +112,7 @@ class Lane(ABC):
         # remove a specific vehicle from the list if found
         if vehicle in self._vehicles:
             self._vehicles.remove(vehicle)
-            self._queue_length = len(self._vehicles)
+            self.queue_length = len(self._vehicles)
             return vehicle
         return None
     
@@ -150,7 +147,7 @@ class Lane(ABC):
                         vehicle.update_wait_time(update_length_ms)
 
                     # set the new vehicle distance
-                    vehicle._distance = new_vehicle_distance
+                    vehicle.set_position(new_vehicle_distance)
 
             # if the vehicle is at the front of the queue and not at the junction (no need to check vehicle ahead)
             elif i == 0 or vehicle_ahead in leaving_vehicles:

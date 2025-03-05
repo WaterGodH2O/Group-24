@@ -186,7 +186,7 @@ class Arm:
             target_lane.add_vehicle_to_index(vehicle, new_lane_index)
 
             # update current lane count (as if the vehicle has been removed) to ensure proper sorting
-            current_lane._queue_length -= 1
+            current_lane.queue_length -= 1
 
             # return true, indicating vehicle has merged successfully
             return True

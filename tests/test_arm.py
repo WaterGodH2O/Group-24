@@ -91,9 +91,9 @@ class TestArm(unittest.TestCase):
         
         # configure lanes
         lane1._vehicles = [vehicle1, vehicle2]
-        lane1._queue_length = 2
+        lane1.queue_length = 2
         lane2._vehicles = []
-        lane2._queue_length = 0
+        lane2.queue_length = 0
 
         # configure arm
         self.arm._lanes = [lane1, lane2]
@@ -122,9 +122,9 @@ class TestArm(unittest.TestCase):
         
         # configure lanes
         lane1._vehicles = [vehicle1]
-        lane1._queue_length = 1
+        lane1.queue_length = 1
         lane2._vehicles = []
-        lane2._queue_length = 0
+        lane2.queue_length = 0
         lane2._allowed_directions = {1, 2}
 
         # configure arm
@@ -142,14 +142,14 @@ class TestArm(unittest.TestCase):
         """Test that a vehicle successfully moves to a new lane when there is space."""
         vehicle = MagicMock(spec=Vehicle)
         current_lane = MagicMock(spec=Lane)
-        current_lane._queue_length = 4
+        current_lane.queue_length = 4
         target_lane = MagicMock(spec=Lane)
         self.arm.enough_space_to_merge = MagicMock(return_value=1)
         
         result = self.arm.move_vehicle_to_lane(vehicle, current_lane, target_lane)
         target_lane.add_vehicle_to_index.assert_called_once_with(vehicle, 1)
         self.assertTrue(result)
-        self.assertEqual(current_lane._queue_length, 3)
+        self.assertEqual(current_lane.queue_length, 3)
     
     def test_move_vehicle_to_lane_fail(self):
         """Test that a vehicle does not move to a new lane when there isn't enough space."""
