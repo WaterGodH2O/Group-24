@@ -475,8 +475,8 @@ def create_table(data):
 
     table_pos_x = 100
     table_pos_y = 50
-    column_width = 130
-    row_height = 90
+    column_width = 150
+    row_height = 120
 
     for (i, row) in enumerate(output_data):
         if (i == 0):
@@ -651,7 +651,7 @@ def calc_efficiency(north_arm, south_arm, east_arm, west_arm, w_avg, w_max, w_le
 
 def draw_y_axis():
     # left y-axis
-    pygame.draw.line(screen, BLACK, (790, HEIGHT // 2), (790, HEIGHT - 50), 2)
+    pygame.draw.line(screen, BLACK, (790, 50), (790, HEIGHT - 50), 2)
     num_ticks = 5
     step = max_value / num_ticks
 
@@ -662,140 +662,6 @@ def draw_y_axis():
         label = font.render(str(value), True, BLACK)
         screen.blit(label, (755, y_pos - 10))
 
-def draw_queue_length_graph(surface: pygame.Surface, queue_data: list[list[int]], top_left: tuple[int, int] = (675, 50), chart_size: tuple[int, int] = (500, 300)) -> None:
-    """
-    Draws a very simple line chart of queue lengths for up to 4 arms in Pygame.
-    
-    :param surface: Pygame surface on which to draw the chart
-    :param queue_data: List of lists, where queue_data[i] is the queue-length history for arm i
-    :param top_left: (x, y) position of the top-left corner of the chart
-    :param chart_size: (width, height) size of the entire chart area
-    """
-    # Basic checks (just in case data is empty)
-    if not queue_data or all(len(arm_data) == 0 for arm_data in queue_data):
-        return
-    line_colours = [
-        (255, 0, 0),    # Red
-        (0, 255, 0),    # Green
-        (0, 0, 255),    # Blue
-        (128, 0, 128)   # Purple
-    ]
-    # Find the max queue length among *all* arms to scale the y-axis
-    max_queue_len = 0
-    for arm_data in queue_data:
-        if arm_data and max(arm_data) > max_queue_len:
-            max_queue_len = max(arm_data)
-    if max_queue_len == 0:
-        return # all zero -> nothing to plot
-    
-    # Find how many time-samples exist for the widest arm's data
-    max_points = max(len(arm_data) for arm_data in queue_data)
-
-    # Unpack desired chart dimensions
-    chart_width, chart_height = chart_size
-    origin_x, origin_y = top_left
-
-    # Draw a simple x-axis and y-axis in black
-    axis_colour = (0, 0, 0) # black
-    # y-axis
-    pygame.draw.line(surface, axis_colour, (origin_x, origin_y), (origin_x, origin_y + chart_height), 2)
-    # x-axis
-    pygame.draw.line(surface, axis_colour, (origin_x, origin_y + chart_height), (origin_x + chart_width, origin_y + chart_height), 2)
-    end_points = []
-    left_margin = 10
-    right_margin = 10
-
-    font = pygame.font.Font(None, 20) # For tick lables
-
-    if max_queue_len < 5:
-        num_y_ticks = int(max_queue_len)
-    else:
-        num_y_ticks = 5
-    y_step = max_queue_len / float(num_y_ticks) if num_y_ticks > 0 else max_queue_len
-
-    for i in range(num_y_ticks + 1):
-        q_val = i * y_step
-        frac_y = q_val / max_queue_len if max_queue_len != 0 else 0
-        y_pos = origin_y + chart_height - (frac_y * chart_height)
-
-        tick_length = 5
-        pygame.draw.line(surface, axis_colour, (origin_x - tick_length, y_pos), (origin_x, y_pos), 2)
-
-        label_str = f"{int(q_val)}"
-        label_surf = font.render(label_str, True, axis_colour)
-        surface.blit(label_surf, (origin_x - tick_length - 5 - label_surf.get_width(), y_pos - label_surf.get_height() / 2))
-
-        num_x_ticks = 5
-        if max_points > 1:
-            x_step = (max_points - 1) / float(num_x_ticks) if num_x_ticks else max_points - 1
-
-            for i in range(num_x_ticks + 1):
-                sample_index = int(i * x_step)
-                frac_x = sample_index / float(max_points - 1)
-                x_pos = origin_x + frac_x * chart_width
-
-                tick_length = 5
-                pygame.draw.line(surface, axis_colour, (x_pos, origin_y + chart_height), (x_pos, origin_y + chart_height + tick_length), 2)
-                label_str = f"{sample_index}"
-                label_surf = font.render(label_str, True, axis_colour)
-                surface.blit((label_surf), (x_pos - label_surf.get_width() / 2, origin_y + chart_height + tick_length + 2))
-
-    for arm_index, arm_data in enumerate(queue_data):
-        if len(arm_data) < 2:
-            continue
-            # Build a list of points (x, y) to draw lines between
-        line_colour = line_colours[arm_index % len(line_colours)]
-        points = []
-        for i, q_len in enumerate(arm_data):
-            frac_x = i / max(len(arm_data) - 1, 1)
-            x_pos = origin_x + left_margin + frac_x * (chart_width - left_margin - right_margin)
-            frac_y = q_len / max_queue_len
-            y_pos = origin_y + chart_height - (frac_y * chart_height)
-            points.append((x_pos, y_pos))
-        
-        pygame.draw.lines(surface, line_colour, False, points, 2)
-
-        end_points.append((points[-1], arm_index, line_colour))
-    
-    x_label_str = "Time (mins)"
-    x_label_surf = font.render(x_label_str, True, axis_colour)
-    x_label_x = origin_x + chart_width // 2 - x_label_surf.get_width() // 2
-    x_label_y = origin_y + chart_height + 30
-    surface.blit(x_label_surf, (x_label_x, x_label_y))
-
-    y_label_str = "Queue Length"
-    y_label_surf = font.render(y_label_str, True, axis_colour)
-    y_label_rotated = pygame.transform.rotate(y_label_surf, 90)
-    y_label_x = origin_x - 50
-    y_label_y = origin_y + chart_height // 2 - y_label_rotated.get_height() // 2
-    surface.blit(y_label_rotated, (y_label_x, y_label_y))
-    draw_legend(surface, queue_length_data, line_colours, (origin_x + chart_width - 100, origin_y))
-
-def draw_legend(surface: pygame.Surface,
-    queue_data: list[list[int]],
-    line_colours: list[tuple[int, int, int]],
-    legend_pos: tuple[int, int] = (700, 50)
-    ) -> None:
-    legend_x, legend_y = legend_pos
-
-    font = pygame.font.Font(None, 20)
-    vertical_spacing = 25
-
-    arm_directions = ["North", "East", "South", "West"]
-    for arm_index in range(len(queue_data)):
-        if len(queue_data[arm_index]) == 0:
-            continue
-
-        colour = line_colours[arm_index % len(line_colours)]
-        label_text = f"{arm_directions[arm_index]} Arm"
-
-        box_rect = pygame.Rect(legend_x, legend_y, 15, 15)
-        pygame.draw.rect(surface, colour, box_rect)
-
-        text_surface = font.render(label_text, True, (0, 0, 0))
-        surface.blit(text_surface, (legend_x + 20, legend_y))
-
-        legend_y += vertical_spacing
 
 def runSimulation():
     global top_junctions
@@ -828,7 +694,7 @@ def runSimulation():
                     # print(kpi)
                     top_junctions.append(
                         [calc_efficiency(kpi[0], kpi[1], kpi[2], kpi[3], w_avg, w_max, w_queue), kpi, num_lanes,
-                         ped_yes, bus_yes, left_yes, passed_per_arm, lane_directions, junction])
+                         ped_yes, bus_yes, left_yes, passed_per_arm, lane_directions])
 
                 except NotEnoughLanesException:
                     # Not adding junctions that fail to create
@@ -1176,24 +1042,6 @@ while running:
             right_arrow.show()
 
         create_table(output_data)
-        # Retrieve queue length data from the best junction configuration
-        if len(top_junctions) > 0:
-            best_junction = top_junctions[0] # Get best configuration
-            best_junction_object = best_junction[-1] # Get the Junction instance
-
-            queue_length_data = best_junction_object.get_queue_length_array() # Use the getter
-            interaval_time_ms = best_junction_object.get_queue_length_timer() # Get the recording interval
-
-            # Create a new UI contatiner for the table
-            queue_table_container = pygame_gui.core.UIContainer(
-                relative_rect=pygame.Rect((650, 50), (500, 500)),
-                manager=manager
-            )
-
-            # Display the queue length table
-            # create_queue_length_table(queue_length_data, interaval_time_ms, manager, queue_table_container)
-            draw_queue_length_graph(screen, queue_length_data)
-
 
         data = {}
 
@@ -1209,11 +1057,9 @@ while running:
         cluster_gap = (bar_width + bar_gap) * 3 + 30
         start_x = 800
 
-        chart_top = HEIGHT // 2     # Halfway down the window
-        chart_bottom = HEIGHT - 50     # near the bottom
-        chart_height = chart_bottom - chart_top
+        chart_height = HEIGHT - 220
         max_value = max(max(values) for values in data.values())
-        scale_factor = chart_height / max_value if max_value != 0 else 1
+        scale_factor = (HEIGHT - 220) / max_value if max_value != 0 else 1
 
         draw_y_axis()
 
@@ -1232,9 +1078,9 @@ while running:
 
             x += cluster_gap
 
-        screen.blit(font.render("Avg. Wait Time (s)", True, BLUE), (1000, chart_top + 20))
-        screen.blit(font.render("Max. Wait Time (s)", True, RED), (1000, chart_top + 50))
-        screen.blit(font.render("Max. Queue Length\n(vehicles)", True, GREEN), (1000, chart_top + 80))
+        screen.blit(font.render("Avg. Wait Time (s)", True, BLUE), (1000, 50))
+        screen.blit(font.render("Max. Wait Time (s)", True, RED), (1000, 80))
+        screen.blit(font.render("Max. Queue Length\n(vehicles)", True, GREEN), (1000, 110))
 
         manager.process_events(event)
         # click on button event

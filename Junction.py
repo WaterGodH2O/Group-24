@@ -113,12 +113,6 @@ class Junction:
     def get_arm_throughputs(self):
         return self._box.get_arm_throughputs()
     
-    def get_queue_length_array(self):
-        return self._queue_length_array
-    
-    def get_queue_length_timer(self):
-        return self._queue_length_timer
-
 
     def simulate(self, sim_time_ms: int, update_length_ms: int) -> None:
         """
