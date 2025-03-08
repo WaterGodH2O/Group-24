@@ -32,7 +32,7 @@ flipper = True
 current_frame = 0
 current_frame_car = 0
 slow_flipper = True
-
+Maybe = 0
 
 def resource_path(relative_path):
     """Get the absolute path to the resource, works for dev and for PyInstaller"""
@@ -122,6 +122,10 @@ def draw_font(text, position):
     text_surface = font.render(text, True, BLACK)
     screen.blit(text_surface, position)
 
+
+def draw_bold_font_RED(text, position):
+    text_surface = bold_font.render(text, True, RED)
+    screen.blit(text_surface, position)
 
 def draw_bold_font(text, position):
     text_surface = bold_font.render(text, True, BLACK)
@@ -769,6 +773,9 @@ while running:
 
         draw_font("Simulation duration\n(minutes)", (700, 700))
 
+        if(selected_pedestrian == "maybe" or selected_bus == "maybe" or selected_turn == "maybe"):
+            draw_bold_font_RED("WARNING: Maybe option significantly increase running time", (520, 665))
+
         junction_visualisation.fill((255, 255, 255))
         draw_junction(junction_visualisation)
         screen.blit(junction_visualisation, (700, 50))
@@ -996,6 +1003,7 @@ while running:
                     if selected_pedestrian == "yes":
                         ped = [True]
                     elif selected_pedestrian == "maybe":
+                        Maybe = Maybe + 1
                         ped = [False, True]
                     else:
                         ped = [False]
@@ -1003,6 +1011,7 @@ while running:
                     if selected_bus == "yes":
                         bus = [True]
                     elif selected_bus == "maybe":
+                        Maybe = Maybe + 1
                         bus = [False, True]
                     else:
                         bus = [False]
@@ -1010,6 +1019,7 @@ while running:
                     if selected_turn == "yes":
                         left = [True]
                     elif selected_turn == "maybe":
+                        Maybe = Maybe + 1
                         left = [False, True]
                     else:
                         left = [False]
@@ -1138,8 +1148,14 @@ while running:
         # this is a inverse proportional function, approximately linear
         sum_traffic = sum(sum(row) for row in traffic_data)
 
+        def factorial(n):
+            if n == 0 or n == 1:
+                return 1
+            else:
+                return n * factorial(n - 1)
+        maybeFactor = factorial(Maybe+1)
         # experience formula
-        estimate_time = (max([1, sum_traffic * 0.001029])) * (sum(lane_configs) * 0.53) * (simulation_duration * 0.0328)
+        estimate_time = (max([1, sum_traffic * 0.001029])) * (sum(lane_configs) * 0.53) * (simulation_duration * 0.0328) * maybeFactor
 
         rate = (1 / estimate_time) * 1.7139
         increasing_bar(rate)
@@ -1181,11 +1197,15 @@ while running:
                     top_junctions = []
                     game_state = 0
                     counter2 = 0
+
+                    Maybe = 0
                     flag = True
                     init_table()
                     show_error_box("Not enough lanes to model any specified junction.")
                 else:
                     increasing_bar(-1)
+
+                    Maybe = 0
                     counter2 = 0
                     game_state = 1
 
