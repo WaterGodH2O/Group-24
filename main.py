@@ -774,7 +774,7 @@ while running:
         draw_font("Simulation duration\n(minutes)", (700, 700))
 
         if(selected_pedestrian == "maybe" or selected_bus == "maybe" or selected_turn == "maybe"):
-            draw_bold_font_RED("WARNING: Maybe option significantly increase running time", (520, 665))
+            draw_bold_font_RED("WARNING: The maybe option significantly increases running time", (500, 665))
 
         junction_visualisation.fill((255, 255, 255))
         draw_junction(junction_visualisation)
