@@ -44,6 +44,22 @@ class TestTrafficLight(unittest.TestCase):
         #Check a full light cycle occurs after 100s
         self.junction.simulate(100000, 10)
         self.assertEqual(self.junction._traffic_light._traffic_light_dir, 0)
+
+    def test_traffic_light_early_end(self):
+        """Test that when a vehicle leaves the junction the direction changes"""
+        for i in range(3):
+            #Add a car to each arm of the junction except north
+            self.junction._arms[i+1]._lanes[1]._vehicles.append(Car(0, i, 0, 50, 4))
+        self.junction._arms[0]._lanes[1]._vehicles.append(Car(2, 0, 3, 2, 4))
+        #Vehicle reaches junction box
+        self.junction.simulate(1000, 100)
+        self.assertEqual(self.junction._traffic_light._traffic_light_dir, 0)
+        #Vehicle leaves arm
+        self.junction.simulate(1,1)
+        self.assertGreater(self.junction._traffic_light._traffic_light_time_ms, 0)
+        #Traffic light turns to red early
+        self.junction.simulate(1,1)
+        self.assertEqual(self.junction._traffic_light._traffic_light_dir, -1)
     
     def test_traffic_light_cycle_single_skip(self):
         """Test that when a lane is empty, its lane is skipped"""
