@@ -21,4 +21,4 @@ Configurable parameters:
 
 The output screen displays a table of all configurations, sorted by efficiency. The first row shows a diagram representing each lane. The second row shows the overall efficiency and the rest of the table shows the specific values of the key performance indicators. This information is also displayed as a graph for the three most efficient configurations.
 
-
+To run the program, run the LaneSimulation.exe file in the Executable File folder.
